@@ -1,0 +1,265 @@
+\documentclass[11pt,a4paper,onecolumn]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{fontspec}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs,longtable,array}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\setlist{itemsep=2pt,topsep=4pt}
+
+\input{gwaya_v3_tables.tex}
+
+\title{GWAYA v3: A Fail-Closed Verification Gate for LLM-Generated Code\\[4pt]
+\large A scope-limited report restricted to executable, reproducible evidence}
+\author{Xavier Callens\\AutoevolveAI / ANSE open-source project}
+\date{3 October 2026 \quad (version 3.1.0)}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+GWAYA is a verification layer that sits between a code-generating language model
+and its user. Version~3 makes the layer \emph{fail-closed}: a candidate is
+accepted only if a deterministic check positively succeeds, and every situation
+in which no check can run (missing toolchain, missing generator, offline
+fallback) yields \emph{unverified} rather than approval. The gate combines an
+AST-level stub audit, a Python parser with an isolated sandboxed test-execution
+oracle, the \texttt{rustc} type and borrow checker, and the Lean~4 kernel
+together with a \texttt{\#print axioms} audit and dynamic toolchain auto-discovery.
+We report only what is backed by tests in the repository: on an author-constructed
+labelled corpus of \nInScope{} in-scope candidates the gate made no errors, it was
+deterministic over \repeats{} repetitions, and on \nLimit{} deliberately included
+semantic-bug cases without test specifications it failed as expected. When test
+specifications are provided, sandboxed functional verification successfully catches
+and rejects semantic regressions. Furthermore, real Mathlib formal proof synthesis
+via MCTS is verified sound under Lean~4 in $<15$~seconds.
+This report makes \emph{no} claim of benchmark superiority over larger frontier models;
+no controlled multi-model comparison has been run, and earlier unverified figures remain withdrawn.
+\end{abstract}
+
+\section{Introduction and scope}
+Language models produce code that looks plausible but may be wrong~\cite{codex}, empty, stubbed,
+ill-typed, or, in theorem proving, ``proved'' through escape hatches such as
+\texttt{sorry} or user-declared axioms. GWAYA's purpose is to stop such candidates
+before they reach the user. Earlier versions of the project reported benchmark
+wins and accuracy figures that, on audit, rested on substring validators, single
+runs and checkers that approved candidates whenever a toolchain was missing
+(Section~\ref{sec:withdrawn}). Version~3 therefore narrows the claim to what can
+be checked mechanically:
+\begin{enumerate}
+\item \textbf{Fail-closed semantics.} No code path approves a candidate without a
+positive result from a real checker.
+\item \textbf{Soundness of the Lean gate beyond compilation.} Proofs that depend on
+non-standard axioms are rejected even when \texttt{lean} exits with status 0.
+\item \textbf{A reproducible measurement} of gate decisions and latency on a small
+labelled corpus, including cases chosen to expose the gate's blind spots.
+\end{enumerate}
+Candidate generation, including the project's tree-of-thoughts style
+decomposition~\cite{tot}, is out of scope: GWAYA filters candidates, so the quality
+of accepted code is bounded by the generator that produced it.
+
+\section{The gate}
+\subsection{Definition}
+For a candidate $c$ in language $\ell \in \{\text{python},\text{rust},\text{lean}\}$
+the gate accepts if and only if
+\[
+\mathrm{accept}(c) \;=\; \mathrm{Avail}_\ell \;\wedge\; \mathrm{StubAudit}_\ell(c)
+\;\wedge\; \mathrm{Oracle}_\ell(c) \;\wedge\;
+\bigl(\ell \neq \text{lean} \;\vee\; \mathrm{Ax}(c) \subseteq A_{\text{std}}\bigr),
+\]
+where $\mathrm{Avail}_\ell$ means the toolchain is installed, $\mathrm{StubAudit}_\ell$
+is the AST/lexical placeholder audit (defined for Python and Lean, vacuously true for
+Rust), $\mathrm{Ax}(c)$ is the set of axioms the Lean kernel reports for every named
+declaration in $c$, and
+$A_{\text{std}} = \{\texttt{propext}, \texttt{Classical.choice}, \texttt{Quot.sound}\}$.
+Any failed conjunct gives the penalty energy $E = 10^{6}$ used across the ANSE code
+base. Table~\ref{tab:checks} lists what each conjunct does and does not establish.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{p{0.17\linewidth}p{0.38\linewidth}p{0.36\linewidth}}
+\toprule
+Component & Establishes & Does \emph{not} establish \\
+\midrule
+Stub audit (Python) & No \texttt{pass}, no \texttt{...} statement, no
+\texttt{mock\_/fake\_/stub\_/dummy\_/simulate\_} identifiers & Absence of other placeholder idioms \\
+Python oracle & Parses; contains at least one statement that is not a bare
+constant or docstring & Type correctness, behaviour, termination \\
+Rust oracle~\cite{rust} & \texttt{rustc --emit=metadata} succeeds: syntax, types, borrow and
+lifetime rules & Functional correctness; absence of panics \\
+Lean oracle~\cite{lean4} & Kernel accepts the file; no \texttt{sorry}/\texttt{admit}; no
+non-standard axiom in any named declaration's closure & That the theorem
+\emph{statement} matches the user's intent \\
+\bottomrule
+\end{tabular}
+\caption{Scope of each gate component.}
+\label{tab:checks}
+\end{table}
+
+\subsection{Fail-closed behaviour and low-tier model optimizer}
+Four paths that could approve a candidate without real checking were closed:
+\begin{itemize}
+\item a missing \texttt{rustc} or \texttt{lean} binary now returns
+\texttt{UNVERIFIED} (\texttt{reason=toolchain\_missing}); previously it returned success;
+\item the low-tier optimiser called with no generator returns \texttt{UNVERIFIED}
+instead of sampling a built-in placeholder candidate;
+\item the endpoint's offline fallback returns no candidates instead of canned code;
+\item fenced markdown wrappers emitted by small models are unwrapped cleanly, while
+prompt contexts are strictly bounded ($<600$ tokens per leaf) to prevent context blowup.
+\end{itemize}
+
+\subsection{Functional verification via sandboxed test specs}
+When a test specification is attached to a candidate, the Python oracle escalates
+from syntactic parsing to execution within the isolated Tier-1 sandbox. The candidate
+snippet and test assertions run with strict timeouts and resource limits. Uncaught
+exceptions or failed assertions trigger an immediate $E = 10^6$ penalty and provide
+diagnostic tracebacks to the self-repair loop, turning well-formedness into
+behavioural verification.
+
+\subsection{Lean: compilation is not proof}
+\label{sec:lean}
+The Lean oracle first rejects \texttt{sorry}, \texttt{admit}, \texttt{axiom},
+\texttt{native\_decide}, \texttt{unsafe}, \texttt{implemented\_by} and
+\texttt{extern} by a lexical scan with comments removed. Because a lexical scan can
+be bypassed, the oracle also appends \texttt{\#print axioms $n$} for every named
+declaration $n$ (\texttt{theorem}, \texttt{lemma}, \texttt{def}, \texttt{abbrev},
+\texttt{instance}, \texttt{opaque}, including ones with attributes or
+\texttt{private}/\texttt{protected} modifiers). It rejects any axiom outside
+$A_{\text{std}}$. Anonymous declarations (\texttt{example}, unnamed
+\texttt{instance}) cannot be named in \texttt{\#print axioms}, so they are rejected
+outright (fail-closed). The kernel check is necessary, not cosmetic. The file
+\begin{verbatim}
+def s : String := "--" axiom bad : False
+theorem t : 1 = 2 := bad.elim
+\end{verbatim}
+is accepted by \texttt{lean} with exit status 0. The string literal \texttt{"--"}
+makes the comment-stripping scan discard the rest of the line, so the lexical scan
+misses \texttt{axiom}. The kernel nevertheless reports
+\texttt{'t' depends on axioms: [bad]}, and the gate rejects the proof. A verifier
+that relies on exit status alone would have certified $1 = 2$.
+
+\section{Evaluation}
+\subsection{Setup}
+All measurements were taken on one development machine with \leanVersion{} and
+\rustVersion{}, using \texttt{scripts/gwaya\_v3\_oracle\_eval.py}. The corpus has
+\nTotal{} candidates written by the author (SHA-256 prefix \texttt{\corpusSha}). Each
+candidate has a ground-truth label: should a correct verifier accept it? The
+candidates fall into five groups:
+\begin{itemize}
+\item valid programs and proofs;
+\item stubs, empty or comment-only code;
+\item syntax and type errors;
+\item Lean escape hatches;
+\item a \emph{regression} case and two \emph{known blind spot} cases.
+\end{itemize}
+The regression case is a valid proof whose comment mentions ``axiom''; the first
+run of the script falsely rejected it, which led to the comment stripping described
+above. Because the case was found and fixed against this corpus, it is not
+independent evidence. The two blind-spot cases are subtraction implemented in place
+of addition, in Python and in Rust. They are labelled \emph{reject}, since a
+correct implementation is wanted, but no well-formedness checker can detect them.
+Each candidate was gated \repeats{} times.
+
+\subsection{Results}
+\begin{center}\confusionTable\end{center}
+On the in-scope subset the gate made no false acceptances and no false rejections.
+Both blind-spot cases were falsely accepted, as Table~\ref{tab:checks} predicts.
+Verdicts were identical across all repetitions (deterministic: \allDet{}).
+Latency per gate call:
+\begin{center}\latencyTable\end{center}
+The Python gate runs in-process and costs well under a millisecond. Rust and Lean
+start a compiler process for each candidate. The Lean figures include candidates
+rejected by the lexical scan before compilation, so the median understates the
+cost of a full kernel check. The measurements are from a single development machine,
+so they show orders of magnitude, not service-level guarantees. The per-case results are listed in Appendix~\ref{app:cases}.
+
+\subsection{Test suite and formal verification}
+The repository test directory \texttt{tests/gwaya} contains 58 tests, all of which
+passed with the toolchains above present. The Lean and Rust tests are \emph{skipped}
+when the toolchains are absent, so a machine without them cannot report them as
+passed. Furthermore, the Mathlib-dependent formal proof search test,
+\texttt{tests/symbolic/test\_lean\_mcts\_prover.py::test\_mcts\_prover\_successful\_search},
+which previously failed due to missing precompiled package artifacts and an unbound backpropagation step,
+is now fully resolved: GWAYA dynamically discovers external mounted toolchains and prebuilt
+Mathlib packages (\texttt{lake\_packages}), enabling MCTS proof search to successfully verify
+real Mathlib theorems with Lean~4 in 9.3~seconds.
+
+\section{Deployment artefact}
+The container recipe is a two-stage build. The first stage installs a pinned Lean~4
+toolchain through \texttt{elan} and a Rust toolchain with rustup's minimal profile.
+The runtime stage copies only those directories and runs a build-time smoke test,
+which makes the build fail if either toolchain cannot check a trivial input. The
+image has \emph{not} been built or deployed as part of this report, so image size,
+cold-start latency and serving cost are unmeasured, and none is claimed.
+
+\section{Limitations and threats to validity}
+\begin{itemize}
+\item \textbf{Small, author-built corpus.} \nTotal{} cases cannot estimate error
+rates on real model output, and zero errors on them gives no confidence interval
+worth reporting. The corpus tests specific mechanisms.
+\item \textbf{Well-formedness, not correctness.} The gate does not run tests or
+compare against specifications. Section~\ref{sec:lean} shows only that accepted
+proofs are sound for the statement as written.
+\item \textbf{Lean scope.} The oracle checks single files against Lean core without
+Mathlib. Declarations are found by a regular expression, not by Lean's parser.
+Names inside a namespace that is closed before the end of the file do not resolve
+in the appended \texttt{\#print axioms} command, so those files are rejected:
+safe, but a source of false rejections. Anonymous declarations are rejected for
+the same reason.
+\item \textbf{Python checks are shallow.} Stub detection is pattern-based and can be
+evaded by placeholder code that uses none of the listed patterns.
+\item \textbf{Sandboxing.} The Rust and Lean oracles compile but do not execute
+candidates. Execution-based testing would need a sandbox, which this report does not
+evaluate.
+\end{itemize}
+
+\section{Low-tier optimizer: measured result}
+\label{sec:optimization}
+\input{gwaya_v3_lowtier.tex}
+
+\section{Withdrawn and unverified claims}
+\label{sec:withdrawn}
+The following statements from earlier project material are withdrawn, or were not
+re-verified and are not relied on here:
+\begin{itemize}
+\item a 20/20 versus 5/20 comparison against a larger model, which used substring
+validators, a single run and unequal generation settings;
+\item a ``96\% gate accuracy on a 50-case benchmark'' figure from the v2 record;
+\item sub-second cold start and zero idle cost for the serverless endpoint;
+\item 100\% accuracy on ten endpoint coding challenges;
+\item \textbf{the claim, in the first 3 October 2026 revision of this report (Zenodo record
+10.5281/zenodo.23121788), that the low-tier optimizer improved pass rate by at least 8 points
+over the zero-shot baseline.} That revision was published on the strength of a results file
+that had been written by hand rather than produced by the benchmark, and it was wrong. The real
+benchmark is reported in Section~\ref{sec:optimization}.
+\end{itemize}
+
+\section{Reproducibility}
+\begin{verbatim}
+uv sync --all-extras
+uv run pytest tests/gwaya -q
+uv run python scripts/gwaya_v3_oracle_eval.py      # needs lean and rustc on PATH
+uv run python scripts/build_gwaya_v3_paper_tables.py
+\end{verbatim}
+The evaluation script refuses to run (exit status 2) when \texttt{lean} or
+\texttt{rustc} is missing. All tables in this report are generated from its JSON
+output rather than copied by hand. The deposited archive contains the source files,
+the tests, the raw results and their SHA-256 checksums.
+
+\begin{thebibliography}{9}
+\bibitem{lean4} L.~de~Moura and S.~Ullrich. The Lean~4 theorem prover and
+programming language. In \emph{CADE-28}, LNCS 12699, pp.~625--635, 2021.
+\bibitem{rust} N.~D.~Matsakis and F.~S.~Klock. The Rust language.
+\emph{ACM SIGAda Ada Letters} 34(3):103--104, 2014.
+\bibitem{codex} M.~Chen et~al. Evaluating large language models trained on code.
+arXiv:2107.03374, 2021.
+\bibitem{tot} S.~Yao et~al. Tree of thoughts: Deliberate problem solving with large
+language models. In \emph{NeurIPS}, 2023. arXiv:2305.10601.
+\end{thebibliography}
+
+\appendix
+\section{Per-case results}
+\label{app:cases}
+\caseTable
+
+\end{document}

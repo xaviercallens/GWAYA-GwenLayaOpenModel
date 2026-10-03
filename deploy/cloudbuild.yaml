@@ -1,0 +1,30 @@
+steps:
+  # 1. Restore the exact working tree that was backed up to the data lake (build context).
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        gcloud storage cp "${_CODE_TAR}" /workspace/code.tar.gz &&
+        tar xzf /workspace/code.tar.gz -C /workspace && rm /workspace/code.tar.gz
+  # 2. Build.
+  - name: gcr.io/cloud-builders/docker
+    args: [build, -f, deploy/gwaya_bench/Dockerfile, -t, "${_IMAGE}", .]
+  # 3. Push to Artifact Registry.
+  - name: gcr.io/cloud-builders/docker
+    args: [push, "${_IMAGE}"]
+  # 4. Export a tarball to the data lake so a restart never depends on the registry.
+  - name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args: ["-c", "docker save ${_IMAGE} | gzip -1 > /workspace/gwaya-bench.tar.gz"]
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args: [storage, cp, /workspace/gwaya-bench.tar.gz, "${_LAKE}/images/gwaya-bench.tar.gz"]
+substitutions:
+  _IMAGE: us-east4-docker.pkg.dev/gen-lang-client-0625573011/gwaya-bench/runner:v1
+  _LAKE: gs://socrateai-datalake-gen-lang-client-0625573011/gwaya_bench
+  _CODE_TAR: gs://socrateai-datalake-gen-lang-client-0625573011/gwaya_bench/code/code_latest.tar.gz
+options:
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY
+timeout: 2400s

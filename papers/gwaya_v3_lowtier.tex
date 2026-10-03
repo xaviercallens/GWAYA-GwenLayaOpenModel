@@ -1,0 +1,61 @@
+Model: \texttt{qwen2.5-coder:1.5b}. Problems: MBPP-sanitized test split. The first assert of each problem is
+public (shown to the model and used by the repair loop); the remaining asserts are hidden. A problem is
+solved only if the \emph{final} code passes \emph{all} asserts in the \texttt{bwrap} sandbox; the
+optimizer's own flag is never used as the outcome. For arms A2--A4 the output is the verified code if one
+was found and the A0 sample otherwise. The protocol, gate and seeds were fixed before the first run
+(\texttt{results/gwaya\_low\_tier/PREREGISTRATION.md}).
+
+\paragraph{Primary pre-registered run ($n=60$, local CPU, Ollama 0.1.44).}
+The run was started from the uncommitted working tree; the recorded commit
+\texttt{531a0a0f6e2f} was made immediately after it finished and contains the same benchmark code
+except for the sandbox self-test added during the run. Hardware and Ollama version were not
+recorded in \texttt{results.json} for this run (recorded here manually).
+
+
+
+\begin{center}\small
+\begin{tabular}{llrrrr}\toprule
+Arm & Configuration & pass@1 (\%) & $\Delta$ vs A0 & 95\% CI & gained/lost \\\midrule
+A0 & raw first sample (baseline) & 68.3 & -- & -- & -- \\
+A2 & best-of-3 by public test & 71.7 & +3.3 & [+0.0, +8.3] & 2/0 \\
+A3 & best-of-3 + up to 3 repair rounds & 75.0 & +6.7 & [+1.7, +13.3] & 4/0 \\
+A4 & A3 + one retrieved exemplar & 75.0 & +6.7 & [-1.7, +15.0] & 6/2 \\
+\bottomrule\end{tabular}
+\end{center}
+
+The pre-registered gate ($\Delta \ge +8.0$ points for A3 over A0) \textbf{failed}: $\Delta = +6.67$ points. This is reported as a finding and the gate was not adjusted. The 95\% bootstrap interval excludes zero, but the exact McNemar test ($p=0.125$) does not reject at 0.05; the two tests disagree at this sample size. The 95\% bootstrap interval excludes zero. For A3, verified code was returned for 86.7\% of problems and
+86.5\% of those also passed the hidden asserts.
+Exact McNemar $p = 0.125$ for A3 versus A0 ($n=60$).
+
+\paragraph{Replication ($n=257$, full split, spot GPU).}
+Declared as a replication before it started (addendum to the pre-registration). Hardware recorded from
+what Ollama used: NVIDIA L4 (ollama ps: 100% GPU) / 8 vCPU; ollama version is 0.5.7-0-ga420a45-dirty. Fresh generation cache: no local rows were reused.
+Same seeds, arms, fallback policy and gate. CPU and GPU runs, and different Ollama versions, give
+different samples under the same seeds, so the two results are separate estimates, not one re-scored run.
+The container had no git metadata; its code is the working-tree tarball with SHA-256
+\texttt{e7274d8f8e2c\ldots} (the committed tree plus the deploy scripts).
+
+
+
+\begin{center}\small
+\begin{tabular}{llrrrr}\toprule
+Arm & Configuration & pass@1 (\%) & $\Delta$ vs A0 & 95\% CI & gained/lost \\\midrule
+A0 & raw first sample (baseline) & 64.2 & -- & -- & -- \\
+A2 & best-of-3 by public test & 69.3 & +5.1 & [+2.7, +7.8] & 13/0 \\
+A3 & best-of-3 + up to 3 repair rounds & 72.0 & +7.8 & [+4.7, +11.3] & 20/0 \\
+A4 & A3 + one retrieved exemplar & 71.2 & +7.0 & [+3.1, +10.9] & 23/5 \\
+\bottomrule\end{tabular}
+\end{center}
+
+The pre-registered gate ($\Delta \ge +8.0$ points for A3 over A0) \textbf{failed}: $\Delta = +7.78$ points. This is reported as a finding and the gate was not adjusted. The 95\% bootstrap interval excludes zero. For A3, verified code was returned for 80.9\% of problems and
+88.9\% of those also passed the hidden asserts.
+Exact McNemar $p = 0.0$ for A3 versus A0 ($n=257$).
+
+Both verdicts are stated. In the replication the A3 gain is statistically clear (no problem lost, 20 gained)
+but its point estimate is below the pre-registered $+8.0$ threshold, so the gate is reported as failed.
+The threshold was not changed after seeing the results.
+
+\textbf{Limitations.} One model, one benchmark, one seed schedule; MBPP's hidden asserts are weak
+specifications, so ``solved'' means ``passes MBPP's asserts''. The repair loop only sees the public assert.
+Retrieval (A4) uses MBPP train/validation/prompt solutions as exemplars and is disjoint from the test split by task id;
+it did not beat A3 (see gained/lost).

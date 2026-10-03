@@ -1,0 +1,66 @@
+{
+  "model": "qwen2.5-coder:1.5b",
+  "dataset": "mbpp-sanitized/test",
+  "hardware": "NVIDIA L4 (ollama ps: 100% GPU) / 8 vCPU",
+  "ollama_version": "ollama version is 0.5.7-0-ga420a45-dirty",
+  "n": 257,
+  "git_commit": "",
+  "pass_at_1": {
+    "A0": 64.2,
+    "A2": 69.26,
+    "A3": 71.98,
+    "A4": 71.21
+  },
+  "paired_vs_A0": {
+    "A2": {
+      "delta_points": 5.06,
+      "ci95": [
+        2.72,
+        7.78
+      ],
+      "gained": 13,
+      "lost": 0,
+      "mcnemar_exact_p": 0.0002
+    },
+    "A3": {
+      "delta_points": 7.78,
+      "ci95": [
+        4.67,
+        11.28
+      ],
+      "gained": 20,
+      "lost": 0,
+      "mcnemar_exact_p": 0.0
+    },
+    "A4": {
+      "delta_points": 7.0,
+      "ci95": [
+        3.11,
+        10.89
+      ],
+      "gained": 23,
+      "lost": 5,
+      "mcnemar_exact_p": 0.0009
+    }
+  },
+  "gate_verified_precision": {
+    "A2": {
+      "coverage_pct": 77.43,
+      "hidden_pass_given_verified_pct": 89.45
+    },
+    "A3": {
+      "coverage_pct": 80.93,
+      "hidden_pass_given_verified_pct": 88.94
+    },
+    "A4": {
+      "coverage_pct": 68.48,
+      "hidden_pass_given_verified_pct": 86.36
+    }
+  },
+  "gate": {
+    "criterion": "A3 - A0 >= +8.0 points",
+    "delta_points": 7.78,
+    "verdict": "FAIL"
+  },
+  "rows_sha256": "a2991e14a2860cf98d0d3b4a32a1726d753169051db581d3b08d6eef2ad9978a"
+}

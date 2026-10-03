@@ -1,0 +1,66 @@
+{
+  "model": "qwen2.5-coder:1.5b",
+  "dataset": "mbpp-sanitized/test",
+  "hardware": "unspecified",
+  "ollama_version": "unspecified",
+  "n": 60,
+  "git_commit": "531a0a0f6e2f2c8847bab3abaaaa5c19361a25d2",
+  "pass_at_1": {
+    "A0": 68.33,
+    "A2": 71.67,
+    "A3": 75.0,
+    "A4": 75.0
+  },
+  "paired_vs_A0": {
+    "A2": {
+      "delta_points": 3.33,
+      "ci95": [
+        0.0,
+        8.33
+      ],
+      "gained": 2,
+      "lost": 0,
+      "mcnemar_exact_p": 0.5
+    },
+    "A3": {
+      "delta_points": 6.67,
+      "ci95": [
+        1.67,
+        13.33
+      ],
+      "gained": 4,
+      "lost": 0,
+      "mcnemar_exact_p": 0.125
+    },
+    "A4": {
+      "delta_points": 6.67,
+      "ci95": [
+        -1.67,
+        15.0
+      ],
+      "gained": 6,
+      "lost": 2,
+      "mcnemar_exact_p": 0.2891
+    }
+  },
+  "gate_verified_precision": {
+    "A2": {
+      "coverage_pct": 83.33,
+      "hidden_pass_given_verified_pct": 86.0
+    },
+    "A3": {
+      "coverage_pct": 86.67,
+      "hidden_pass_given_verified_pct": 86.54
+    },
+    "A4": {
+      "coverage_pct": 71.67,
+      "hidden_pass_given_verified_pct": 86.05
+    }
+  },
+  "gate": {
+    "criterion": "A3 - A0 >= +8.0 points",
+    "delta_points": 6.67,
+    "verdict": "FAIL"
+  },
+  "rows_sha256": "8f66d7de8b60bbe2b5822c2b1ba602ca39e38863788eed0c25f6d365a63337b4"
+}

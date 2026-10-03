@@ -1,0 +1,52 @@
+{
+  "created_unix": 1791043169.1201413,
+  "git_commit": "531a0a0f6e2f2c8847bab3abaaaa5c19361a25d2",
+  "audit_receipt_sha256": "960ad8b1b190cdc98447e21dc47f1da458fb46bb492916aa8ce682d89c3f7f9c",
+  "rows_sha256": "8f66d7de8b60bbe2b5822c2b1ba602ca39e38863788eed0c25f6d365a63337b4",
+  "results_sha256": "7464a7f569a2076221f0fe0ffc2cf966873aae6553b195edc2a64137a727c938",
+  "preregistration_sha256": "426d9ac8362578ebbee4874ecf951ccbce1734f5b1f69c25a00d9df1b667b902",
+  "paper_pdf_sha256": "cff0c35426964b36dca45af3cd0f9a3955b7d7aa040ff5b724549a6f33a2796a",
+  "gate": {
+    "criterion": "A3 - A0 >= +8.0 points",
+    "delta_points": 6.67,
+    "verdict": "FAIL"
+  },
+  "pass_at_1": {
+    "A0": 68.33,
+    "A2": 71.67,
+    "A3": 75.0,
+    "A4": 75.0
+  },
+  "paired_vs_A0": {
+    "A2": {
+      "delta_points": 3.33,
+      "ci95": [
+        0.0,
+        8.33
+      ],
+      "gained": 2,
+      "lost": 0,
+      "mcnemar_exact_p": 0.5
+    },
+    "A3": {
+      "delta_points": 6.67,
+      "ci95": [
+        1.67,
+        13.33
+      ],
+      "gained": 4,
+      "lost": 0,
+      "mcnemar_exact_p": 0.125
+    },
+    "A4": {
+      "delta_points": 6.67,
+      "ci95": [
+        -1.67,
+        15.0
+      ],
+      "gained": 6,
+      "lost": 2,
+      "mcnemar_exact_p": 0.2891
+    }
+  }
+}
