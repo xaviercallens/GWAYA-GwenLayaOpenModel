@@ -4,7 +4,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23123923.svg)](https://doi.org/10.5281/zenodo.23123923)
 [![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Dataset-yellow)](https://huggingface.co/datasets/callensxavier/gwaya-v3-verified-report)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-64%20passed%2C%201%20skipped-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-90%20passed%2C%201%20skipped-brightgreen.svg)](tests/)
 [![Paper](https://img.shields.io/badge/Paper-PDF-red.svg)](papers/gwaya_v3_verified_report.pdf)
 
 > **GWAYA (Gwen-Laya Open Model)** is a zero-trust, fail-closed verification layer that sits between code-generating language models (such as the Qwen / Gwen series) and execution environments. 
@@ -187,6 +187,42 @@ python scripts/run_benchmark.py --n 10 --model qwen2.5-coder:1.5b
 # Run full MBPP replication (n=257)
 python scripts/run_benchmark.py --n 257 --model qwen2.5-coder:7b --out-dir results/my_rtx4090_run
 ```
+
+---
+
+## ⚡ Local Agent Deployment: `gwaya-agent` CLI & Docker Compose
+
+For developer workstations with NVIDIA RTX GPUs (RTX 3060, 3080, 4060, 4080, 4090) or CPU fallback:
+
+### 1. Zero-Config GPU Doctor & CLI
+```bash
+# Check GPU VRAM, detect installed models, and get automated model recommendations:
+gwaya-agent doctor
+
+# Run fail-closed verified generation:
+gwaya-agent ask "def is_prime(n): check if n is prime" --test "assert is_prime(7) and not is_prime(8)"
+```
+
+### 2. Full Local Stack with Docker Compose
+Run both the Ollama GPU backend and GWAYA verification agent with a single command:
+
+```bash
+# Launch Ollama with GPU pass-through + GWAYA agent:
+docker compose up -d
+
+# Verify agent status
+docker compose run gwaya-agent doctor
+```
+
+### 3. Anti-Hallucination Grounding & Consensus Self-Testing
+Small models frequently suffer from:
+- **Symbol hallucinations:** Inventing functions (`numpyx.fast_solve`), non-existent stdlib attributes, or unbound variables.
+- **Over-fitting to a single public test:** Emitting hardcoded checks that fail hidden edge cases.
+
+GWAYA resolves this through:
+1. **`gwaya.grounding`:** Static AST and pyflakes inspection rejects candidates referencing unresolvable imports or unbound local names *before execution*.
+2. **`gwaya.consensus_agent`:** Generates candidate unit tests from multiple independent generations and computes consensus ($k \ge 2$) assert agreement, rejecting candidates that fail consensus tests even if they pass the public prompt test.
+3. **Full-Context Trace Feedback:** Replaces naive error truncations with sandbox-evaluated LHS/RHS runtime values for targeted self-repair.
 
 ---
 

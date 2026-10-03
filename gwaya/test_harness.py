@@ -81,23 +81,26 @@ except _BaseException as _e:
     _os._exit(0)
 
 _tree = _ast.parse(_spec_src)
-_passed, _total, _first = 0, 0, None
+_passed, _total, _first, _failed = 0, 0, None, []
 _lines = _spec_src.splitlines()
 for _stmt in _tree.body:
     _is_test = any(isinstance(_n, _ast.Assert) for _n in _ast.walk(_stmt))
+    _idx = _total
     _total += 1 if _is_test else 0
     _src = "\n".join(_lines[_stmt.lineno - 1:_stmt.end_lineno])
     try:
         _exec(_compile(_ast.Module(body=[_stmt], type_ignores=[]), "spec.py", "exec"), _ns)
         _passed += 1 if _is_test else 0
     except _BaseException as _e:
+        if _is_test:
+            _failed.append(_idx)
         if _first is None:
             _first = _src.strip()[:300] + " -> " + _short(_e)
         if not _is_test:
             _remaining = _tree.body[_tree.body.index(_stmt) + 1:]
             _total += sum(1 for _s in _remaining if any(isinstance(_n, _ast.Assert) for _n in _ast.walk(_s)))
             break
-_emit({"passed": _passed, "total": _total, "stage": "spec", "first_failure": _first})
+_emit({"passed": _passed, "total": _total, "stage": "spec", "first_failure": _first, "failed": _failed})
 _os._exit(0)
 '''
 
@@ -306,4 +309,5 @@ def run_candidate_tests(
         isolation=isolation,
         duration_ms=round((time.perf_counter() - t0) * 1000.0, 2),
         stdout_tail=tail,
+        details={"failed_idx": [int(i) for i in record.get("failed", [])]},
     )
