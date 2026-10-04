@@ -2,6 +2,7 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   initTabs();
+  initGpuLifecycle();
   initSystemPoller();
   initScenarios();
   initAstAuditor();
@@ -38,6 +39,147 @@ function initTabs() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// GPU Lifecycle & VRAM Allocator
+// ─────────────────────────────────────────────────────────────────────────────
+let isGpuRunning = true;
+let isTogglingGpu = false;
+
+function initGpuLifecycle() {
+  const btnToggle = document.getElementById("btn-gpu-toggle");
+  const btnBannerStart = document.getElementById("btn-banner-start-gpu");
+  const btnLoraToggle = document.getElementById("btn-lora-gpu-toggle");
+
+  if (btnToggle) {
+    btnToggle.addEventListener("click", () => handleGpuToggle());
+  }
+  if (btnBannerStart) {
+    btnBannerStart.addEventListener("click", () => handleGpuToggle(true));
+  }
+  if (btnLoraToggle) {
+    btnLoraToggle.addEventListener("click", () => handleGpuToggle());
+  }
+
+  // Immediate status check
+  checkGpuStatus();
+}
+
+async function checkGpuStatus() {
+  try {
+    const res = await fetch("/api/gpu/status");
+    const data = await res.json();
+    updateGpuUiState(data.is_running, data);
+  } catch (err) {
+    console.warn("Could not query GPU status:", err);
+  }
+}
+
+function updateGpuUiState(running, data) {
+  isGpuRunning = !!running;
+
+  const btnToggle = document.getElementById("btn-gpu-toggle");
+  const btnLabel = document.getElementById("gpu-btn-label");
+  const btnAction = document.getElementById("gpu-btn-action");
+  const gpuDot = document.getElementById("gpu-dot");
+  const gpuStatusText = document.getElementById("gpu-status-text");
+  const ollamaStatusText = document.getElementById("ollama-status-text");
+  const studioBanner = document.getElementById("studio-gpu-alert");
+  const loraStatusText = document.getElementById("lora-gpu-status-text");
+  const loraDot = document.getElementById("lora-gpu-dot");
+  const btnLoraToggle = document.getElementById("btn-lora-gpu-toggle");
+
+  if (isGpuRunning) {
+    // ACTIVE STATE
+    if (btnToggle) {
+      btnToggle.className = "btn-gpu-toggle btn-gpu-active";
+      btnToggle.disabled = false;
+    }
+    if (btnLabel) btnLabel.textContent = "GPU ACTIVE";
+    if (btnAction) btnAction.textContent = "(Stop to Free VRAM)";
+    if (gpuDot) gpuDot.className = "dot dot-green";
+
+    if (data && data.gpu && data.gpu.available) {
+      const memUsed = Math.round(data.gpu.memory_used_mb);
+      const memTotal = Math.round(data.gpu.memory_total_mb);
+      const temp = Math.round(data.gpu.temp_c);
+      const pwr = Math.round(data.gpu.power_w);
+      if (gpuStatusText) gpuStatusText.textContent = `${data.gpu.name} | ${memUsed}/${memTotal}MB | ${temp}°C | ${pwr}W`;
+    } else if (gpuStatusText) {
+      gpuStatusText.textContent = "RTX 2070 8GB | Active";
+    }
+
+    if (ollamaStatusText) {
+      const count = data && data.models_count !== undefined ? data.models_count : 4;
+      ollamaStatusText.textContent = `Ollama CUDA | ${count} Models`;
+    }
+
+    if (studioBanner) studioBanner.style.display = "none";
+
+    if (loraStatusText) {
+      loraStatusText.textContent = "RTX 2070 Active (Ready for Training)";
+      loraStatusText.style.color = "var(--accent-green)";
+    }
+    if (loraDot) loraDot.className = "dot dot-green";
+    if (btnLoraToggle) btnLoraToggle.textContent = "Stop GPU (Free VRAM)";
+
+  } else {
+    // STOPPED STATE
+    if (btnToggle) {
+      btnToggle.className = "btn-gpu-toggle btn-gpu-stopped";
+      btnToggle.disabled = false;
+    }
+    if (btnLabel) btnLabel.textContent = "▶ START GPU";
+    if (btnAction) btnAction.textContent = "(VRAM Released)";
+    if (gpuDot) gpuDot.className = "dot dot-amber";
+
+    if (gpuStatusText) {
+      gpuStatusText.textContent = "GPU STOPPED (VRAM Released for Other Projects)";
+    }
+    if (ollamaStatusText) {
+      ollamaStatusText.textContent = "Ollama Offloaded | 0 MB VRAM";
+    }
+
+    if (studioBanner) studioBanner.style.display = "flex";
+
+    if (loraStatusText) {
+      loraStatusText.textContent = "GPU STOPPED (VRAM Freed for External Workloads)";
+      loraStatusText.style.color = "var(--accent-amber)";
+    }
+    if (loraDot) loraDot.className = "dot dot-amber";
+    if (btnLoraToggle) btnLoraToggle.textContent = "Start GPU Engine";
+  }
+}
+
+async function handleGpuToggle(forceStart = false) {
+  if (isTogglingGpu) return;
+  isTogglingGpu = true;
+
+  const btnToggle = document.getElementById("btn-gpu-toggle");
+  const btnLabel = document.getElementById("gpu-btn-label");
+  const btnAction = document.getElementById("gpu-btn-action");
+
+  const shouldStart = forceStart || !isGpuRunning;
+
+  if (btnToggle) {
+    btnToggle.disabled = true;
+    if (btnLabel) btnLabel.textContent = shouldStart ? "STARTING GPU..." : "STOPPING GPU...";
+    if (btnAction) btnAction.textContent = shouldStart ? "(Warming up CUDA)" : "(Releasing VRAM)";
+  }
+
+  try {
+    const endpoint = shouldStart ? "/api/gpu/start" : "/api/gpu/stop";
+    const res = await fetch(endpoint, { method: "POST" });
+    const data = await res.json();
+    updateGpuUiState(data.is_running, data);
+  } catch (err) {
+    console.error("GPU toggle error:", err);
+    alert(`Failed to ${shouldStart ? "start" : "stop"} GPU: ` + err.message);
+  } finally {
+    isTogglingGpu = false;
+    await checkGpuStatus();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // System Telemetry Poller
 // ─────────────────────────────────────────────────────────────────────────────
 function initSystemPoller() {
@@ -46,20 +188,11 @@ function initSystemPoller() {
       const res = await fetch("/api/system/status");
       const data = await res.json();
 
-      if (data.gpu && data.gpu.available) {
-        const memUsed = Math.round(data.gpu.memory_used_mb);
-        const memTotal = Math.round(data.gpu.memory_total_mb);
-        const temp = Math.round(data.gpu.temp_c);
-        const pwr = Math.round(data.gpu.power_w);
-        document.getElementById("gpu-status-text").textContent =
-          `${data.gpu.name} | ${memUsed}/${memTotal}MB | ${temp}°C | ${pwr}W`;
-      } else {
-        document.getElementById("gpu-status-text").textContent = "RTX GPU Active";
-      }
-
-      if (data.ollama_models && data.ollama_models.length > 0) {
-        document.getElementById("ollama-status-text").textContent =
-          `Ollama CUDA | ${data.ollama_models.length} Models`;
+      if (data.gpu_service_running !== undefined && !isTogglingGpu) {
+        updateGpuUiState(data.gpu_service_running, {
+          gpu: data.gpu,
+          models_count: data.ollama_models ? data.ollama_models.length : 0,
+        });
       }
     } catch (err) {
       console.warn("Telemetry polling error:", err);
@@ -173,6 +306,13 @@ function initStudio() {
       return;
     }
 
+    if (!isGpuRunning) {
+      alert("GPU Engine is currently STOPPED to free VRAM for another project. Click 'Start GPU' in the header or the alert banner to activate inference.");
+      tokCounter.className = "badge badge-amber";
+      tokCounter.textContent = "GPU Stopped";
+      return;
+    }
+
     btnGen.disabled = true;
     btnGen.innerHTML = `<span>⏳ Synthesizing on RTX GPU...</span>`;
     tokCounter.className = "badge badge-amber";
@@ -189,6 +329,11 @@ function initStudio() {
           mode: armSelect.value,
         }),
       });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.detail || res.statusText);
+      }
 
       const data = await res.json();
       codeOutput.value = data.code || "";

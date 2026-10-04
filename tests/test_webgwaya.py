@@ -5,6 +5,10 @@ Unit and API integration tests for WebGWAYA console backend.
 """
 from __future__ import annotations
 
+import os
+
+os.environ["GWAYA_ALLOW_UNISOLATED"] = "1"
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -114,3 +118,45 @@ def test_lora_generate_config():
     assert data["status"] == "created"
     assert "config_path" in data
     assert "train_script_path" in data
+
+
+def test_gpu_status_endpoint():
+    res = client.get("/api/gpu/status")
+    assert res.status_code == 200
+    data = res.json()
+    assert "status" in data
+    assert "is_running" in data
+    assert "gpu" in data
+    assert "vram_freed" in data
+
+
+def test_gpu_stop_and_start_cycle():
+    # 1. Stop GPU
+    res_stop = client.post("/api/gpu/stop")
+    assert res_stop.status_code == 200
+    data_stop = res_stop.json()
+    assert data_stop["status"] == "stopped"
+    assert data_stop["is_running"] is False
+    assert data_stop["vram_freed"] is True
+
+    # 2. Check status when stopped
+    res_st1 = client.get("/api/gpu/status")
+    assert res_st1.json()["status"] == "stopped"
+    assert res_st1.json()["is_running"] is False
+
+    # 3. Verify generate fails closed with 503
+    res_gen = client.post("/api/gwaya/generate", json={"goal": "def f(): return 1", "model": "qwen2.5-coder:1.5b"})
+    assert res_gen.status_code == 503
+    assert "STOPPED" in res_gen.json()["detail"]
+
+    # 4. Start GPU
+    res_start = client.post("/api/gpu/start")
+    assert res_start.status_code == 200
+    data_start = res_start.json()
+    assert data_start["status"] == "active"
+    assert data_start["is_running"] is True
+
+    # 5. Check status when active
+    res_st2 = client.get("/api/gpu/status")
+    assert res_st2.json()["status"] == "active"
+    assert res_st2.json()["is_running"] is True

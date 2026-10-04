@@ -42,6 +42,14 @@ from gwaya.low_tier_engine import (
     extract_code_block,
 )
 from gwaya.oracles import PythonCompilerOracle
+from webgwaya.gpu_manager import (
+    get_available_models,
+    get_gpu_full_status,
+    get_nvidia_telemetry,
+    is_ollama_service_online,
+    start_gpu_service,
+    stop_gpu_service,
+)
 
 try:
     import chromadb
@@ -267,55 +275,39 @@ async def serve_index():
 
 @app.get("/api/system/status")
 async def get_system_status():
-    gpu_info = {"available": False, "raw": "No GPU detected"}
-    try:
-        res = subprocess.run(
-            ["nvidia-smi", "--query-gpu=name,driver_version,memory.total,memory.used,memory.free,temperature.gpu,power.draw,utilization.gpu", "--format=csv,noheader,nounits"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if res.returncode == 0 and res.stdout.strip():
-            parts = [p.strip() for p in res.stdout.strip().split(",")]
-            if len(parts) >= 8:
-                gpu_info = {
-                    "available": True,
-                    "name": parts[0],
-                    "driver": parts[1],
-                    "memory_total_mb": float(parts[2]),
-                    "memory_used_mb": float(parts[3]),
-                    "memory_free_mb": float(parts[4]),
-                    "temp_c": float(parts[5]),
-                    "power_w": float(parts[6]),
-                    "util_pct": float(parts[7]),
-                }
-    except Exception as e:
-        gpu_info["error"] = str(e)
-
-    # Check Ollama models
-    models = []
-    try:
-        inner = OllamaGenerator()
-        if inner.available():
-            res_ollama = subprocess.run(
-                ["ollama", "list"], capture_output=True, text=True, check=False
-            )
-            for line in res_ollama.stdout.splitlines()[1:]:
-                if line.strip():
-                    parts = line.split()
-                    models.append({"name": parts[0], "size": parts[2] if len(parts) > 2 else "unknown"})
-    except Exception:
-        pass
-
+    gpu_full = get_gpu_full_status()
     return {
         "status": "online",
         "app_name": "WebGWAYA",
         "version": "3.1.1",
-        "gpu": gpu_info,
-        "ollama_models": models,
+        "gpu": gpu_full.get("gpu", {}),
+        "gpu_service_running": gpu_full.get("is_running", False),
+        "gpu_status": gpu_full.get("status", "unknown"),
+        "vram_freed": gpu_full.get("vram_freed", False),
+        "ollama_models": gpu_full.get("models", []),
         "chroma_available": CHROMA_AVAILABLE,
         "unisolated_mode": os.environ.get("GWAYA_ALLOW_UNISOLATED") == "1",
     }
+
+
+@app.get("/api/gpu/status")
+async def get_gpu_status():
+    """Returns real-time GPU hardware metrics and Ollama service state."""
+    return get_gpu_full_status()
+
+
+@app.post("/api/gpu/stop")
+async def stop_gpu():
+    """Stops the Ollama CUDA service and releases GPU VRAM for external workloads."""
+    result = stop_gpu_service()
+    return result
+
+
+@app.post("/api/gpu/start")
+async def start_gpu():
+    """Starts the Ollama CUDA service and brings the local RTX GPU online."""
+    result = start_gpu_service()
+    return result
 
 
 @app.get("/api/scenarios")
@@ -425,6 +417,12 @@ async def evaluate_code(req: EvaluateRequest):
 
 @app.post("/api/gwaya/generate")
 async def generate_solution(req: GenerateRequest):
+    if not is_ollama_service_online():
+        raise HTTPException(
+            status_code=503,
+            detail="GPU engine is currently STOPPED. VRAM has been released for external projects. Click 'Start GPU' in WebGWAYA to activate."
+        )
+
     tier = ModelTier.LOW if ("0.5b" in req.model or "1.5b" in req.model) else ModelTier.MID
     inner_gen = OllamaGenerator(model=req.model)
 

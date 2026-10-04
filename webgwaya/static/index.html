@@ -24,7 +24,7 @@
 
     <div class="top-telemetry">
       <div class="telemetry-chip" id="gpu-chip">
-        <span class="dot dot-green"></span>
+        <span class="dot dot-green" id="gpu-dot"></span>
         <span id="gpu-status-text">RTX 2070 8GB | Active</span>
       </div>
       <div class="telemetry-chip">
@@ -35,6 +35,14 @@
         <span class="dot dot-purple"></span>
         <span>Zero-Trust Sandbox</span>
       </div>
+    </div>
+
+    <div class="gpu-control-wrapper">
+      <button id="btn-gpu-toggle" class="btn-gpu-toggle btn-gpu-active" title="Toggle GPU service state to allocate or release VRAM">
+        <span class="gpu-pulse-dot" id="gpu-pulse-dot"></span>
+        <span id="gpu-btn-label">GPU ACTIVE</span>
+        <span id="gpu-btn-action" class="gpu-btn-sub">(Stop to Free VRAM)</span>
+      </button>
     </div>
   </header>
 
@@ -185,6 +193,20 @@ E(candidate) =
             <option value="">-- Choose a challenging coding problem --</option>
           </select>
           <button class="btn-secondary" id="btn-load-scenario">Load Scenario</button>
+        </div>
+
+        <!-- GPU Stopped Alert Banner -->
+        <div id="studio-gpu-alert" class="gpu-notice-banner" style="display: none;">
+          <div class="banner-left">
+            <span class="banner-icon">🛑</span>
+            <div>
+              <div class="banner-title">GPU Inference Engine is Currently STOPPED</div>
+              <div class="banner-desc">VRAM has been 100% released for your other project. Local Qwen generation is paused. Click below to start the GPU when ready.</div>
+            </div>
+          </div>
+          <button id="btn-banner-start-gpu" class="btn-primary" style="padding: 0.45rem 1.1rem; font-size: 0.88rem; white-space: nowrap;">
+            ▶ Start GPU Engine
+          </button>
         </div>
 
         <div class="grid-2">
@@ -358,6 +380,20 @@ E(candidate) =
         <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
           Configure local Low-Rank Adaptation (LoRA) fine-tuning on your NVIDIA RTX 2070 GPU. Retrain small Qwen models using verified GWAYA self-repair traces to eliminate stub emissions natively.
         </p>
+
+        <!-- LoRA GPU Status Card -->
+        <div id="lora-gpu-status-card" class="glass-card" style="background: rgba(10, 14, 24, 0.9); padding: 0.85rem 1.25rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span class="dot dot-green" id="lora-gpu-dot"></span>
+            <div>
+              <span style="font-size: 0.82rem; color: var(--text-muted);">RTX Hardware Allocation:</span>
+              <strong id="lora-gpu-status-text" style="color: var(--accent-green); margin-left: 0.35rem; font-size: 0.88rem;">Active (Ready for LoRA)</strong>
+            </div>
+          </div>
+          <button id="btn-lora-gpu-toggle" class="btn-secondary" style="padding: 0.35rem 0.9rem; font-size: 0.82rem;">
+            Stop GPU (Free VRAM)
+          </button>
+        </div>
 
         <div class="grid-2">
           <!-- Training Config -->
