@@ -113,8 +113,6 @@ def _attribute_flags(tree: ast.AST, aliases: dict[str, str]) -> list[str]:
 
 
 def _undefined_name_flags(tree: ast.AST) -> list[str]:
-    if _PyflakesChecker is None:  # pragma: no cover
-        raise RuntimeError("pyflakes is required for the undefined-name check (uv add pyflakes)")
     checker = _PyflakesChecker(tree)
     return [
         f"undefined name '{m.message_args[0]}'"

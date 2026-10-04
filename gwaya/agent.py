@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -89,9 +90,10 @@ def doctor() -> dict[str, Any]:
 
 
 def ask(goal: str, test: str | None, model: str, rounds: int, candidates: int) -> AgentAnswer:
-    if not isolation_available():
+    if not isolation_available() and os.environ.get("GWAYA_ALLOW_UNISOLATED") != "1":
         raise RuntimeError(
-            "bwrap isolation is unavailable: refusing to execute model-written code (fail-closed)"
+            "bwrap isolation is unavailable: refusing to execute model-written code (fail-closed) "
+            "(set GWAYA_ALLOW_UNISOLATED=1 for local development only)"
         )
     agent = ConsensusRepairAgent(
         OllamaGenerator(model=model),

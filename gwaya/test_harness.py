@@ -185,12 +185,15 @@ def _bwrap_argv(bwrap: str, work: Path) -> list[str]:
 
 def _rlimits(cpu_s: int, mem_mb: int):
     def _apply() -> None:
-        import resource
+        try:
+            import resource
 
-        resource.setrlimit(resource.RLIMIT_CPU, (cpu_s, cpu_s + 1))
-        resource.setrlimit(resource.RLIMIT_AS, (mem_mb * 1024 * 1024,) * 2)
-        resource.setrlimit(resource.RLIMIT_FSIZE, (16 * 1024 * 1024,) * 2)
-        resource.setrlimit(resource.RLIMIT_NOFILE, (128, 128))
+            resource.setrlimit(resource.RLIMIT_CPU, (cpu_s, cpu_s + 1))
+            resource.setrlimit(resource.RLIMIT_AS, (mem_mb * 1024 * 1024,) * 2)
+            resource.setrlimit(resource.RLIMIT_FSIZE, (16 * 1024 * 1024,) * 2)
+            resource.setrlimit(resource.RLIMIT_NOFILE, (128, 128))
+        except (ImportError, AttributeError):
+            pass
 
     return _apply
 
@@ -222,20 +225,32 @@ def _launch(argv: list[str], work: Path, nonce: str, timeout_s: float, mem_mb: i
     """Runs the sandbox, returns (stdout text, timed_out). Output goes to a size-limited file."""
     out_path = work / ".stdout"
     with open(out_path, "wb") as out:
+        kwargs: dict[str, Any] = {
+            "stdin": subprocess.PIPE,
+            "stdout": out,
+            "stderr": subprocess.STDOUT,
+            "cwd": work,
+        }
+        if sys.platform != "win32":
+            kwargs["start_new_session"] = True
+            kwargs["preexec_fn"] = _rlimits(int(timeout_s) + 1, mem_mb)
         proc = subprocess.Popen(  # nosec B603 - fixed argv, no shell
-            argv, stdin=subprocess.PIPE, stdout=out, stderr=subprocess.STDOUT,
-            cwd=work, start_new_session=True,
-            preexec_fn=_rlimits(int(timeout_s) + 1, mem_mb),  # noqa: PLW1509
+            argv,
+            **kwargs,
         )
         timed_out = False
         try:
             proc.communicate(input=(nonce + "\n").encode(), timeout=timeout_s)
         except subprocess.TimeoutExpired:
             timed_out = True
-            try:
-                os.killpg(proc.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
+            if sys.platform != "win32":
+                try:
+                    sig = getattr(signal, "SIGKILL", signal.SIGTERM)
+                    os.killpg(proc.pid, sig)
+                except (ProcessLookupError, AttributeError):
+                    pass
+            else:
+                proc.kill()
             proc.wait()
     with open(out_path, "rb") as fh:
         text = fh.read(_MAX_REPORTED_OUTPUT * 64).decode("utf-8", errors="replace")

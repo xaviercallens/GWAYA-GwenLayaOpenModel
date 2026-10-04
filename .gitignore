@@ -12,3 +12,7 @@ out/
 *.log
 generation_cache.jsonl
 mbpp_exemplars.json
+chroma_db/
+.hf_cache/
+*.onnx
+*.bin

@@ -255,15 +255,6 @@ class Lean4CompilerOracle:
         Runs Lean 4 on snippet. Fails if lean exits non-zero or if `sorry` is present
         without allow_sorry=True.
         """
-        if not self.available:
-            return OracleResult(
-                success=False,
-                compiler="lean4",
-                error_message="UNVERIFIED: lean toolchain not installed (fail-closed, E=1e6)",
-                latency_ms=0.0,
-                details={"unverified": True, "reason": "toolchain_missing"},
-            )
-
         t0 = time.perf_counter()
 
         forbidden = self._lexical_flaws(code)
@@ -275,6 +266,15 @@ class Lean4CompilerOracle:
                 error_message=f"Unsound or unauditable construct(s) {forbidden} detected in formal proof",
                 latency_ms=round(latency_ms, 2),
                 details={"flaw": "unacknowledged_sorry", "forbidden": forbidden},
+            )
+
+        if not self.available:
+            return OracleResult(
+                success=False,
+                compiler="lean4",
+                error_message="UNVERIFIED: lean toolchain not installed (fail-closed, E=1e6)",
+                latency_ms=0.0,
+                details={"unverified": True, "reason": "toolchain_missing"},
             )
 
         with tempfile.NamedTemporaryFile("w", suffix=".lean", delete=False) as f:

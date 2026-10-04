@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 import urllib.error
 import urllib.request
 from collections.abc import Callable
@@ -99,18 +100,28 @@ class OllamaGenerator:
 
     # ── transport (patched in unit tests) ──────────────────────────────────
 
-    def _post(self, path: str, payload: dict[str, Any]) -> dict[str, Any]:
+    def _post(self, path: str, payload: dict[str, Any], retries: int = 2) -> dict[str, Any]:
         req = urllib.request.Request(
             f"{self.host}{path}",
             data=json.dumps(payload).encode("utf-8"),
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        try:
-            with urllib.request.urlopen(req, timeout=self.timeout_s) as resp:  # nosec B310 - local host
-                return json.loads(resp.read().decode("utf-8"))
-        except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as exc:
-            raise GeneratorUnavailableError(f"Ollama request to {self.host}{path} failed: {exc}") from exc
+        for attempt in range(retries + 1):
+            try:
+                with urllib.request.urlopen(req, timeout=self.timeout_s) as resp:  # nosec B310 - local host
+                    return json.loads(resp.read().decode("utf-8"))
+            except urllib.error.HTTPError as exc:
+                body = exc.read().decode("utf-8", errors="replace")
+                if attempt < retries:
+                    time.sleep(1.0)
+                    continue
+                raise GeneratorUnavailableError(f"Ollama request to {self.host}{path} failed: {exc} ({body})") from exc
+            except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as exc:
+                if attempt < retries:
+                    time.sleep(1.0)
+                    continue
+                raise GeneratorUnavailableError(f"Ollama request to {self.host}{path} failed: {exc}") from exc
 
     def available(self) -> bool:
         """True if the server answers and has ``self.model`` pulled."""
@@ -136,20 +147,33 @@ class OllamaGenerator:
         call_seed = self.base_seed + self.calls if seed is None else seed
         self.calls += 1
         tag = self.fence_tag(domain)
-        payload = {
-            "model": self.model,
-            "prompt": self.build_raw_prompt(prompt, domain),
-            "raw": True,
-            "stream": False,
-            "options": {
-                "temperature": float(temperature),
-                "num_predict": int(max_tokens),
-                "seed": int(call_seed),
-                "stop": ["```", "<|im_end|>", "<|endoftext|>"],
-            },
-        }
-        data = self._post("/api/generate", payload)
-        if "response" not in data:
+        data = None
+        for retry in range(3):
+            actual_seed = int(call_seed) + retry * 37
+            actual_temp = min(1.0, float(temperature) + retry * 0.15)
+            payload = {
+                "model": self.model,
+                "prompt": self.build_raw_prompt(prompt, domain),
+                "raw": True,
+                "stream": False,
+                "options": {
+                    "temperature": actual_temp,
+                    "num_predict": int(max_tokens),
+                    "seed": actual_seed,
+                    "stop": ["```", "<|im_end|>", "<|endoftext|>"],
+                },
+            }
+            try:
+                data = self._post("/api/generate", payload)
+                break
+            except GeneratorUnavailableError as exc:
+                if "token repeat limit reached" in str(exc) and retry < 2:
+                    continue
+                if "token repeat limit reached" in str(exc):
+                    data = {"response": ""}
+                    break
+                raise
+        if not data or "response" not in data:
             raise GeneratorUnavailableError(f"Ollama returned no 'response' field: {str(data)[:200]}")
 
         stats = GenerationStats(

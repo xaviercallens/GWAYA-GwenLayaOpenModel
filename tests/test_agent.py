@@ -29,6 +29,7 @@ def test_doctor_reports_fields(monkeypatch):
 
 
 def test_ask_is_fail_closed_without_sandbox(monkeypatch):
+    monkeypatch.delenv("GWAYA_ALLOW_UNISOLATED", raising=False)
     monkeypatch.setattr(agent_mod, "isolation_available", lambda: False)
     with pytest.raises(RuntimeError, match="fail-closed"):
         agent_mod.ask("double x", None, "m", 1, 1)

@@ -1,0 +1,670 @@
+{
+  "model": "qwen2.5-coder:1.5b",
+  "n_tasks": 20,
+  "pass_at_1": {
+    "A0_raw": 80.0,
+    "A2_best_of_3": 80.0,
+    "A3_gwaya_v3": 80.0
+  },
+  "deltas_percentage_points": {
+    "A3_vs_A0": 0.0,
+    "A2_vs_A0": 0.0,
+    "A3_vs_A2": 0.0
+  },
+  "self_repair_efficiency": {
+    "a0_failed_count": 4,
+    "repaired_by_a3_count": 0,
+    "repair_recovery_rate_pct": 0.0
+  },
+  "gate_verification_precision": {
+    "verified_claimed_pct": 95.0,
+    "hidden_pass_given_verified_pct": 84.21
+  },
+  "performance": {
+    "tokens_per_s": 135.1,
+    "total_tokens_generated": 1861,
+    "total_duration_s": 134.63
+  },
+  "rows": [
+    {
+      "id": "task_01_merge_intervals",
+      "category": "intervals",
+      "goal": "Write a function merge_intervals(intervals: list[list[int]]) -> list[list[int]] that merges all overlapping intervals and returns an array of non-overlapping intervals sorted by start time.",
+      "A0": {
+        "solved": true,
+        "passed": 7,
+        "total": 7,
+        "latency_ms": 34647.0,
+        "error": ""
+      },
+      "A2": {
+        "solved": true,
+        "gate_verified": true,
+        "candidates": 1,
+        "energy": 0.2501,
+        "latency_ms": 548.9,
+        "passed": 7,
+        "total": 7
+      },
+      "A3": {
+        "solved": true,
+        "gate_verified": true,
+        "repair_attempts": 1,
+        "candidates": 1,
+        "violations_caught": 0,
+        "energy": 0.2501,
+        "latency_ms": 458.3,
+        "passed": 7,
+        "total": 7
+      }
+    },
+    {
+      "id": "task_02_longest_consecutive",
+      "category": "hash_table",
+      "goal": "Write a function longest_consecutive(nums: list[int]) -> int that returns the length of the longest consecutive elements sequence in O(n) time.",
+      "A0": {
+        "solved": true,
+        "passed": 6,
+        "total": 6,
+        "latency_ms": 3086.2,
+        "error": ""
+      },
+      "A2": {
+        "solved": true,
+        "gate_verified": true,
+        "candidates": 1,
+        "energy": 0.3501,
+        "latency_ms": 483.3,
+        "passed": 6,
+        "total": 6
+      },
+      "A3": {
+        "solved": true,
+        "gate_verified": true,
+        "repair_attempts": 1,
+        "candidates": 1,
+        "violations_caught": 0,
+        "energy": 0.3501,
+        "latency_ms": 471.8,
+        "passed": 6,
+        "total": 6
+      }
+    },
+    {
+      "id": "task_03_trap_rain_water",
+      "category": "two_pointers",
+      "goal": "Write a function trap_rain_water(height: list[int]) -> int that computes how much water it can trap after raining given n non-negative integers representing an elevation map.",
+      "A0": {
+        "solved": false,
+        "passed": 6,
+        "total": 7,
+        "latency_ms": 3183.1,
+        "error": "TEST_FAILED (6/7 passed): assert trap_rain_water([]) == 0 -> IndexError: list index out of range"
+      },
+      "A2": {
+        "solved": false,
+        "gate_verified": true,
+        "candidates": 1,
+        "energy": 0.2501,
+        "latency_ms": 458.9,
+        "passed": 6,
+        "total": 7
+      },
+      "A3": {
+        "solved": false,
+        "gate_verified": true,
+        "repair_attempts": 1,
+        "candidates": 1,
+        "violations_caught": 0,
+        "energy": 0.2501,
+        "latency_ms": 450.1,
+        "passed": 6,
+        "total": 7
+      }
+    },
+    {
+      "id": "task_04_group_anagrams",
+      "category": "hash_table",
+      "goal": "Write a function group_anagrams(strs: list[str]) -> list[list[str]] that groups anagrams together. The inner lists and outer list can be in any order, but each anagram group must contain the exact elements.",
+      "A0": {
+        "solved": true,
+        "passed": 4,
+        "total": 4,
+        "latency_ms": 2886.6,
+        "error": ""
+      },
+      "A2": {
+        "solved": true,
+        "gate_verified": true,
+        "candidates": 1,
+        "energy": 0.2001,
+        "latency_ms": 461.7,
+        "passed": 4,
+        "total": 4
+      },
+      "A3": {
+        "solved": true,
+        "gate_verified": true,
+        "repair_attempts": 1,
+        "candidates": 1,
+        "violations_caught": 0,
+        "energy": 0.2001,
+        "latency_ms": 459.0,
+        "passed": 4,
+        "total": 4
+      }
+    },
+    {
+      "id": "task_05_search_rotated_array",
+      "category": "binary_search",
+      "goal": "Write a function search_rotated_array(nums: list[int], target: int) -> int that finds target in an ascending sorted array rotated at an unknown pivot in O(log n) time. Return index or -1 if not found.",
+      "A0": {
+        "solved": true,
+        "passed": 7,
+        "total": 7,
+        "latency_ms": 3321.3,
+        "error": ""
+      },
+      "A2": {
+        "solved": true,
+        "gate_verified": true,
+        "candidates": 1,
+        "energy": 0.4001,
+        "latency_ms": 460.5,
+        "passed": 7,
+        "total": 7
+      },
+      "A3": {
+        "solved": true,
+        "gate_verified": true,
+        "repair_attempts": 1,
+        "candidates": 1,
+        "violations_caught": 0,
+        "energy": 0.4001,
+        "latency_ms": 459.8,
+        "passed": 7,
+        "total": 7
+      }
+    },
+    {
+      "id": "task_06_subarray_sum_k",
+      "category": "prefix_sum",
+      "goal": "Write a function subarray_sum_k(nums: list[int], k: int) -> int that returns the total number of continuous subarrays whose sum equals to k.",
+      "A0": {
+        "solved": true,
+        "passed": 6,
+        "total": 6,
+        "latency_ms": 3165.0,
+        "error": ""
+      },
+      "A2": {
+        "solved": true,
+        "gate_verified": true,
+        "candidates": 1,
+        "energy": 0.2501,
+        "latency_ms": 484.8,
+        "passed": 6,
+        "total": 6
+      },
+      "A3": {
+        "solved": true,
+        "gate_verified": true,
+        "repair_attempts": 1,
+        "candidates": 1,
+        "violations_caught": 0,
+        "energy": 0.2501,
+        "latency_ms": 514.3,
+        "passed": 6,
+        "total": 6
+      }
+    },
+    {
+      "id": "task_07_longest_valid_parentheses",
+      "category": "dp_stack",
+      "goal": "Write a function longest_valid_parentheses(s: str) -> int that returns the length of the longest valid (well-formed) parentheses substring.",
+      "A0": {
+        "solved": false,
+        "passed": 6,
+        "total": 7,
+        "latency_ms": 3145.9,
+        "error": "TEST_FAILED (6/7 passed): assert longest_valid_parentheses('(()') == 2 -> AssertionError"
+      },
+      "A2": {
+        "solved": false,
+        "gate_verified": true,
+        "candidates": 2,
+        "energy": 3.217,
+        "latency_ms": 3437.7,
+        "passed": 6,
+        "total": 7
+      },
+      "A3": {
+        "solved": false,
+        "gate_verified": true,
+        "repair_attempts": 1,
+        "candidates": 2,
+        "violations_caught": 0,
+        "energy": 0.4001,
+        "latency_ms": 645.6,
+        "passed": 6,
+        "total": 7
+      }
+    },
+    {
+      "id": "task_08_coin_change",
+      "category": "dynamic_programming",
+      "goal": "Write a function coin_change(coins: list[int], amount: int) -> int that returns the fewest number of coins needed to make up amount. If not possible, return -1.",
+      "A0": {
+        "solved": true,
+        "passed": 6,
+        "total": 6,
+        "latency_ms": 3137.1,
+        "error": ""
+      },
+      "A2": {
+        "solved": true,
+        "gate_verified": true,
+        "candidates": 1,
+        "energy": 0.2501,
+        "latency_ms": 508.8,
+        "passed": 6,
+        "total": 6
+      },
+      "A3": {
+        "solved": true,
+        "gate_verified": true,
+        "repair_attempts": 1,
+        "candidates": 1,
+        "violations_caught": 0,
+        "energy": 0.2501,
+        "latency_ms": 461.2,
+        "passed": 6,
+        "total": 6
+      }
+    },
+    {
+      "id": "task_09_spiral_order",
+      "category": "matrix",
+      "goal": "Write a function spiral_order(matrix: list[list[int]]) -> list[int] that returns all elements of the matrix in spiral order.",
+      "A0": {
+        "solved": true,
+        "passed": 6,
+        "total": 6,
+        "latency_ms": 3718.4,
+        "error": ""
+      },
+      "A2": {
+        "solved": true,
+        "gate_verified": true,
+        "candidates": 1,
+        "energy": 0.5502,
+        "latency_ms": 566.1,
+        "passed": 6,
+        "total": 6
+      },
+      "A3": {
+        "solved": true,
+        "gate_verified": true,
+        "repair_attempts": 1,
+        "candidates": 1,
+        "violations_caught": 0,
+        "energy": 0.5502,
+        "latency_ms": 497.3,
+        "passed": 6,
+        "total": 6
+      }
+    },
+    {
+      "id": "task_10_word_break",
+      "category": "dynamic_programming",
+      "goal": "Write a function word_break(s: str, word_dict: list[str]) -> bool that returns True if s can be segmented into a space-separated sequence of dictionary words.",
+      "A0": {
+        "solved": true,
+        "passed": 6,
+        "total": 6,
+        "latency_ms": 2983.5,
+        "error": ""
+      },
+      "A2": {
+        "solved": true,
+        "gate_verified": true,
+        "candidates": 1,
+        "energy": 0.3001,
+        "latency_ms": 478.7,
+        "passed": 6,
+        "total": 6
+      },
+      "A3": {
+        "solved": true,
+        "gate_verified": true,
+        "repair_attempts": 1,
+        "candidates": 1,
+        "violations_caught": 0,
+        "energy": 0.3001,
+        "latency_ms": 475.6,
+        "passed": 6,
+        "total": 6
+      }
+    },
+    {
+      "id": "task_11_mbpp_02",
+      "category": "mbpp_sanitized",
+      "goal": "Write a function similar_elements(test_tup1, test_tup2) to find the shared elements between two tuples, returning a tuple of unique shared values in ascending order.",
+      "A0": {
+        "solved": true,
+        "passed": 3,
+        "total": 3,
+        "latency_ms": 2996.9,
+        "error": ""
+      },
+      "A2": {
+        "solved": true,
+        "gate_verified": true,
+        "candidates": 1,
+        "energy": 0.1501,
+        "latency_ms": 477.7,
+        "passed": 3,
+        "total": 3
+      },
+      "A3": {
+        "solved": true,
+        "gate_verified": true,
+        "repair_attempts": 1,
+        "candidates": 1,
+        "violations_caught": 0,
+        "energy": 0.1501,
+        "latency_ms": 484.7,
+        "passed": 3,
+        "total": 3
+      }
+    },
+    {
+      "id": "task_12_mbpp_03",
+      "category": "mbpp_sanitized",
+      "goal": "Write a python function is_not_prime(n) to identify non-prime numbers. Return True if n is not prime (including <= 1), and False if n is prime.",
+      "A0": {
+        "solved": true,
+        "passed": 6,
+        "total": 6,
+        "latency_ms": 2834.3,
+        "error": ""
+      },
+      "A2": {
+        "solved": true,
+        "gate_verified": true,
+        "candidates": 1,
+        "energy": 0.3001,
+        "latency_ms": 498.9,
+        "passed": 6,
+        "total": 6
+      },
+      "A3": {
+        "solved": true,
+        "gate_verified": true,
+        "repair_attempts": 1,
+        "candidates": 1,
+        "violations_caught": 0,
+        "energy": 0.3001,
+        "latency_ms": 597.9,
+        "passed": 6,
+        "total": 6
+      }
+    },
+    {
+      "id": "task_13_mbpp_04",
+      "category": "mbpp_sanitized",
+      "goal": "Write a function heap_queue_largest(nums, n) to find the n largest integers from a given list of numbers, returned in descending order.",
+      "A0": {
+        "solved": true,
+        "passed": 3,
+        "total": 3,
+        "latency_ms": 2749.0,
+        "error": ""
+      },
+      "A2": {
+        "solved": true,
+        "gate_verified": true,
+        "candidates": 1,
+        "energy": 0.1501,
+        "latency_ms": 499.9,
+        "passed": 3,
+        "total": 3
+      },
+      "A3": {
+        "solved": true,
+        "gate_verified": true,
+        "repair_attempts": 1,
+        "candidates": 1,
+        "violations_caught": 0,
+        "energy": 0.15,
+        "latency_ms": 481.6,
+        "passed": 3,
+        "total": 3
+      }
+    },
+    {
+      "id": "task_14_mbpp_07",
+      "category": "mbpp_sanitized",
+      "goal": "Write a function find_char_long(text) to find all words that are at least 4 characters long in a string, returned as a list of strings.",
+      "A0": {
+        "solved": true,
+        "passed": 3,
+        "total": 3,
+        "latency_ms": 2834.9,
+        "error": ""
+      },
+      "A2": {
+        "solved": true,
+        "gate_verified": true,
+        "candidates": 1,
+        "energy": 0.1501,
+        "latency_ms": 486.5,
+        "passed": 3,
+        "total": 3
+      },
+      "A3": {
+        "solved": true,
+        "gate_verified": true,
+        "repair_attempts": 1,
+        "candidates": 1,
+        "violations_caught": 0,
+        "energy": 0.1501,
+        "latency_ms": 483.6,
+        "passed": 3,
+        "total": 3
+      }
+    },
+    {
+      "id": "task_15_mbpp_08",
+      "category": "mbpp_sanitized",
+      "goal": "Write a function square_nums(nums) to find squares of individual elements in a list, returning a new list.",
+      "A0": {
+        "solved": true,
+        "passed": 4,
+        "total": 4,
+        "latency_ms": 2637.0,
+        "error": ""
+      },
+      "A2": {
+        "solved": true,
+        "gate_verified": true,
+        "candidates": 1,
+        "energy": 0.15,
+        "latency_ms": 452.1,
+        "passed": 4,
+        "total": 4
+      },
+      "A3": {
+        "solved": true,
+        "gate_verified": true,
+        "repair_attempts": 1,
+        "candidates": 1,
+        "violations_caught": 0,
+        "energy": 0.1501,
+        "latency_ms": 480.8,
+        "passed": 4,
+        "total": 4
+      }
+    },
+    {
+      "id": "task_16_mbpp_11",
+      "category": "mbpp_sanitized",
+      "goal": "Write a python function remove_Occ(s, ch) to remove the first and last occurrence of a given character from a string.",
+      "A0": {
+        "solved": false,
+        "passed": 3,
+        "total": 5,
+        "latency_ms": 3148.7,
+        "error": "TEST_FAILED (3/5 passed): assert remove_Occ('abcda', 'a') == 'bcd' -> AssertionError"
+      },
+      "A2": {
+        "solved": false,
+        "gate_verified": true,
+        "candidates": 1,
+        "energy": 0.2001,
+        "latency_ms": 542.2,
+        "passed": 3,
+        "total": 5
+      },
+      "A3": {
+        "solved": false,
+        "gate_verified": true,
+        "repair_attempts": 1,
+        "candidates": 1,
+        "violations_caught": 0,
+        "energy": 0.2001,
+        "latency_ms": 598.1,
+        "passed": 3,
+        "total": 5
+      }
+    },
+    {
+      "id": "task_17_mbpp_14",
+      "category": "mbpp_sanitized",
+      "goal": "Write a python function find_Volume(l, b, h) to find the volume of a triangular prism with triangular base length l, base width b, and height h. Volume is 0.5 * l * b * h.",
+      "A0": {
+        "solved": true,
+        "passed": 3,
+        "total": 3,
+        "latency_ms": 2725.9,
+        "error": ""
+      },
+      "A2": {
+        "solved": true,
+        "gate_verified": true,
+        "candidates": 1,
+        "energy": 0.15,
+        "latency_ms": 475.0,
+        "passed": 3,
+        "total": 3
+      },
+      "A3": {
+        "solved": true,
+        "gate_verified": true,
+        "repair_attempts": 1,
+        "candidates": 1,
+        "violations_caught": 0,
+        "energy": 0.15,
+        "latency_ms": 463.8,
+        "passed": 3,
+        "total": 3
+      }
+    },
+    {
+      "id": "task_18_mbpp_17",
+      "category": "mbpp_sanitized",
+      "goal": "Write a function square_perimeter(a) to find the perimeter of a square with side length a.",
+      "A0": {
+        "solved": true,
+        "passed": 3,
+        "total": 3,
+        "latency_ms": 2693.8,
+        "error": ""
+      },
+      "A2": {
+        "solved": true,
+        "gate_verified": true,
+        "candidates": 1,
+        "energy": 0.15,
+        "latency_ms": 457.8,
+        "passed": 3,
+        "total": 3
+      },
+      "A3": {
+        "solved": true,
+        "gate_verified": true,
+        "repair_attempts": 1,
+        "candidates": 1,
+        "violations_caught": 0,
+        "energy": 0.1501,
+        "latency_ms": 475.9,
+        "passed": 3,
+        "total": 3
+      }
+    },
+    {
+      "id": "task_19_mbpp_18",
+      "category": "mbpp_sanitized",
+      "goal": "Write a function remove_dirty_chars(string, second_string) to remove all characters from the first string that are present in the second string.",
+      "A0": {
+        "solved": false,
+        "passed": 0,
+        "total": 3,
+        "latency_ms": 2746.0,
+        "error": "TEST_FAILED (0/3 passed): assert remove_dirty_chars('probasscurve', 'pros') == 'bacurve' -> AssertionError"
+      },
+      "A2": {
+        "solved": false,
+        "gate_verified": false,
+        "candidates": 2,
+        "energy": 1000000.0,
+        "latency_ms": 5529.3,
+        "passed": 0,
+        "total": 3
+      },
+      "A3": {
+        "solved": false,
+        "gate_verified": false,
+        "repair_attempts": 3,
+        "candidates": 4,
+        "violations_caught": 3,
+        "energy": 1000000.0,
+        "latency_ms": 15748.7,
+        "passed": 0,
+        "total": 3
+      }
+    },
+    {
+      "id": "task_20_mbpp_20",
+      "category": "mbpp_sanitized",
+      "goal": "Write a function is_woodall(x) to check if the given number is a Woodall number. A Woodall number is of the form n * 2^n - 1 for some positive integer n >= 1.",
+      "A0": {
+        "solved": true,
+        "passed": 6,
+        "total": 6,
+        "latency_ms": 2854.4,
+        "error": ""
+      },
+      "A2": {
+        "solved": true,
+        "gate_verified": true,
+        "candidates": 1,
+        "energy": 0.3001,
+        "latency_ms": 475.7,
+        "passed": 6,
+        "total": 6
+      },
+      "A3": {
+        "solved": true,
+        "gate_verified": true,
+        "repair_attempts": 1,
+        "candidates": 1,
+        "violations_caught": 0,
+        "energy": 0.3001,
+        "latency_ms": 501.5,
+        "passed": 6,
+        "total": 6
+      }
+    }
+  ]
+}

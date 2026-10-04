@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebGWAYA - GwenLaya Open Model System</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header class="app-header">
+    <div class="brand-wrapper">
+      <div class="logo-badge">
+        <span>⚡ WebGWAYA</span>
+        <span class="version-tag">v3.1.1 PROD</span>
+      </div>
+      <span style="font-size: 0.82rem; color: var(--text-muted);">Gwen-Laya Open Model Verification Engine</span>
+    </div>
+
+    <div class="top-telemetry">
+      <div class="telemetry-chip" id="gpu-chip">
+        <span class="dot dot-green"></span>
+        <span id="gpu-status-text">RTX 2070 8GB | Active</span>
+      </div>
+      <div class="telemetry-chip">
+        <span class="dot dot-cyan"></span>
+        <span id="ollama-status-text">Ollama CUDA | 4 Models</span>
+      </div>
+      <div class="telemetry-chip">
+        <span class="dot dot-purple"></span>
+        <span>Zero-Trust Sandbox</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="tab-architecture">
+      <span>🛡️ GWAYA Concept & Physics</span>
+    </button>
+    <button class="tab-btn" data-tab="tab-studio">
+      <span>⚡ Live AI Coding Studio</span>
+    </button>
+    <button class="tab-btn" data-tab="tab-benchmark">
+      <span>📊 Multi-Model Gains & Benchmark</span>
+    </button>
+    <button class="tab-btn" data-tab="tab-rag">
+      <span>🧠 Private RAG Vault (ChromaDB)</span>
+    </button>
+    <button class="tab-btn" data-tab="tab-lora">
+      <span>⚙️ LoRA Admin & Fine-Tuning</span>
+    </button>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="app-container">
+
+    <!-- ───────────────────────────────────────────────────────────────── -->
+    <!-- TAB 1: GWAYA CONCEPT & ARCHITECTURE                                -->
+    <!-- ───────────────────────────────────────────────────────────────── -->
+    <div class="tab-content active" id="tab-architecture">
+      <div class="glass-card">
+        <h2 class="card-title">
+          <span>🔬 The GWAYA Compound AI Architecture</span>
+          <span class="badge badge-cyan">ANSE Physics System 1</span>
+        </h2>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+          Small Language Models (&le;7B) are prone to stub emission (<code>pass</code>, <code>...</code>, <code>sorry</code>), syntax hallucinations, and off-by-one algorithmic errors. 
+          <strong>GWAYA v3</strong> eliminates these failure modes using a four-tier fail-closed gate and thermodynamic energy selection.
+        </p>
+
+        <!-- Visual Flow Pipeline -->
+        <div class="flow-diagram">
+          <div class="flow-step">
+            <h4>1. User Goal</h4>
+            <p>Task prompt + test assertions</p>
+          </div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-step">
+            <h4>2. Low-Tier Optimizer</h4>
+            <p>Bounded context (&lt;800 tok)</p>
+          </div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-step active-step">
+            <h4>3. AST ZeroStubAudit</h4>
+            <p>Rejects stubs, pass, mocks</p>
+          </div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-step active-step">
+            <h4>4. Nonce Sandbox</h4>
+            <p>Bypass-resistant test harness</p>
+          </div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-step">
+            <h4>5. Energy Physics ($E$)</h4>
+            <p>Selects min runtime & CC</p>
+          </div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-step">
+            <h4>6. Self-Repair (N&le;3)</h4>
+            <p>Bounded traceback feedback</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Physics & Math Breakdown -->
+      <div class="grid-2">
+        <div class="glass-card">
+          <h3 class="card-title">
+            <span>⚡ Thermodynamic Energy Function</span>
+            <span class="badge badge-purple">Physics Model</span>
+          </h3>
+          <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.9rem;">
+            Candidates are evaluated under an objective physical energy metric. Any candidate containing stubs, syntax errors, or failing tests is assigned Maximum Pain:
+          </p>
+          <pre class="code-block" style="color: #a78bfa; margin-bottom: 1rem;">
+E(candidate) = 
+  if is_valid and tests_passed:
+      0.001 &times; latency_ms + 0.05 &times; CyclomaticComplexity + 0.1
+  else:
+      1,000,000.0  # Maximum Pain (Fail-Closed)</pre>
+          <ul style="color: var(--text-muted); font-size: 0.88rem; padding-left: 1.25rem;">
+            <li><strong>ZeroStubAudit:</strong> Inspects AST nodes for <code>ast.Pass</code>, <code>ast.Ellipsis</code>, empty bodies, and mock constants.</li>
+            <li><strong>Fail-Closed Guarantee:</strong> If repair fails after 3 turns, returns UNVERIFIED; never delivers unverified hallucinations.</li>
+          </ul>
+        </div>
+
+        <!-- Interactive AST ZeroStubAudit Sandbox -->
+        <div class="glass-card">
+          <h3 class="card-title">
+            <span>🛡️ Live AST ZeroStubAudit Probe</span>
+            <span class="badge badge-green">Interactive</span>
+          </h3>
+          <p style="color: var(--text-muted); margin-bottom: 0.75rem; font-size: 0.88rem;">
+            Test the physical AST shield live on any code snippet:
+          </p>
+          <textarea id="ast-test-input" class="code-editor" style="min-height: 120px;">def solve(items: list[int]) -> int:
+    # Notice the stub below
+    pass</textarea>
+          <div style="display: flex; gap: 0.75rem; margin-top: 0.75rem; align-items: center;">
+            <button class="btn-primary" id="btn-run-ast-audit">Run AST Audit</button>
+            <div id="ast-audit-result" style="font-size: 0.88rem;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ───────────────────────────────────────────────────────────────── -->
+    <!-- TAB 2: LIVE AI CODING STUDIO & LAYA EVALUATOR                      -->
+    <!-- ───────────────────────────────────────────────────────────────── -->
+    <div class="tab-content" id="tab-studio">
+      <div class="glass-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h2 class="card-title" style="margin-bottom: 0;">
+            <span>⚡ Live AI Coding Studio</span>
+            <span class="badge badge-cyan">Low Hallucination</span>
+          </h2>
+          <div style="display: flex; gap: 1rem; align-items: center;">
+            <label style="font-size: 0.88rem; color: var(--text-muted);">Model:</label>
+            <select id="studio-model-select" style="width: 220px;">
+              <option value="qwen2.5-coder:1.5b" selected>Qwen2.5-Coder:1.5B (Fast)</option>
+              <option value="qwen2.5-coder:0.5b">Qwen2.5-Coder:0.5B (Ultra-Light)</option>
+              <option value="qwen2.5-coder:3b">Qwen2.5-Coder:3B (Balanced)</option>
+              <option value="qwen2.5-coder:7b">Qwen2.5-Coder:7B (Heavy)</option>
+            </select>
+
+            <label style="font-size: 0.88rem; color: var(--text-muted);">Arm:</label>
+            <select id="studio-arm-select" style="width: 200px;">
+              <option value="A3" selected>A3: GWAYA v3 (Self-Repair)</option>
+              <option value="A2">A2: Best-of-3 Selection</option>
+              <option value="A0">A0: Raw Zero-Shot</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Scenario Picker -->
+        <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1.25rem;">
+          <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Load Prepared Scenario:</span>
+          <select id="scenario-selector" style="flex: 1;">
+            <option value="">-- Choose a challenging coding problem --</option>
+          </select>
+          <button class="btn-secondary" id="btn-load-scenario">Load Scenario</button>
+        </div>
+
+        <div class="grid-2">
+          <!-- Left: Prompt & Test Spec -->
+          <div>
+            <label style="font-weight: 600; font-size: 0.88rem; color: var(--text-muted); margin-bottom: 0.35rem; display: block;">Task Goal / Specification:</label>
+            <textarea id="studio-goal" class="code-editor" style="min-height: 140px; margin-bottom: 1rem;" placeholder="e.g. Write a function merge_intervals(intervals) -> list..."></textarea>
+
+            <label style="font-weight: 600; font-size: 0.88rem; color: var(--text-muted); margin-bottom: 0.35rem; display: block;">Verification Test Specification (Asserts):</label>
+            <textarea id="studio-test-spec" class="code-editor" style="min-height: 120px;" placeholder="assert merge_intervals([[1,3],[2,6]]) == [[1,6]]"></textarea>
+
+            <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+              <button class="btn-primary" id="btn-generate-code" style="flex: 1;">
+                <span>🚀 Synthesize & Verify with GWAYA</span>
+              </button>
+              <button class="btn-secondary" id="btn-eval-only">
+                <span>🛡️ Laya Evaluator Only</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Right: Code Output & Laya Evaluator -->
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+              <label style="font-weight: 600; font-size: 0.88rem; color: var(--text-muted);">Generated Code / Active Snippet:</label>
+              <span id="tok-counter" class="badge badge-purple">Ready</span>
+            </div>
+            <textarea id="studio-code-output" class="code-editor" style="min-height: 240px; color: #38bdf8;"></textarea>
+
+            <!-- Laya Evaluator Card -->
+            <div class="glass-card" style="margin-top: 1rem; padding: 1rem; margin-bottom: 0; background: rgba(8, 12, 20, 0.9);">
+              <h4 style="font-size: 0.9rem; margin-bottom: 0.75rem; display: flex; justify-content: space-between;">
+                <span>🛡️ Laya Model Evaluator Verdict</span>
+                <span id="laya-verdict-badge" class="badge badge-amber">Awaiting Run</span>
+              </h4>
+              <div class="grid-4" style="margin-bottom: 0.75rem;">
+                <div class="metric-box">
+                  <div class="metric-val" id="eval-tests">-</div>
+                  <div class="metric-label">Tests Passed</div>
+                </div>
+                <div class="metric-box">
+                  <div class="metric-val" id="eval-cc">-</div>
+                  <div class="metric-label">Complexity (CC)</div>
+                </div>
+                <div class="metric-box">
+                  <div class="metric-val" id="eval-energy">-</div>
+                  <div class="metric-label">Energy Score</div>
+                </div>
+                <div class="metric-box">
+                  <div class="metric-val" id="eval-latency">-</div>
+                  <div class="metric-label">Latency (ms)</div>
+                </div>
+              </div>
+              <div id="eval-feedback" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ───────────────────────────────────────────────────────────────── -->
+    <!-- TAB 3: BENCHMARK & MULTI-MODEL GAINS                               -->
+    <!-- ───────────────────────────────────────────────────────────────── -->
+    <div class="tab-content" id="tab-benchmark">
+      <div class="glass-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+          <div>
+            <h2 class="card-title" style="margin-bottom: 0.25rem;">
+              <span>📊 Empirical Multi-Model Benchmark Results</span>
+              <span class="badge badge-green">RTX 2070 Local GPU</span>
+            </h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">
+              Zero-Shot Baseline (A0) vs Best-of-3 (A2) vs GWAYA v3 Iterative Self-Repair (A3) on Hidden Validation Tests.
+            </p>
+          </div>
+          <button class="btn-secondary" id="btn-refresh-benchmark">🔄 Refresh Live Results</button>
+        </div>
+
+        <div class="grid-2" style="margin-bottom: 1.5rem;">
+          <!-- Chart 1: Pass@1 by Model -->
+          <div class="glass-card" style="margin-bottom: 0;">
+            <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem;">Pass@1 Comparison by Model Series</h4>
+            <div style="position: relative; height: 260px;">
+              <canvas id="chart-pass-rates"></canvas>
+            </div>
+          </div>
+
+          <!-- Chart 2: Self-Repair Delta Gains & Speed -->
+          <div class="glass-card" style="margin-bottom: 0;">
+            <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem;">GWAYA v3 Uplift &Delta;(A3 - A0) & Throughput (tok/s)</h4>
+            <div style="position: relative; height: 260px;">
+              <canvas id="chart-deltas"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detailed Model Summary Cards -->
+        <div id="benchmark-summary-cards" class="grid-4" style="margin-bottom: 1.5rem;">
+          <!-- Dynamically populated -->
+        </div>
+
+        <!-- Task Breakdown Table -->
+        <h4 style="font-size: 1rem; margin-bottom: 0.75rem; font-weight: 700;">Task-by-Task Verification Log</h4>
+        <div style="overflow-x: auto;">
+          <table class="data-table" id="benchmark-tasks-table">
+            <thead>
+              <tr>
+                <th>Task ID</th>
+                <th>Category</th>
+                <th>A0 (Raw)</th>
+                <th>A2 (Best-of-3)</th>
+                <th>A3 (GWAYA v3)</th>
+                <th>Rounds</th>
+                <th>Energy</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="7" style="text-align: center; color: var(--text-dim);">Loading benchmark execution records...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ───────────────────────────────────────────────────────────────── -->
+    <!-- TAB 4: PRIVATE RAG VAULT (ChromaDB)                                -->
+    <!-- ───────────────────────────────────────────────────────────────── -->
+    <div class="tab-content" id="tab-rag">
+      <div class="glass-card">
+        <h2 class="card-title">
+          <span>🧠 Private Code RAG Vault</span>
+          <span class="badge badge-purple">ChromaDB Vector Store</span>
+        </h2>
+        <p style="color: var(--text-muted); margin-bottom: 1.25rem;">
+          Index any local private directory into an on-disk ChromaDB collection. When generating code, GWAYA retrieves verified exemplars and architectural context into the prompt context window to eliminate hallucination.
+        </p>
+
+        <!-- Indexing Card -->
+        <div class="glass-card" style="background: rgba(10, 14, 24, 0.9);">
+          <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem;">1. Select Private Folder to Index</h4>
+          <div style="display: flex; gap: 0.75rem;">
+            <input type="text" id="rag-folder-path" value="D:\xdev\GWAYA-GwenLayaOpenModel\gwaya" placeholder="Folder path to index">
+            <button class="btn-purple" id="btn-index-folder">Index Folder in Chroma</button>
+          </div>
+          <div id="rag-index-status" style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);"></div>
+        </div>
+
+        <!-- Query & Retrieve Card -->
+        <div class="glass-card" style="background: rgba(10, 14, 24, 0.9); margin-bottom: 0;">
+          <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem;">2. Semantic Code Retrieval Test</h4>
+          <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem;">
+            <input type="text" id="rag-query-input" placeholder="Search functions or concepts (e.g. ZeroStubAudit or compiler oracle)">
+            <button class="btn-primary" id="btn-query-rag">Retrieve Relevant Code</button>
+          </div>
+          <div id="rag-results-container">
+            <p style="color: var(--text-dim); font-size: 0.88rem;">Search queries will display top matching chunks with cosine similarity.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ───────────────────────────────────────────────────────────────── -->
+    <!-- TAB 5: LoRA ADMIN & FINE-TUNING PANEL                              -->
+    <!-- ───────────────────────────────────────────────────────────────── -->
+    <div class="tab-content" id="tab-lora">
+      <div class="glass-card">
+        <h2 class="card-title">
+          <span>⚙️ Local LoRA Retraining & Adapter Studio</span>
+          <span class="badge badge-amber">PEFT / QLoRA 4-Bit</span>
+        </h2>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+          Configure local Low-Rank Adaptation (LoRA) fine-tuning on your NVIDIA RTX 2070 GPU. Retrain small Qwen models using verified GWAYA self-repair traces to eliminate stub emissions natively.
+        </p>
+
+        <div class="grid-2">
+          <!-- Training Config -->
+          <div class="glass-card" style="background: rgba(10, 14, 24, 0.9); margin-bottom: 0;">
+            <h4 style="font-size: 0.95rem; margin-bottom: 1rem;">Hyperparameters & Hardware Setup</h4>
+            
+            <div style="margin-bottom: 1rem;">
+              <label style="font-size: 0.85rem; color: var(--text-muted);">Base Model to Adapt:</label>
+              <select id="lora-base-model">
+                <option value="qwen2.5-coder:1.5b" selected>Qwen2.5-Coder:1.5B (Optimal for 8GB VRAM)</option>
+                <option value="qwen2.5-coder:0.5b">Qwen2.5-Coder:0.5B</option>
+                <option value="qwen2.5-coder:3b">Qwen2.5-Coder:3B</option>
+                <option value="qwen2.5-coder:7b">Qwen2.5-Coder:7B (Requires 4-bit QLoRA)</option>
+              </select>
+            </div>
+
+            <div class="grid-2" style="margin-bottom: 1rem;">
+              <div>
+                <label style="font-size: 0.85rem; color: var(--text-muted);">LoRA Rank ($r$):</label>
+                <input type="number" id="lora-rank" value="16">
+              </div>
+              <div>
+                <label style="font-size: 0.85rem; color: var(--text-muted);">LoRA Alpha (&alpha;):</label>
+                <input type="number" id="lora-alpha" value="32">
+              </div>
+            </div>
+
+            <div class="grid-2" style="margin-bottom: 1rem;">
+              <div>
+                <label style="font-size: 0.85rem; color: var(--text-muted);">Learning Rate:</label>
+                <input type="text" id="lora-lr" value="0.0002">
+              </div>
+              <div>
+                <label style="font-size: 0.85rem; color: var(--text-muted);">Quantization:</label>
+                <select id="lora-quant">
+                  <option value="4bit" selected>4-bit (QLoRA ~ 2.4 GB VRAM)</option>
+                  <option value="8bit">8-bit (~ 4.8 GB VRAM)</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+              <label style="font-size: 0.85rem; color: var(--text-muted);">Training Dataset:</label>
+              <select id="lora-dataset-select">
+                <option value="gwaya_verified_receipts" selected>GWAYA Verified Repair Receipts (Self-Cured)</option>
+                <option value="mbpp_exemplars">MBPP Verified Exemplars</option>
+              </select>
+            </div>
+
+            <button class="btn-primary" id="btn-generate-lora-config" style="width: 100%;">
+              <span>⚡ Generate LoRA Config & Training Script</span>
+            </button>
+          </div>
+
+          <!-- Dataset & Status -->
+          <div class="glass-card" style="background: rgba(10, 14, 24, 0.9); margin-bottom: 0;">
+            <h4 style="font-size: 0.95rem; margin-bottom: 1rem;">Dataset Telemetry & Export Output</h4>
+            <div id="lora-dataset-info" style="margin-bottom: 1rem; font-size: 0.88rem; color: var(--text-muted);">
+              Scanning local verified receipts...
+            </div>
+
+            <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">Generated PEFT Training Config:</label>
+            <pre id="lora-config-output" class="code-block" style="min-height: 220px; font-size: 0.82rem; color: #34d399;">{
+  "status": "ready",
+  "message": "Click 'Generate LoRA Config' to build your training specification"
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
