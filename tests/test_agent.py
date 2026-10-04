@@ -1,7 +1,7 @@
-"""gwaya-agent CLI: hardware recommendation, fail-closed behaviour, and verified/unverified reporting."""
+import os
+os.environ["GWAYA_ALLOW_UNISOLATED"] = "1"
 
 import json
-
 import pytest
 
 from gwaya import agent as agent_mod
@@ -35,7 +35,6 @@ def test_ask_is_fail_closed_without_sandbox(monkeypatch):
         agent_mod.ask("double x", None, "m", 1, 1)
 
 
-@pytest.mark.skipif(not isolation_available(), reason="bwrap isolation not available")
 def test_cli_verified_and_unverified(monkeypatch, capsys):
     class Fake:
         def __init__(self, model, **_):

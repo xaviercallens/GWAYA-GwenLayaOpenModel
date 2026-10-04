@@ -206,6 +206,47 @@ SCENARIOS = [
             "    return best\n"
         ),
     },
+
+    {
+        "id": "scenario_06_critical_connections",
+        "title": "Critical Connections (Tarjan's Bridge-Finding)",
+        "category": "Graphs / DFS",
+        "difficulty": "Hard",
+        "goal": "Write a function critical_connections(n: int, connections: list[list[int]]) -> list[list[int]] that returns all critical connections (bridges) in the network.",
+        "test_spec": (
+            "def sort_bridges(b):\n"
+            "    return sorted([sorted(edge) for edge in b])\n"
+            "assert sort_bridges(critical_connections(4, [[0,1],[1,2],[2,0],[1,3]])) == [[1,3]]\n"
+            "assert sort_bridges(critical_connections(2, [[0,1]])) == [[0,1]]\n"
+        ),
+        "starter_code": (
+            "def critical_connections(n: int, connections: list[list[int]]) -> list[list[int]]:\n"
+            "    graph = {i: [] for i in range(n)}\n"
+            "    for u, v in connections:\n"
+            "        graph[u].append(v)\n"
+            "        graph[v].append(u)\n"
+            "    bridges = []\n"
+            "    discovery_time = [-1] * n\n"
+            "    lowest_reachable = [-1] * n\n"
+            "    time = 0\n"
+            "    def dfs(node, parent):\n"
+            "        nonlocal time\n"
+            "        discovery_time[node] = lowest_reachable[node] = time\n"
+            "        time += 1\n"
+            "        for neighbor in graph[node]:\n"
+            "            if neighbor == parent: continue\n"
+            "            if discovery_time[neighbor] == -1:\n"
+            "                dfs(neighbor, node)\n"
+            "                lowest_reachable[node] = min(lowest_reachable[node], lowest_reachable[neighbor])\n"
+            "                if lowest_reachable[neighbor] > discovery_time[node]:\n"
+            "                    bridges.append([node, neighbor])\n"
+            "            else:\n"
+            "                lowest_reachable[node] = min(lowest_reachable[node], discovery_time[neighbor])\n"
+            "    dfs(0, -1)\n"
+            "    return bridges\n"
+        ),
+    },
+
 ]
 
 # ─────────────────────────────────────────────────────────────────────────────

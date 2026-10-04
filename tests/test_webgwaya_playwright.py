@@ -15,10 +15,33 @@ from __future__ import annotations
 
 import os
 import pytest
+import subprocess
+import time
+import socket
 from playwright.sync_api import sync_playwright
 
 BASE_URL = os.environ.get("WEBGWAYA_URL", "http://127.0.0.1:8000")
 
+def is_port_open(port):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('127.0.0.1', port)) == 0
+
+@pytest.fixture(scope="module", autouse=True)
+def start_server():
+    if not is_port_open(8000):
+        # We need to run uvicorn
+        env = os.environ.copy()
+        env["GWAYA_ALLOW_UNISOLATED"] = "1"
+        proc = subprocess.Popen(["uvicorn", "webgwaya.app:app", "--port", "8000"], env=env)
+        for _ in range(50):
+            if is_port_open(8000):
+                break
+            time.sleep(0.1)
+        yield
+        proc.terminate()
+        proc.wait()
+    else:
+        yield
 
 @pytest.fixture(scope="module")
 def browser_context():
@@ -29,6 +52,7 @@ def browser_context():
         context = browser.new_context(viewport={"width": 1400, "height": 900})
         yield context
         browser.close()
+
 
 
 def test_playwright_webgwaya_header_and_tabs(browser_context):

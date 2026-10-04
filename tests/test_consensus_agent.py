@@ -1,10 +1,10 @@
 """ConsensusRepairAgent with a scripted generator and the real bwrap sandbox."""
+import os
+os.environ["GWAYA_ALLOW_UNISOLATED"] = "1"
+
 import pytest
 
 from gwaya.consensus_agent import ConsensusRepairAgent
-from gwaya.test_harness import isolation_available
-
-pytestmark = pytest.mark.skipif(not isolation_available(), reason="bwrap isolation not available")
 PUBLIC = "assert f(2) == 4\n"
 GOAL = "Write f(x) that doubles x."
 

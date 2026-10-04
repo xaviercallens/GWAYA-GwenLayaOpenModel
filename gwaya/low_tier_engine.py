@@ -373,6 +373,22 @@ class LowTierModelOptimizer:
     ) -> str:
         # Bound feedback length (approx 150-200 tokens)
         err_msg = worst_cand.oracle_error or "Detected incomplete code or stubs"
+        
+        # Parse traceback to extract exception type and line number
+        parsed_details = []
+        if "Traceback (most recent call last):" in err_msg or "Error" in err_msg:
+            import re
+            # Match exception type, e.g. "ValueError: ..." or "AssertionError"
+            exc_match = re.search(r"^[A-Z][a-zA-Z0-9]+Error:.*$", err_msg, flags=re.MULTILINE)
+            if exc_match:
+                parsed_details.append(f"Exception Type: {exc_match.group(0).strip()}")
+            # Match line numbers
+            line_matches = re.findall(r"line (\d+)", err_msg)
+            if line_matches:
+                parsed_details.append(f"Failing Line(s): {', '.join(line_matches)}")
+                
+        parsed_str = ("\nParsed Traceback Info:\n- " + "\n- ".join(parsed_details) + "\n") if parsed_details else ""
+
         if len(err_msg) > 600:
             err_msg = err_msg[:300] + "\n...[truncated]...\n" + err_msg[-300:]
             
@@ -384,7 +400,7 @@ class LowTierModelOptimizer:
             f"{base_prompt}\n"
             f"--- REPAIR FEEDBACK (Attempt {attempt}) ---\n"
             f"Your previous solution was REJECTED with the following error:\n"
-            f"{err_msg}\n\n"
+            f"{err_msg}\n{parsed_str}\n"
             f"Previous rejected snippet:\n"
             f"```\n{code_snip}\n```\n"
             "CRITICAL: Fix the specific error identified above. "
