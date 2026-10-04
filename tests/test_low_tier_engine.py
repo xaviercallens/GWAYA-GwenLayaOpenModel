@@ -3,6 +3,12 @@ tests/gwaya/test_low_tier_engine.py
 ===================================
 Tests for GWAYA v3 Low-Tier Model Optimizer and Self-Repair Loop.
 """
+from __future__ import annotations
+
+import os
+
+os.environ["GWAYA_ALLOW_UNISOLATED"] = "1"
+
 from gwaya.low_tier_engine import LowTierModelOptimizer, ModelTier
 
 
@@ -132,4 +138,34 @@ def test_low_tier_atomic_context_bounding():
     assert opt_res.telemetry.get("atomic_decomposition") is True
     assert received_kwargs.get("temperature") == 0.8
     assert received_kwargs.get("max_tokens") == 600
+
+
+def test_adaptive_temperature_schedule_widens_for_low_tier():
+    optimizer_low = LowTierModelOptimizer(tier=ModelTier.LOW)
+    # Attempt 1: canonical 0.2, then 0.8
+    assert optimizer_low._get_candidate_temperature(0, attempt=1) == 0.2
+    assert optimizer_low._get_candidate_temperature(1, attempt=1) == 0.8
+
+    # Attempt 2: widens exploration for SLMs
+    temp_round2 = optimizer_low._get_candidate_temperature(0, attempt=2)
+    assert temp_round2 > 0.2  # 0.35
+    assert optimizer_low._get_candidate_temperature(1, attempt=2) > temp_round2
+
+    # Attempt 3: widens further
+    temp_round3 = optimizer_low._get_candidate_temperature(0, attempt=3)
+    assert temp_round3 > temp_round2
+
+
+def test_repair_prompt_contains_full_code_context():
+    optimizer = LowTierModelOptimizer(tier=ModelTier.LOW)
+    long_code = "def process_data(items):\n" + "\n".join(f"    x_{i} = items[{i}] * 2" for i in range(25)) + "\n    return x_0\n"
+    assert len(long_code) > 400
+
+    cand = optimizer.evaluate_candidate(long_code, domain="python")
+    prompt = optimizer._build_repair_prompt("Goal: process data", cand, attempt=1)
+
+    # Verify code was not cut off at 200 characters
+    assert "x_10" in prompt
+    assert "CRITICAL: Fix the specific error" in prompt
+
 

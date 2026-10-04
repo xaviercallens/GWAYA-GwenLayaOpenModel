@@ -338,8 +338,14 @@ function initStudio() {
       const data = await res.json();
       codeOutput.value = data.code || "";
 
-      tokCounter.className = "badge badge-purple";
-      tokCounter.textContent = `${data.tokens_per_s || 0} tok/s | ${data.latency_ms || 0}ms`;
+      if (data.mode === "A4_cascade") {
+        const path = (data.trajectory || []).map(t => `${t.tier} (${t.status === 'verified' ? 'PASS' : 'FAIL'})`).join(' ➔ ');
+        tokCounter.className = data.verified ? "badge badge-green" : "badge badge-amber";
+        tokCounter.textContent = `Cascade: ${path || data.model} | ${data.tokens_per_s || 0} tok/s | ${data.latency_ms || 0}ms`;
+      } else {
+        tokCounter.className = "badge badge-purple";
+        tokCounter.textContent = `${data.tokens_per_s || 0} tok/s | ${data.latency_ms || 0}ms`;
+      }
 
       if (data.evaluation) {
         updateEvaluatorUI(data.evaluation);

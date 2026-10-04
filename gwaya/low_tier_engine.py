@@ -302,8 +302,23 @@ class LowTierModelOptimizer:
             tests_total=tests_total,
         )
 
+    def _get_candidate_temperature(self, candidate_idx: int, attempt: int) -> float:
+        """
+        Adaptive temperature schedule based on model tier and repair attempt.
+        On low-tier SLMs, progressive exploration prevents repetitive token traps.
+        """
+        if attempt == 1:
+            return 0.2 if candidate_idx == 0 else 0.8
+        
+        if self.tier == ModelTier.LOW:
+            base_temp = min(0.85, 0.35 + (attempt - 2) * 0.15)
+            return min(0.95, base_temp + candidate_idx * 0.15)
+        else:
+            base_temp = min(0.55, 0.25 + (attempt - 2) * 0.1)
+            return min(0.8, base_temp + candidate_idx * 0.2)
+
     def _sample_batch(
-        self, prompt: str, goal: str, domain: str, test_spec: str | None = None
+        self, prompt: str, goal: str, domain: str, test_spec: str | None = None, attempt: int = 1
     ) -> list[CandidateEvaluation]:
         if self.generator_fn is None:
             raise RuntimeError("LowTierModelOptimizer requires a generator_fn; none configured")
@@ -311,7 +326,8 @@ class LowTierModelOptimizer:
         seen_hashes: set[str] = set()
         for i in range(self.config.best_of_n_candidates):
             t_cand_start = time.perf_counter()
-            code_cand = self._generate_one(prompt, temperature=0.2 if i == 0 else 0.8)
+            temp = self._get_candidate_temperature(i, attempt)
+            code_cand = self._generate_one(prompt, temperature=temp)
             cand_dur = (time.perf_counter() - t_cand_start) * 1000.0
             if self._is_duplicate(code_cand, domain, seen_hashes):
                 continue
@@ -355,13 +371,13 @@ class LowTierModelOptimizer:
     def _build_repair_prompt(
         self, base_prompt: str, worst_cand: CandidateEvaluation, attempt: int
     ) -> str:
-        # Bound feedback length (approx 150 tokens ~ 600 chars)
+        # Bound feedback length (approx 150-200 tokens)
         err_msg = worst_cand.oracle_error or "Detected incomplete code or stubs"
-        if len(err_msg) > 500:
-            err_msg = err_msg[:250] + "\n...[truncated]...\n" + err_msg[-250:]
+        if len(err_msg) > 600:
+            err_msg = err_msg[:300] + "\n...[truncated]...\n" + err_msg[-300:]
             
-        code_snip = worst_cand.code[:200]
-        if len(worst_cand.code) > 200:
+        code_snip = worst_cand.code[:1200]
+        if len(worst_cand.code) > 1200:
             code_snip += "\n...[truncated]..."
             
         return (
@@ -371,7 +387,8 @@ class LowTierModelOptimizer:
             f"{err_msg}\n\n"
             f"Previous rejected snippet:\n"
             f"```\n{code_snip}\n```\n"
-            "Fix this issue immediately. Do NOT repeat the error and do NOT use any placeholders."
+            "CRITICAL: Fix the specific error identified above. "
+            "Return ONLY the complete, corrected implementation without stubs or placeholders."
         )
 
     def _bound_context(self, context: str) -> tuple[str, bool]:
@@ -443,7 +460,7 @@ class LowTierModelOptimizer:
 
         for attempt in range(self.config.max_repair_attempts):
             repair_attempts = attempt + 1
-            batch = self._sample_batch(current_prompt, goal, domain, test_spec=test_spec)
+            batch = self._sample_batch(current_prompt, goal, domain, test_spec=test_spec, attempt=attempt + 1)
             candidates_count += len(batch)
             best_candidate = self._select_best_candidate(batch, best_candidate)
 
