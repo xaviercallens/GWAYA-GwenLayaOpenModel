@@ -93,3 +93,27 @@ class ZeroStubAudit:
         if violations:
             return ZeroStubAuditResult(is_clean=False, violations=violations, penalty_energy=1e6)
         return ZeroStubAuditResult(is_clean=True, violations=[], penalty_energy=0.0)
+
+    @classmethod
+    def audit_cpp_code(cls, source_code: str) -> ZeroStubAuditResult:
+        violations: List[str] = []
+        if re.search(r"\bTODO\b", source_code):
+            violations.append("Forbidden C++ 'TODO' comment/macro detected.")
+        if re.search(r"throw\s+std::logic_error\(\s*\"(?:Not implemented|TODO).*\"\s*\)", source_code, re.IGNORECASE):
+            violations.append("Forbidden C++ 'Not implemented' exception detected.")
+
+        if violations:
+            return ZeroStubAuditResult(is_clean=False, violations=violations, penalty_energy=1e6)
+        return ZeroStubAuditResult(is_clean=True, violations=[], penalty_energy=0.0)
+
+    @classmethod
+    def audit_go_code(cls, source_code: str) -> ZeroStubAuditResult:
+        violations: List[str] = []
+        if re.search(r"\bpanic\(\"TODO.*\"\)", source_code, re.IGNORECASE):
+            violations.append("Forbidden Go 'panic(TODO)' macro detected.")
+        if re.search(r"\bpanic\(\"Not implemented.*\"\)", source_code, re.IGNORECASE):
+            violations.append("Forbidden Go 'panic(Not implemented)' macro detected.")
+
+        if violations:
+            return ZeroStubAuditResult(is_clean=False, violations=violations, penalty_energy=1e6)
+        return ZeroStubAuditResult(is_clean=True, violations=[], penalty_energy=0.0)

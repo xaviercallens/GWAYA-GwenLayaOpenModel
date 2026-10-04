@@ -32,6 +32,8 @@ from gwaya.oracles import (
     Lean4CompilerOracle,
     PythonCompilerOracle,
     RustCompilerOracle,
+    CppCompilerOracle,
+    GoCompilerOracle,
 )
 from gwaya.test_harness import isolation_available
 
@@ -43,6 +45,8 @@ mcp = FastMCP("gwaya-verification-engine")
 _py_oracle = PythonCompilerOracle()
 _rust_oracle = RustCompilerOracle()
 _lean_oracle = Lean4CompilerOracle()
+_cpp_oracle = CppCompilerOracle()
+_go_oracle = GoCompilerOracle()
 
 
 @mcp.tool()
@@ -55,6 +59,8 @@ def gwaya_system_status() -> Dict[str, Any]:
         "python": {"available": True, "version": sys.version.split()[0]},
         "rustc": {"available": shutil.which("rustc") is not None},
         "lean4": {"available": shutil.which("lean") is not None},
+        "cpp": {"available": bool(shutil.which("clang++") or shutil.which("g++"))},
+        "go": {"available": shutil.which("go") is not None},
         "bubblewrap_sandbox": {"available": isolation_available()},
         "ollama": {"running": False, "models": []},
     }
@@ -63,6 +69,10 @@ def gwaya_system_status() -> Dict[str, Any]:
         status["rustc"]["path"] = shutil.which("rustc")
     if status["lean4"]["available"]:
         status["lean4"]["path"] = shutil.which("lean")
+    if status["cpp"]["available"]:
+        status["cpp"]["path"] = shutil.which("clang++") or shutil.which("g++")
+    if status["go"]["available"]:
+        status["go"]["path"] = shutil.which("go")
 
     # Check Ollama connectivity
     ollama_url = os.environ.get("OLLAMA_HOST", "http://127.0.0.1:11434")
@@ -97,6 +107,10 @@ def gwaya_audit_stubs(language: str, code: str) -> Dict[str, Any]:
         res = ZeroStubAudit.audit_lean_code(code)
     elif lang in ("rust", "rs"):
         res = ZeroStubAudit.audit_rust_code(code)
+    elif lang in ("cpp", "c++"):
+        res = ZeroStubAudit.audit_cpp_code(code)
+    elif lang in ("go", "golang"):
+        res = ZeroStubAudit.audit_go_code(code)
     else:
         return {
             "is_clean": False,
@@ -118,11 +132,13 @@ def gwaya_verify_code(language: str, code: str, test_spec: str = "") -> Dict[str
     - Python: Syntactic AST check, non-triviality check, and sandboxed Bubblewrap execution if test_spec is provided.
     - Rust: Fail-closed type, syntax, and borrow checker via 'rustc --emit=metadata'.
     - Lean 4: Fail-closed syntax & Lean 4 kernel with '#print axioms' soundness audit.
+    - C++: Syntax and type check via 'clang++ -fsyntax-only'.
+    - Go: Syntax and compilation check via 'go build -o /dev/null'.
 
     Missing toolchains return UNVERIFIED (fail-closed) rather than false approval.
 
     Args:
-        language: 'python', 'rust', or 'lean'.
+        language: 'python', 'rust', 'lean', 'cpp', or 'go'.
         code: Candidate code snippet.
         test_spec: Optional test assertion code (for Python).
     """
@@ -137,6 +153,10 @@ def gwaya_verify_code(language: str, code: str, test_spec: str = "") -> Dict[str
         res = _rust_oracle.verify(code)
     elif lang in ("lean", "lean4"):
         res = _lean_oracle.verify(code)
+    elif lang in ("cpp", "c++"):
+        res = _cpp_oracle.verify(code)
+    elif lang in ("go", "golang"):
+        res = _go_oracle.verify(code)
     else:
         return {
             "success": False,

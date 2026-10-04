@@ -40,6 +40,8 @@ def test_mcp_verify_python_syntax():
 
 
 def test_mcp_verify_python_with_tests():
+    import os
+    os.environ['GWAYA_ALLOW_UNISOLATED'] = '1'
     code = "def add(a, b):\n    return a + b\n"
     # Passing test spec
     pass_spec = "assert add(2, 3) == 5\n"
@@ -50,3 +52,21 @@ def test_mcp_verify_python_with_tests():
     fail_spec = "assert add(2, 3) == 999\n"
     res_fail = mcp_server.gwaya_verify_code("python", code, test_spec=fail_spec)
     assert res_fail["success"] is False
+
+
+def test_mcp_system_status_cpp_go():
+    status = mcp_server.gwaya_system_status()
+    assert "cpp" in status
+    assert "go" in status
+
+def test_mcp_audit_stubs_cpp_go():
+    res_cpp = mcp_server.gwaya_audit_stubs("cpp", "int f() { // TODO: impl\n }")
+    assert res_cpp["is_clean"] is False
+    
+    res_go = mcp_server.gwaya_audit_stubs("go", "func f() { panic(\"TODO\") }")
+    assert res_go["is_clean"] is False
+
+def test_mcp_verify_unsupported_language():
+    res = mcp_server.gwaya_verify_code("ruby", "puts 'hello'")
+    assert res["success"] is False
+    assert res["status"] == "UNSUPPORTED_LANGUAGE"

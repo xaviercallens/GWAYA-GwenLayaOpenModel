@@ -35,6 +35,8 @@ from gwaya.oracles import (
     OracleResult,
     PythonCompilerOracle,
     RustCompilerOracle,
+    CppCompilerOracle,
+    GoCompilerOracle,
 )
 from gwaya.ast_audit import ZeroStubAudit
 
@@ -190,10 +192,18 @@ class LowTierModelOptimizer:
         self.python_oracle = PythonCompilerOracle()
         self.rust_oracle = RustCompilerOracle()
         self.lean_oracle = Lean4CompilerOracle()
+        self.cpp_oracle = CppCompilerOracle()
+        self.go_oracle = GoCompilerOracle()
 
     def _check_stubs(self, code: str, domain: str) -> list[str]:
         if domain == "lean4":
             audit = ZeroStubAudit.audit_lean_code(code)
+        elif domain == "rust":
+            audit = ZeroStubAudit.audit_rust_code(code)
+        elif domain == "cpp" or domain == "c++":
+            audit = ZeroStubAudit.audit_cpp_code(code)
+        elif domain == "go":
+            audit = ZeroStubAudit.audit_go_code(code)
         else:
             audit = ZeroStubAudit.audit_python_code(code)
         return [] if audit.is_clean else audit.violations
@@ -215,6 +225,10 @@ class LowTierModelOptimizer:
             return self.rust_oracle.verify_snippet(code)
         elif domain == "lean4":
             return self.lean_oracle.verify_snippet(code)
+        elif domain == "cpp" or domain == "c++":
+            return self.cpp_oracle.verify(code)
+        elif domain == "go":
+            return self.go_oracle.verify(code)
         return self.python_oracle.verify_snippet(code)
 
     @staticmethod

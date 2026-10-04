@@ -434,3 +434,168 @@ class PythonCompilerOracle:
         )
 
 
+
+
+class CppCompilerOracle:
+    """
+    Verifies C++ snippets via clang++ or g++ -fsyntax-only to ensure type/syntax correctness.
+    """
+    def __init__(self, timeout_s: float = 10.0) -> None:
+        self.timeout_s = timeout_s
+        self.clang_path = shutil.which("clang++")
+        self.gpp_path = shutil.which("g++")
+        self.available = bool(self.clang_path or self.gpp_path)
+        self.compiler_cmd = self.clang_path or self.gpp_path
+
+    def verify(self, code: str) -> OracleResult:
+        if not self.available:
+            return OracleResult(
+                success=False,
+                compiler="cpp",
+                error_message="UNVERIFIED: clang++/g++ not installed (fail-closed, E=1e6)",
+                details={"unverified": True, "reason": "toolchain_missing"},
+            )
+
+        t0 = time.perf_counter()
+        
+        # Prevent empty or whitespace-only code
+        if not code.strip():
+            return OracleResult(
+                success=False,
+                compiler="cpp",
+                error_message="STUB_DETECTED: Empty code",
+                details={"reason": "stub"}
+            )
+            
+        with tempfile.NamedTemporaryFile("w", suffix=".cpp", delete=False) as f:
+            f.write(code)
+            temp_path = f.name
+
+        try:
+            cmd = [
+                self.compiler_cmd,
+                "-fsyntax-only",
+                "-std=c++20",
+                "-Wall",
+                "-Werror=return-type",
+                temp_path,
+            ]
+            res = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=self.timeout_s
+            )
+            latency = (time.perf_counter() - t0) * 1000.0
+            
+            if res.returncode == 0:
+                return OracleResult(
+                    success=True,
+                    compiler="cpp",
+                    stdout=res.stdout,
+                    stderr=res.stderr,
+                    latency_ms=round(latency, 2),
+                )
+            else:
+                return OracleResult(
+                    success=False,
+                    compiler="cpp",
+                    error_message=res.stderr.strip() or "Syntax error",
+                    stdout=res.stdout,
+                    stderr=res.stderr,
+                    latency_ms=round(latency, 2),
+                )
+        except subprocess.TimeoutExpired:
+            return OracleResult(
+                success=False,
+                compiler="cpp",
+                error_message=f"C++ verification timed out after {self.timeout_s}s",
+            )
+        except Exception as exc:
+            return OracleResult(
+                success=False,
+                compiler="cpp",
+                error_message=str(exc),
+            )
+        finally:
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+
+
+class GoCompilerOracle:
+    """
+    Verifies Go snippets via 'go build' to ensure type/syntax correctness.
+    """
+    def __init__(self, timeout_s: float = 10.0) -> None:
+        self.timeout_s = timeout_s
+        self.go_path = shutil.which("go")
+        self.available = bool(self.go_path)
+
+    def verify(self, code: str) -> OracleResult:
+        if not self.available:
+            return OracleResult(
+                success=False,
+                compiler="go",
+                error_message="UNVERIFIED: go compiler not installed (fail-closed, E=1e6)",
+                details={"unverified": True, "reason": "toolchain_missing"},
+            )
+
+        t0 = time.perf_counter()
+        
+        if not code.strip():
+            return OracleResult(
+                success=False,
+                compiler="go",
+                error_message="STUB_DETECTED: Empty code",
+                details={"reason": "stub"}
+            )
+            
+        code_to_compile = code
+        # Go files need a package declaration.
+        if "package " not in code:
+            code_to_compile = f"package main\n\n{code}"
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = os.path.join(temp_dir, "main.go")
+            with open(temp_path, "w") as f:
+                f.write(code_to_compile)
+
+            try:
+                cmd = [
+                    self.go_path,
+                    "build",
+                    "-o",
+                    os.devnull,
+                    temp_path,
+                ]
+                res = subprocess.run(
+                    cmd, capture_output=True, text=True, timeout=self.timeout_s
+                )
+                latency = (time.perf_counter() - t0) * 1000.0
+                
+                if res.returncode == 0:
+                    return OracleResult(
+                        success=True,
+                        compiler="go",
+                        stdout=res.stdout,
+                        stderr=res.stderr,
+                        latency_ms=round(latency, 2),
+                    )
+                else:
+                    return OracleResult(
+                        success=False,
+                        compiler="go",
+                        error_message=res.stderr.strip() or "Syntax error",
+                        stdout=res.stdout,
+                        stderr=res.stderr,
+                        latency_ms=round(latency, 2),
+                    )
+            except subprocess.TimeoutExpired:
+                return OracleResult(
+                    success=False,
+                    compiler="go",
+                    error_message=f"Go verification timed out after {self.timeout_s}s",
+                )
+            except Exception as exc:
+                return OracleResult(
+                    success=False,
+                    compiler="go",
+                    error_message=str(exc),
+                )
