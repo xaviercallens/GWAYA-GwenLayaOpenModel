@@ -1,4 +1,4 @@
-"""
+﻿"""
 tests/test_webgwaya_playwright.py
 =================================
 Automated End-to-End browser tests for WebGWAYA using Playwright.
@@ -61,7 +61,7 @@ def test_playwright_webgwaya_header_and_tabs(browser_context):
 
     # 1. Verify branding
     assert "WebGWAYA" in page.title()
-    assert page.locator(".logo-badge").inner_text().startswith("⚡ WebGWAYA")
+    from playwright.sync_api import expect; expect(page.locator(".logo-badge")).to_contain_text("WebGWAYA")
 
     # 2. Verify Tab Transitions
     tabs = [

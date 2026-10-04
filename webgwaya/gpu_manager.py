@@ -183,7 +183,7 @@ def stop_gpu_service(host: str = OLLAMA_DEFAULT_HOST) -> dict[str, Any]:
             log.warning("pkill error: %s", e)
 
     # Small pause to allow driver to reclaim memory
-    time.sleep(1.0)
+    time.sleep(3.0)
 
     # Verify status
     still_online = is_ollama_service_online(host)
@@ -249,7 +249,7 @@ def start_gpu_service(host: str = OLLAMA_DEFAULT_HOST, timeout_s: float = 25.0) 
         if is_ollama_service_online(host):
             online = True
             break
-        time.sleep(1.0)
+        time.sleep(3.0)
 
     if not online:
         return {
