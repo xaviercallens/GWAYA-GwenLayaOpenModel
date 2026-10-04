@@ -1,0 +1,139 @@
+{
+  "summary": {
+    "total": 13,
+    "correct": 13,
+    "accuracy": 100.0
+  },
+  "results": [
+    {
+      "lang": "rust",
+      "id": "rs_01_two_sum",
+      "name": "Two Sum (HashMap)",
+      "expected": "accept",
+      "actual": "accept",
+      "correct": true,
+      "latency_ms": 185.4,
+      "error": ""
+    },
+    {
+      "lang": "rust",
+      "id": "rs_02_trap_rain_water",
+      "name": "Trapping Rain Water (Two Pointers)",
+      "expected": "accept",
+      "actual": "accept",
+      "correct": true,
+      "latency_ms": 115.6,
+      "error": ""
+    },
+    {
+      "lang": "rust",
+      "id": "rs_03_merge_intervals",
+      "name": "Merge Intervals (Sorting & Vector Slicing)",
+      "expected": "accept",
+      "actual": "accept",
+      "correct": true,
+      "latency_ms": 177.5,
+      "error": ""
+    },
+    {
+      "lang": "rust",
+      "id": "rs_04_generic_binary_search",
+      "name": "Generic Binary Search with Ord Trait",
+      "expected": "accept",
+      "actual": "accept",
+      "correct": true,
+      "latency_ms": 120.8,
+      "error": ""
+    },
+    {
+      "lang": "rust",
+      "id": "rs_05_borrow_checker_violation",
+      "name": "Borrow Checker Move Violation (Should Reject)",
+      "expected": "reject",
+      "actual": "reject",
+      "correct": true,
+      "latency_ms": 107.1,
+      "error": "error[E0382]: borrow of moved value: `s`"
+    },
+    {
+      "lang": "rust",
+      "id": "rs_06_type_mismatch_violation",
+      "name": "Type Mismatch Signature Violation (Should Reject)",
+      "expected": "reject",
+      "actual": "reject",
+      "correct": true,
+      "latency_ms": 107.5,
+      "error": "error[E0308]: mismatched types"
+    },
+    {
+      "lang": "rust",
+      "id": "rs_07_stub_todo_violation",
+      "name": "Placeholder todo!() Stub Violation (Should Reject)",
+      "expected": "reject",
+      "actual": "reject",
+      "correct": true,
+      "latency_ms": 0.0,
+      "error": "STUB_DETECTED: Rust placeholder macro todo!()"
+    },
+    {
+      "lang": "rust",
+      "id": "rs_08_stub_unimplemented_violation",
+      "name": "Placeholder unimplemented!() Stub Violation (Should Reject)",
+      "expected": "reject",
+      "actual": "reject",
+      "correct": true,
+      "latency_ms": 0.0,
+      "error": "STUB_DETECTED: Rust placeholder macro unimplemented!()"
+    },
+    {
+      "lang": "python",
+      "id": "py_01_lru_cache",
+      "name": "LRU Cache Implementation",
+      "expected": "accept",
+      "actual": "accept",
+      "correct": true,
+      "latency_ms": 201.8,
+      "error": ""
+    },
+    {
+      "lang": "python",
+      "id": "py_02_dutch_national_flag",
+      "name": "Dutch National Flag 3-Way Sort (In-Place)",
+      "expected": "accept",
+      "actual": "accept",
+      "correct": true,
+      "latency_ms": 175.1,
+      "error": ""
+    },
+    {
+      "lang": "python",
+      "id": "py_03_trie_prefix_tree",
+      "name": "Trie Prefix Tree Implementation",
+      "expected": "accept",
+      "actual": "accept",
+      "correct": true,
+      "latency_ms": 174.2,
+      "error": ""
+    },
+    {
+      "lang": "python",
+      "id": "py_04_pass_stub_rejection",
+      "name": "AST ZeroStubAudit Rejection on pass",
+      "expected": "reject",
+      "actual": "reject",
+      "correct": true,
+      "latency_ms": 0.1,
+      "error": "Forbidden 'pass' statement detected in execution body."
+    },
+    {
+      "lang": "python",
+      "id": "py_05_mock_constant_rejection",
+      "name": "AST ZeroStubAudit Rejection on mock constant",
+      "expected": "reject",
+      "actual": "reject",
+      "correct": true,
+      "latency_ms": 0.0,
+      "error": "Forbidden mock identifier 'mock_optimizer' detected."
+    }
+  ]
+}
