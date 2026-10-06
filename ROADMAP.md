@@ -9,6 +9,9 @@
 
 ## Track A — Numerical / Scientific-Code Oracle (priority: high)
 
+**Status.** Pre-registered evaluation protocol A1 available: `protocols/PREREGISTRATION-TRACK-A.md` (domain anchor: quantum-fluids / superfluid simulation code).
+
+
 **Goal.** Extend the fail-closed gate to AI-generated scientific computing code, where unit tests
 alone are insufficient (a wrong solver can still converge and pass superficial tests).
 
@@ -38,7 +41,8 @@ mathematical proof (tier 2, new) for critical functions.
   (preconditions, postconditions, invariants).
 - Proof of correctness against kernel-checked libraries; zero-`sorry` audit and
   `#print axioms` closure audit remain mandatory.
-- Failure to prove does not imply rejection of the executable tier, but the candidate is never
+- Failure to prove does not imply rejection of the execut
+able tier, but the candidate is never
   marked PROVEN; silent acceptance is forbidden.
 
 **Relation to existing roadmap.** Implements and supersedes the `Lean 4 Mathlib formal proof search
@@ -82,7 +86,8 @@ Evaluations required for industrial adoption, in priority order:
    toolchains, over-tight timeouts, or sandbox misconfiguration. Determines operational acceptability.
 2. **Cost per verified decision** — compute/energy cost of one verification versus an equivalent
    human review, expressed in time and money.
-3. **Adversarial robustness** — behavior against candidates engineered to evade verification
+3. **Adversarial robustness** — behavior aga
+inst candidates engineered to evade verification
    (undeclared dependencies, masked network calls, runtime code generation, obfuscation).
 4. **Traceability** — completeness and auditability of the emitted verification trace against
    safety-relevant frameworks (IEC 62304, ISO 26262, DO-178C, EU AI Act). Target is gap measurement,
