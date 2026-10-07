@@ -5,6 +5,8 @@
 #   /data/out/                         (resume state; synced back to the lake by the host)
 # Env: GWAYA_N (problems), GWAYA_REQUIRE_GPU (1 = abort if Ollama is not on the GPU).
 set -euo pipefail
+# GwenLaya v4 staged run (deploy/run_on_gcp.sh --stage): hand over to the plan-driven stage entry
+if [ -n "${GWAYA_STAGE:-}" ]; then exec /app/deploy/stage_entry.sh; fi
 N="${GWAYA_N:-60}"
 REQUIRE_GPU="${GWAYA_REQUIRE_GPU:-1}"
 mkdir -p /data/ollama /data/out
@@ -42,4 +44,4 @@ fi
 echo "hardware: $GWAYA_HARDWARE | $GWAYA_OLLAMA_VERSION"
 
 cd /app
-exec python scripts/run_low_tier_benchmark.py --n "$N" --out-dir /data/out --mbpp-dir /data/datasets/mbpp-sanitized
+exec python scripts/run_benchmark.py --n "$N" --out-dir /data/out --mbpp-dir /data/datasets/mbpp-sanitized

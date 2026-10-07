@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gwaya"
-version = "3.1.1"
+version = "3.2.0"
 description = "GWAYA: Fail-Closed Gate & Real Toolchain Verification for LLM Code Generation"
 readme = "README.md"
 authors = [{ name = "Xavier Callens", email = "callensxavier@gmail.com" }]
 license = { text = "MIT" }
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 keywords = [
     "llm",
     "verification",
@@ -27,7 +27,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
@@ -41,13 +40,39 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+math = [
+    "sympy>=1.12",
+]
+web = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.24.0",
+    "chromadb>=0.4.0",
+]
 dev = [
     "pytest>=7.0.0",
+    "pytest-playwright>=0.4.0",
+    "playwright>=1.40.0",
+]
+e2e = [
+    "pytest>=7.0.0",
+    "pytest-playwright>=0.4.0",
+    "playwright>=1.40.0",
 ]
 benchmark = [
     "pandas>=2.0.0",
     "pyarrow>=12.0.0",
     "huggingface_hub",
+]
+
+train = [
+    "torch>=2.3",
+    "transformers>=4.50",
+    "peft>=0.13",
+    "trl>=0.19",
+    "datasets>=2.20",
+    "bitsandbytes>=0.43",
+    "accelerate>=0.30",
+    "safetensors>=0.4",
 ]
 
 [project.urls]
@@ -60,5 +85,8 @@ Repository = "https://github.com/xaviercallens/GWAYA-GwenLayaOpenModel.git"
 gwaya-mcp = "mcp_server:mcp.run"
 gwaya-agent = "gwaya.agent:main"
 
+[tool.setuptools]
+py-modules = ["mcp_server"]
+
 [tool.setuptools.packages.find]
-include = ["gwaya*"]
+include = ["gwaya*", "webgwaya*"]

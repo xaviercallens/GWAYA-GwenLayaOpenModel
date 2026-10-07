@@ -1,6 +1,6 @@
 """
-anse/gwaya/self_tests.py
-========================
+gwaya/self_tests.py
+===================
 Self-generated tests for candidate selection (H1).
 
 The model is asked for extra ``assert`` statements from the problem text and the one public example

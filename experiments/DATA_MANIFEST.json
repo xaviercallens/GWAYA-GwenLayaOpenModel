@@ -1,0 +1,113 @@
+{
+  "version": "1.0",
+  "generated": "2026-10-07T19:23:50.519978Z",
+  "plan": {
+    "name": "GwenLaya v4",
+    "date": "2026-10-07",
+    "total_cap_usd": 50.0
+  },
+  "datasets": {
+    "eval": [
+      {
+        "id": "EVAL000",
+        "hf_id": "evalplus/mbppplus",
+        "domain": "python",
+        "role": "eval",
+        "license": "apache-2.0",
+        "sha256": "TBD",
+        "bytes": 189000,
+        "path": "",
+        "hf_revision": "",
+        "split": null,
+        "config": null,
+        "row_count": 378,
+        "note": ""
+      },
+      {
+        "id": "EVAL001",
+        "hf_id": "evalplus/humanevalplus",
+        "domain": "python",
+        "role": "eval",
+        "license": "apache-2.0",
+        "sha256": "TBD",
+        "bytes": 82000,
+        "path": "",
+        "hf_revision": "",
+        "split": null,
+        "config": null,
+        "row_count": 164,
+        "note": ""
+      },
+      {
+        "id": "EVAL002",
+        "hf_id": "google-research-datasets/mbpp",
+        "domain": "python",
+        "role": "eval",
+        "license": "cc-by-4.0",
+        "sha256": "TBD",
+        "bytes": 213500,
+        "path": "",
+        "hf_revision": "",
+        "split": null,
+        "config": "sanitized",
+        "row_count": 427,
+        "note": "test n=257 continuity; train+validation+prompt (170) to C minus MBPP+ ids"
+      }
+    ],
+    "train": [],
+    "calib": [],
+    "dpo": []
+  },
+  "laya_weights": {
+    "model.safetensors": {
+      "bytes": 842609210,
+      "sha256": "891102d372688fc2"
+    },
+    "rl_energy_model_unified.pt": {
+      "bytes": 96620,
+      "sha256": "5387fe9c0699b7e6"
+    },
+    "rl_100_formal_critic.pt": {
+      "bytes": 96499,
+      "sha256": "27335eace9cb1310"
+    },
+    "surrogate_energy_predictor_v2.pt": {
+      "bytes": 272357,
+      "sha256": "ea24a4153b027dc3"
+    },
+    "rl_agent_config.json": {
+      "bytes": 745,
+      "sha256": "ae287b56bbcf5f8c"
+    },
+    "rl_energy_model_unified_200.pt": {
+      "bytes": 96824,
+      "sha256": "a5f32b894a801629"
+    },
+    "rl_multidisciplinary_critic.pt": {
+      "bytes": 96824,
+      "sha256": "ce1c7c31a689062b"
+    },
+    "rl_common.py": {
+      "bytes": 19282,
+      "sha256": "c35dc070546aed7b"
+    },
+    "rl_agent_api.py": {
+      "bytes": 4732,
+      "sha256": "be3b46819c9999c3"
+    },
+    "rl_nightly_epochs_1_to_100.tar.gz": {
+      "bytes": 133361851,
+      "sha256": "d38f713755c8f647"
+    }
+  },
+  "lean_oracle": {
+    "path": "gs://socrateai-datalake-gen-lang-client-0625573011/formal_verification/lean_oracle_v5.tar.gz",
+    "size_bytes": 33956755,
+    "size_mb": 32.38
+  },
+  "statistics": {
+    "total_eval_rows": 969,
+    "total_eval_bytes_est": 484500,
+    "laya_weights_bytes": 976654944
+  }
+}

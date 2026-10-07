@@ -1,6 +1,6 @@
 """
-anse/gwaya/low_tier_engine.py
-=============================
+gwaya/low_tier_engine.py
+========================
 GWAYA v3 Low-Tier Model Compound AI Optimizer & Verification Engine.
 
 Addresses the core challenge of low-tier models (<=1B parameters, SLMs, or lightweight APIs):

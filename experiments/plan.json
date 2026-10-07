@@ -1,0 +1,964 @@
+{
+ "name": "GwenLaya v4",
+ "prereg": "docs/GWENLAYA_PREREGISTRATION.md",
+ "written": "2026-10-07",
+ "note": "No measured values. est_hours is TBD until S1 measures throughput; max_hours = cap_usd / planning rate (an upper bound enforced by --max-run-duration, not a forecast). Unknowns are TBD.",
+ "planning_rates_usd_per_h": {
+  "l4_spot_vm": 0.55,
+  "t4_spot_vm_fallback": 0.45,
+  "cloudrun_l4_4cpu_16gib": 1.0465
+ },
+ "price_source": "Cloud Billing Catalog API, read 2026-10-07 (list prices)",
+ "total_cap_usd": 50.0,
+ "planned_cap_usd": 40.0,
+ "misc_cap_usd": 4.5,
+ "reserve_usd": 10.0,
+ "single_gpu_at_a_time": true,
+ "gcs_output_prefix": "gs://socrateai-datalake-gen-lang-client-0625573011/gwenlaya_v4/",
+ "stages": [
+  {
+   "id": "C0",
+   "where": "cpu",
+   "models": [],
+   "domains": [
+    "python",
+    "rust",
+    "lean4",
+    "math"
+   ],
+   "tasks": [
+    "preflight script (read-only gcloud): GPUS_ALL_REGIONS usage == 0, no running accelerator VM",
+    "write eval manifest (ids, sha256, HF revision, license)",
+    "decontaminate T/C vs E",
+    "freeze addendum hash (must exist before S2 starts)"
+   ],
+   "arms": [],
+   "quant": [],
+   "n": "TBD",
+   "est_hours": "TBD",
+   "cap_usd": 0.0
+  },
+  {
+   "id": "C1",
+   "where": "cpu",
+   "models": [],
+   "domains": [
+    "python",
+    "rust",
+    "lean4",
+    "math"
+   ],
+   "tasks": [
+    "RustCompilerOracle.verify_io",
+    "Lean4CompilerOracle(project_dir, mem_mb)",
+    "gwaya/math_oracle.py",
+    "gwaya/selective_metrics.py",
+    "ledger + kill/resume tests"
+   ],
+   "arms": [],
+   "quant": [],
+   "n": "TBD",
+   "est_hours": "TBD",
+   "cap_usd": 0.0
+  },
+  {
+   "id": "C2",
+   "where": "cpu",
+   "models": [],
+   "domains": [
+    "lean4"
+   ],
+   "tasks": [
+    "minif2f-lean4 repo has no lean-toolchain/lakefile (checked 2026-10-07): pick a Mathlib rev under which its headers elaborate, record lean-toolchain + Mathlib commit",
+    "lean_oracle_v5.tar.gz: inspected 2026-10-07, contains no Mathlib and no lean-toolchain -> not reused",
+    "fetch Mathlib oleans with `lake exe cache get` (no source build)",
+    "elaborate all 488 minif2f statements with sorry; count failures",
+    "time one kernel check + #print axioms (TBD) and peak RSS (TBD); derive C3/C7 Lean hours and worker count (1-2)",
+    "filter Lean-Workbook statements that elaborate with sorry"
+   ],
+   "arms": [],
+   "quant": [],
+   "n": "TBD",
+   "est_hours": "TBD",
+   "cap_usd": 0.0,
+   "lean_workers_max": 2
+  },
+  {
+   "id": "S1",
+   "where": "l4",
+   "models": [
+    "qwen3.5:2b-q4_K_M",
+    "qwen3.5:4b-q4_K_M",
+    "qwen3.5:9b-q4_K_M",
+    "qwen3.8:27b-q4_K_M",
+    "Qwen/Qwen3.5-4B",
+    "Qwen/Qwen3.5-9B",
+    "Qwen/Qwen3.8-27B"
+   ],
+   "domains": [
+    "python",
+    "rust",
+    "lean4",
+    "math"
+   ],
+   "tasks": [
+    "support matrix model x quant x engine (llama.cpp GGUF, vLLM, transformers+peft+bitsandbytes), library versions recorded",
+    "tokens/s and peak VRAM at batch 1 and 8 (llama.cpp --parallel 8), thinking disabled, every tier",
+    "GO/NO-GO for S6: projected S6 hours from batch-8 tokens/s; if > 0.8 * S6 max_hours, apply S6 reduction order and record it",
+    "9B bf16 on vLLM: support, max batch, tokens/s (decides S3 sampler)",
+    "fix S3 prompt counts per domain from measured tokens/s and S3 cap",
+    "9B bf16 GGUF fit check",
+    "QLoRA 20-step memory pilot 4B/9B",
+    "llama.cpp loads Qwen3.8-27B q4 GGUF with a GGUF LoRA adapter (decides 27B tuned serving)"
+   ],
+   "arms": [],
+   "quant": [
+    "bf16",
+    "q8_0",
+    "q4_K_M",
+    "nf4"
+   ],
+   "n": 8,
+   "est_hours": "TBD",
+   "cap_usd": 1.5,
+   "region_pref": [
+    "us-east4",
+    "us-central1"
+   ],
+   "max_hours": 2.7
+  },
+  {
+   "id": "S2",
+   "where": "l4",
+   "models": [
+    "qwen3.5:2b-q4_K_M",
+    "qwen3.5:4b-q4_K_M",
+    "qwen3.5:9b-q4_K_M",
+    "qwen3.8:27b-q4_K_M",
+    "qwen2.5-coder:1.5b-instruct-q4_K_M"
+   ],
+   "domains": [
+    "python",
+    "rust",
+    "lean4",
+    "math"
+   ],
+   "tasks": [
+    "base-tier generation on C and router-train",
+    "continuity anchor MBPP-sanitized n=257 A0/A3"
+   ],
+   "arms": [
+    "B1",
+    "B2",
+    "B3",
+    "B4",
+    "B5",
+    "continuity"
+   ],
+   "quant": [
+    "q4_K_M"
+   ],
+   "n": "TBD",
+   "est_hours": "TBD",
+   "cap_usd": 3.5,
+   "max_hours": 6.4,
+   "depends_on": [
+    "C0",
+    "C1",
+    "S1"
+   ]
+  },
+  {
+   "id": "S3",
+   "where": "l4",
+   "models": [
+    "Qwen/Qwen3.5-9B",
+    "Qwen/Qwen3.5-4B"
+   ],
+   "domains": [
+    "python",
+    "rust",
+    "lean4",
+    "math"
+   ],
+   "tasks": [
+    "rejection sampling k=4 (code/math) k=8 (lean), T=0.8 top_p=0.95, thinking disabled",
+    "sampler from S1: 9B bf16 vLLM if supported with batch >= 8; else 9B 8-bit/fp8 weights (stated: changes the sampling distribution); else 4B bf16 only",
+    "prompt counts per domain fixed from S1 tokens/s and the cap, recorded before start"
+   ],
+   "arms": [],
+   "quant": [
+    "bf16"
+   ],
+   "n": "TBD",
+   "est_hours": "TBD",
+   "cap_usd": 6.0,
+   "depends_on": [
+    "S1",
+    "C2"
+   ],
+   "max_hours": 10.9
+  },
+  {
+   "id": "C3",
+   "where": "cpu",
+   "models": [],
+   "domains": [
+    "python",
+    "rust",
+    "lean4",
+    "math"
+   ],
+   "tasks": [
+    "verify S2/S3 candidates in bwrap (tests, rustc, lean kernel+axioms, math oracle)",
+    "build SFT/DPO datasets"
+   ],
+   "arms": [],
+   "quant": [],
+   "n": "TBD",
+   "est_hours": "TBD",
+   "cap_usd": 0.0,
+   "depends_on": [
+    "S2",
+    "S3",
+    "C2"
+   ]
+  },
+  {
+   "id": "S4a",
+   "where": "l4",
+   "models": [
+    "Qwen/Qwen3.5-4B"
+   ],
+   "domains": [
+    "python",
+    "rust",
+    "lean4",
+    "math"
+   ],
+   "tasks": [
+    "QLoRA SFT r=16 lr 2e-4 2 epochs",
+    "DPO beta 0.1 lr 5e-6 1 epoch"
+   ],
+   "arms": [
+    "SFT",
+    "SFT+DPO"
+   ],
+   "quant": [
+    "nf4"
+   ],
+   "n": "TBD",
+   "est_hours": "TBD",
+   "cap_usd": 4.0,
+   "depends_on": [
+    "C3",
+    "S1"
+   ],
+   "max_hours": 7.3
+  },
+  {
+   "id": "S4b",
+   "where": "l4",
+   "models": [
+    "Qwen/Qwen3.5-9B"
+   ],
+   "domains": [
+    "python",
+    "rust",
+    "lean4",
+    "math"
+   ],
+   "tasks": [
+    "QLoRA SFT r=16 lr 1e-4 2 epochs"
+   ],
+   "arms": [
+    "SFT"
+   ],
+   "quant": [
+    "nf4"
+   ],
+   "n": "TBD",
+   "est_hours": "TBD",
+   "cap_usd": 5.5,
+   "depends_on": [
+    "C3",
+    "S1"
+   ],
+   "max_hours": 10.0
+  },
+  {
+   "id": "S4c",
+   "where": "l4",
+   "models": [
+    "Qwen/Qwen3.8-27B"
+   ],
+   "domains": [
+    "python",
+    "rust",
+    "lean4",
+    "math"
+   ],
+   "tasks": [
+    "training stack loads Qwen3.8-27B text backbone in 4-bit (transformers/peft/bitsandbytes versions recorded)",
+    "QLoRA probe 100 steps seq<=1024",
+    "GO iff peak VRAM <= 22 GiB AND measured tokens/s extrapolates S4d to <= S4d max_hours",
+    "NO-GO or OOM -> fall back to the 9B result; S4d cap returns to the reserve"
+   ],
+   "arms": [],
+   "quant": [
+    "nf4"
+   ],
+   "n": 100,
+   "est_hours": "TBD",
+   "cap_usd": 1.0,
+   "depends_on": [
+    "S4b"
+   ],
+   "max_hours": 1.8
+  },
+  {
+   "id": "S4d",
+   "where": "l4",
+   "models": [
+    "Qwen/Qwen3.8-27B"
+   ],
+   "domains": [
+    "python",
+    "rust",
+    "lean4",
+    "math"
+   ],
+   "tasks": [
+    "QLoRA SFT r=8 lr 5e-5 1 epoch seq 1024"
+   ],
+   "arms": [
+    "SFT"
+   ],
+   "quant": [
+    "nf4"
+   ],
+   "n": "TBD",
+   "est_hours": "TBD",
+   "cap_usd": 3.0,
+   "conditional": "S4c GO; otherwise cap returns to reserve",
+   "max_hours": 5.5,
+   "depends_on": [
+    "S4c"
+   ],
+   "serving": "adapter left unmerged: convert to GGUF LoRA and serve with llama.cpp --lora over the same q4 base GGUF; if S1 shows llama.cpp cannot load it, the 27B tuned arm is dropped from S6 and this is reported. No 27B merge."
+  },
+  {
+   "id": "C4",
+   "where": "cpu",
+   "models": [
+    "convaiinnovations/laya"
+   ],
+   "domains": [
+    "python",
+    "rust",
+    "lean4",
+    "math"
+   ],
+   "tasks": [
+    "50-step Laya LoRA timing; full CPU run iff projected <= 12 h",
+    "merge_and_unload <=9B, GGUF convert, quantize q8_0/q4_K_M (imatrix on train text)"
+   ],
+   "arms": [
+    "B6",
+    "LR",
+    "SH"
+   ],
+   "quant": [
+    "bf16",
+    "q8_0",
+    "q4_K_M"
+   ],
+   "n": "TBD",
+   "est_hours": "TBD",
+   "cap_usd": 0.0,
+   "depends_on": [
+    "S4a",
+    "S4b",
+    "C3"
+   ]
+  },
+  {
+   "id": "S5",
+   "where": "l4",
+   "models": [
+    "tuned tiers",
+    "convaiinnovations/laya"
+   ],
+   "domains": [
+    "python",
+    "rust",
+    "lean4",
+    "math"
+   ],
+   "tasks": [
+    "tuned-tier generation on C and router-train (candidates cached to GCS)",
+    "Laya LoRA on L4 if CPU infeasible"
+   ],
+   "arms": [
+    "GL"
+   ],
+   "quant": [
+    "q4_K_M"
+   ],
+   "n": "TBD",
+   "est_hours": "TBD",
+   "cap_usd": 2.5,
+   "max_hours": 4.5,
+   "depends_on": [
+    "S4a",
+    "S4b",
+    "C4",
+    "C3"
+   ]
+  },
+  {
+   "id": "C6",
+   "where": "cpu",
+   "models": [
+    "convaiinnovations/laya"
+   ],
+   "domains": [
+    "python",
+    "rust",
+    "lean4",
+    "math"
+   ],
+   "tasks": [
+    "verify S5 candidates on CPU (tests, rustc, lean, math oracle)",
+    "fit calibrator + per-domain thresholds on C",
+    "FREEZE addendum (calibrator, thresholds, analysis plan, E manifest hash) before S6"
+   ],
+   "arms": [
+    "GL"
+   ],
+   "quant": [],
+   "n": "TBD",
+   "est_hours": "TBD",
+   "cap_usd": 0.0,
+   "depends_on": [
+    "S5",
+    "C2"
+   ]
+  },
+  {
+   "id": "S6",
+   "where": "l4",
+   "models": [
+    "qwen3.5:2b-q4_K_M",
+    "qwen3.5:4b-q4_K_M",
+    "qwen3.5:9b-q4_K_M",
+    "qwen3.8:27b-q4_K_M",
+    "Qwen/Qwen3.5-9B (quant factor)",
+    "qwen2.5-coder:1.5b-instruct-q4_K_M"
+   ],
+   "domains": [
+    "python",
+    "rust",
+    "lean4",
+    "math"
+   ],
+   "tasks": [
+    "E eval matrix in seeded order, candidates cached; arms replayed offline",
+    "quant factor 9B bf16/q8_0/q4_K_M same engine",
+    "27B tier: full E only if S1 projection fits; else seeded subsample sized at S1, 27B results exploratory and GL tiers = 2B/4B/9B"
+   ],
+   "arms": [
+    "GL",
+    "B1",
+    "B2",
+    "B3",
+    "B4",
+    "B5",
+    "B6",
+    "B7",
+    "LR",
+    "SH",
+    "SFT",
+    "SFT+DPO",
+    "Laya x gate 2x2"
+   ],
+   "quant": [
+    "bf16",
+    "q8_0",
+    "q4_K_M"
+   ],
+   "n": {
+    "python": 542,
+    "rust": 510,
+    "math": 500,
+    "lean4": 244,
+    "gsm8k": 500,
+    "aime25": 30,
+    "livecodebench": "TBD"
+   },
+   "est_hours": "TBD",
+   "cap_usd": 6.0,
+   "depends_on": [
+    "S5",
+    "C1",
+    "C2",
+    "C6"
+   ],
+   "max_hours": 10.9,
+   "reduction_order_if_projection_exceeds_cap": [
+    "B4 k=5 -> k=3 on a seeded subsample",
+    "27B tier -> seeded subsample (B2 becomes 9B; recorded)",
+    "q8_0 cell",
+    "GSM8K, AIME25, LiveCodeBench"
+   ]
+  },
+  {
+   "id": "C7",
+   "where": "cpu",
+   "models": [],
+   "domains": [
+    "python",
+    "rust",
+    "lean4",
+    "math"
+   ],
+   "tasks": [
+    "verify S6 E candidates on CPU against gate-visible and hidden checks; Lean workers <= 2"
+   ],
+   "arms": [],
+   "quant": [],
+   "n": "TBD",
+   "est_hours": "TBD",
+   "cap_usd": 0.0,
+   "depends_on": [
+    "S6",
+    "C2"
+   ]
+  },
+  {
+   "id": "S7",
+   "where": "cloudrun-l4",
+   "models": [
+    "qwen3.5:9b-q4_K_M",
+    "convaiinnovations/laya"
+   ],
+   "domains": [
+    "python",
+    "rust",
+    "math"
+   ],
+   "tasks": [
+    "read-only Cloud Run L4 quota check before approval; first deploy reports quota; no quota -> drop S7",
+    "deploy gwenlaya-gen (L4, min 0, max 1, auth) + gwenlaya-gate (CPU); image build/registry billed to misc",
+    "measure idle-to-zero once (docs: GPU instances may stay idle up to 10 min, billed under instance-based billing)",
+    "cold samples: min 4, max 6, each waits for scale-to-zero; stop early when the cap would be exceeded",
+    "warm: 30 requests per length bucket in one session",
+    "teardown"
+   ],
+   "arms": [
+    "GL"
+   ],
+   "quant": [
+    "q4_K_M"
+   ],
+   "n": 6,
+   "est_hours": "TBD",
+   "cap_usd": 2.5,
+   "region": "us-central1",
+   "requires_user_approval_of_exact_commands": true,
+   "max_instance_hours": 2.4,
+   "depends_on": [
+    "S6"
+   ]
+  },
+  {
+   "id": "C5",
+   "where": "cpu",
+   "models": [],
+   "domains": [
+    "python",
+    "rust",
+    "lean4",
+    "math"
+   ],
+   "tasks": [
+    "analysis: bootstrap, McNemar, Holm, TOST, risk-coverage",
+    "release checks R1-R6"
+   ],
+   "arms": [],
+   "quant": [],
+   "n": "TBD",
+   "est_hours": "TBD",
+   "cap_usd": 0.0,
+   "depends_on": [
+    "C7"
+   ]
+  }
+ ],
+ "datasets": [
+  {
+   "hf_id": "evalplus/mbppplus",
+   "domain": "python",
+   "role": "eval",
+   "license": "apache-2.0",
+   "est_gb": "TBD",
+   "needs_decontam": true,
+   "n": 378
+  },
+  {
+   "hf_id": "evalplus/humanevalplus",
+   "domain": "python",
+   "role": "eval",
+   "license": "apache-2.0",
+   "est_gb": "TBD",
+   "needs_decontam": true,
+   "n": 164
+  },
+  {
+   "hf_id": "google-research-datasets/mbpp",
+   "domain": "python",
+   "role": "eval",
+   "license": "cc-by-4.0",
+   "est_gb": "TBD",
+   "needs_decontam": true,
+   "config": "sanitized",
+   "note": "test n=257 continuity; train+validation+prompt (170) to C minus MBPP+ ids"
+  },
+  {
+   "hf_id": "google-research-datasets/mbpp",
+   "domain": "python",
+   "role": "calib",
+   "license": "cc-by-4.0",
+   "est_gb": "TBD",
+   "needs_decontam": true,
+   "config": "sanitized",
+   "splits": [
+    "train",
+    "validation",
+    "prompt"
+   ]
+  },
+  {
+   "hf_id": "livecodebench/code_generation_lite",
+   "domain": "python",
+   "role": "eval",
+   "license": "cc (unspecified)",
+   "est_gb": "TBD",
+   "needs_decontam": true,
+   "note": "exploratory only; lastModified 2025-06-05 predates Qwen3.5"
+  },
+  {
+   "hf_id": "nuprl/MultiPL-E",
+   "domain": "rust",
+   "role": "eval",
+   "license": "mit",
+   "est_gb": "TBD",
+   "needs_decontam": true,
+   "configs": [
+    "humaneval-rs",
+    "mbpp-rs"
+   ],
+   "n": 510
+  },
+  {
+   "hf_id": "cat-searcher/minif2f-lean4",
+   "domain": "lean4",
+   "role": "eval",
+   "license": "mit",
+   "est_gb": "TBD",
+   "needs_decontam": true,
+   "split": "test",
+   "n": 244
+  },
+  {
+   "hf_id": "cat-searcher/minif2f-lean4",
+   "domain": "lean4",
+   "role": "calib",
+   "license": "mit",
+   "est_gb": "TBD",
+   "needs_decontam": true,
+   "split": "validation",
+   "n": 244
+  },
+  {
+   "hf_id": "hoskinson-center/proofnet",
+   "domain": "lean4",
+   "role": "eval",
+   "license": "mit",
+   "est_gb": "TBD",
+   "needs_decontam": true,
+   "note": "secondary/exploratory; Lean4 port TBD"
+  },
+  {
+   "hf_id": "HuggingFaceH4/MATH-500",
+   "domain": "math",
+   "role": "eval",
+   "license": "none on card (derived from MIT MATH); eval only",
+   "est_gb": "TBD",
+   "needs_decontam": true,
+   "n": 500
+  },
+  {
+   "hf_id": "openai/gsm8k",
+   "domain": "math",
+   "role": "eval",
+   "license": "mit",
+   "est_gb": "TBD",
+   "needs_decontam": true,
+   "split": "test",
+   "n": 500
+  },
+  {
+   "hf_id": "math-ai/aime25",
+   "domain": "math",
+   "role": "eval",
+   "license": "apache-2.0",
+   "est_gb": "TBD",
+   "needs_decontam": true,
+   "n": 30
+  },
+  {
+   "hf_id": "openai/gsm8k",
+   "domain": "math",
+   "role": "train",
+   "license": "mit",
+   "est_gb": "TBD",
+   "needs_decontam": true,
+   "split": "train"
+  },
+  {
+   "hf_id": "EleutherAI/hendrycks_math",
+   "domain": "math",
+   "role": "train",
+   "license": "mit",
+   "est_gb": "TBD",
+   "needs_decontam": true,
+   "split": "train",
+   "note": "mod-20==0 slice goes to calib"
+  },
+  {
+   "hf_id": "AI-MO/NuminaMath-1.5",
+   "domain": "math",
+   "role": "train",
+   "license": "apache-2.0",
+   "est_gb": "TBD",
+   "needs_decontam": true,
+   "note": "drop MATH-test/AIME/AMC-2025 sources"
+  },
+  {
+   "hf_id": "internlm/Lean-Workbook",
+   "domain": "lean4",
+   "role": "train",
+   "license": "apache-2.0",
+   "est_gb": "TBD",
+   "needs_decontam": true
+  },
+  {
+   "hf_id": "AI-MO/NuminaMath-LEAN",
+   "domain": "lean4",
+   "role": "train",
+   "license": "apache-2.0",
+   "est_gb": "TBD",
+   "needs_decontam": true,
+   "note": "optional"
+  },
+  {
+   "hf_id": "likaixin/TACO-verified",
+   "domain": "python",
+   "role": "train",
+   "license": "mit",
+   "est_gb": "TBD",
+   "needs_decontam": true
+  },
+  {
+   "hf_id": "codeparrot/apps",
+   "domain": "python",
+   "role": "train",
+   "license": "mit",
+   "est_gb": "TBD",
+   "needs_decontam": true,
+   "note": "introductory+interview; also Rust via verify_io"
+  },
+  {
+   "hf_id": "deepmind/code_contests",
+   "domain": "rust",
+   "role": "train",
+   "license": "cc-by-4.0",
+   "est_gb": "TBD",
+   "needs_decontam": true,
+   "note": "stdin/stdout cases for Rust traces; license from task context, not re-read"
+  },
+  {
+   "hf_id": "newfacade/LeetCodeDataset",
+   "domain": "python",
+   "role": "train",
+   "license": "apache-2.0",
+   "est_gb": "TBD",
+   "needs_decontam": true
+  },
+  {
+   "hf_id": "KAKA22/CodeRM-UnitTest",
+   "domain": "python",
+   "role": "train",
+   "license": "apache-2.0",
+   "est_gb": "TBD",
+   "needs_decontam": true
+  },
+  {
+   "hf_id": "nvidia/OpenCodeReasoning",
+   "domain": "python",
+   "role": "train",
+   "license": "cc-by-4.0",
+   "est_gb": "TBD",
+   "needs_decontam": true,
+   "note": "optional; license from task context, not re-read"
+  },
+  {
+   "hf_id": "callensxavier/laya-coding-curriculum-78k",
+   "domain": "python",
+   "role": "train",
+   "license": "apache-2.0",
+   "est_gb": "TBD",
+   "needs_decontam": true
+  },
+  {
+   "hf_id": "gate-verified SFT failures (S3)",
+   "domain": "all",
+   "role": "dpo",
+   "license": "derived",
+   "est_gb": "TBD",
+   "needs_decontam": true
+  }
+ ],
+ "excluded": [
+  "KodCode (cc-by-nc)",
+  "Magpie-Qwen2.5-Coder-Pro",
+  "Vezora preference pairs",
+  "Goedel-LM/Goedel-Pset-v1 (no license)",
+  "PrimeIntellect (license other/missing)",
+  "callensxavier/gwaya_v2_verifier_curriculum (no license tag on HF API 2026-10-07)",
+  "Qwen3.8 2.4T-A95B / Flash-Next (license other)",
+  "gs://.../autoevolve_anse_datalake/models/laya_lora (not used)"
+ ],
+ "seeds": {
+  "generation": "1000*(item_index+1)+call_index",
+  "bootstrap": 0,
+  "bootstrap_resamples": 10000,
+  "split_hash": "sha256(source||id) mod 20: 0=calib, 1-2=router_train",
+  "eval_order": 20261007,
+  "training": [
+   1234
+  ],
+  "second_generation_seed_if_budget": [
+   2
+  ]
+ },
+ "hypotheses": [
+  {
+   "id": "H1",
+   "family": "primary"
+  },
+  {
+   "id": "H2",
+   "family": "exploratory"
+  },
+  {
+   "id": "H3",
+   "family": "primary"
+  },
+  {
+   "id": "H4",
+   "family": "calibration"
+  },
+  {
+   "id": "H5",
+   "family": "calibration"
+  },
+  {
+   "id": "H6",
+   "family": "calibration"
+  },
+  {
+   "id": "H7",
+   "family": "exploratory"
+  },
+  {
+   "id": "H8",
+   "family": "quantization"
+  },
+  {
+   "id": "H9",
+   "family": "training"
+  },
+  {
+   "id": "H10",
+   "family": "exploratory"
+  },
+  {
+   "id": "H11",
+   "family": "exploratory"
+  },
+  {
+   "id": "H12",
+   "family": "exploratory"
+  },
+  {
+   "id": "H13",
+   "family": "systems"
+  },
+  {
+   "id": "H14",
+   "family": "systems"
+  },
+  {
+   "id": "H15",
+   "family": "systems"
+  }
+ ],
+ "cut_order": [
+  "S4d",
+  "S4c",
+  "S4a:DPO",
+  "S6:B4_k5",
+  "S6:27B_full_E",
+  "S6:q8_0",
+  "second_seed",
+  "S7:cold_samples_5_6"
+ ],
+ "misc_breakdown_usd": {
+  "pd_disk": 2.0,
+  "gcs_storage_ops_egress": 1.0,
+  "cloud_build_and_artifact_registry": 1.5
+ },
+ "preflight": {
+  "before_every_vm_create": [
+   "read-only: gcloud compute project-info describe -> assert GPUS_ALL_REGIONS usage == 0, else STOP and tell the user",
+   "read-only: gcloud compute instances list -> assert no RUNNING VM with accelerators",
+   "ledger total + stage cap <= planned_cap_usd"
+  ],
+  "blocker_2026_10_07": "GPUS_ALL_REGIONS limit 1, usage 1 (read 19:11 UTC): socreateai-agora-hermes-node1 (us-east4-b, T4, SPOT) is RUNNING. Not a GwenLaya VM: the user stops it or schedules around it; never stopped autonomously.",
+  "between_stages": "delete every purpose=gwenlaya VM and its disk at the end of each stage (weights live in GCS); a TERMINATED VM frees the GPU quota but its disk still bills",
+  "cloud_run_before_s7": "read-only: gcloud beta quotas info list --service=run.googleapis.com; first deploy must report the quota; if no L4 quota, S7 is dropped and the user told; never request quota"
+ },
+ "spend_rules": [
+  "a stage's cap covers its whole VM lifecycle: boot, downloads, re-downloads after preemption, idle",
+  "--max-run-duration = remaining stage cap / planning rate; at the cap the stage stops and is reported PARTIAL, never extended silently",
+  "accrued cost is checked against the cap at every stage boundary and by an in-stage watchdog every 30 min",
+  "checkpoints / generation caches are committed to GCS every <= 15 min; resume from the last COMMITTED object"
+ ],
+ "generation_settings": {
+  "thinking": "disabled for every tier, domain and stage (chat template enable_thinking=false / Ollama think=false)",
+  "max_new_tokens": {
+   "python": 1024,
+   "rust": 1024,
+   "math": 1024,
+   "lean4": 1024
+  },
+  "eval_decoding": "greedy (temperature 0) except B4 samples and S3 rejection sampling",
+  "repair_rounds_in_GL": 0,
+  "engine": "llama.cpp server, --parallel 8 continuous batching, same build for all GGUF quants",
+  "gpu_seconds_attribution": "batch wall-time split by each call's share of generated+prompt tokens in that batch",
+  "reuse_rule": "each (tier, quant, item, seed) is generated once and cached; GL, SH, LR, B-arms and the 2x2 replay the cache; no arm regenerates",
+  "verification_location": "never on the GPU VM: all gate and scoring checks run on the local CPU (C3, C6, C7) against cached candidates"
+ }
+}

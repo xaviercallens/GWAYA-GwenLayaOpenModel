@@ -1,9 +1,19 @@
 import os
-os.environ["GWAYA_ALLOW_UNISOLATED"] = "1"
-
 import pytest
 from webgwaya.app import SCENARIOS
 from gwaya.low_tier_engine import LowTierModelOptimizer, ModelTier
+
+
+@pytest.fixture(scope="module", autouse=True)
+def allow_unisolated():
+    """Allow unisolated execution for this test module."""
+    old_val = os.environ.get("GWAYA_ALLOW_UNISOLATED")
+    os.environ["GWAYA_ALLOW_UNISOLATED"] = "1"
+    yield
+    if old_val is None:
+        os.environ.pop("GWAYA_ALLOW_UNISOLATED", None)
+    else:
+        os.environ["GWAYA_ALLOW_UNISOLATED"] = old_val
 
 @pytest.mark.parametrize("scenario", [s for s in SCENARIOS if s["id"].startswith("scenario_")])
 def test_scenario_starter_code_evaluates_correctly(scenario):

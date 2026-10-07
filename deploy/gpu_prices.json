@@ -1,0 +1,35 @@
+{
+  "_note": "unverified, check cloud.google.com/compute/gpus-pricing before running production benchmarks",
+  "gpus": {
+    "t4": {
+      "name": "NVIDIA Tesla T4",
+      "vram_gb": 16,
+      "machine_type": "n1-standard-8",
+      "price_per_hour_usd": 0.29,
+      "zones": ["us-east4-a", "us-east4-c", "us-central1-a", "us-central1-b", "us-central1-c"],
+      "default_models": ["qwen2.5-coder:7b"]
+    },
+    "l4": {
+      "name": "NVIDIA L4",
+      "vram_gb": 24,
+      "machine_type": "g2-standard-8",
+      "price_per_hour_usd": 0.35,
+      "zones": ["us-east4-a", "us-east4-c", "us-central1-a", "us-central1-b", "us-central1-c"],
+      "default_models": ["qwen2.5-coder:7b", "qwen2.5-coder:14b"]
+    }
+  },
+  "unavailable": {
+    "h4": "No H4 GPU available on GCP; use L4 instead (24GB VRAM, similar performance)",
+    "a100": "A100 80GB available but out-of-budget for spot instances; use L4 instead",
+    "h100": "H100 out-of-budget for spot instances; use L4 instead"
+  },
+  "defaults": {
+    "region": "us-east4",
+    "boot_disk_gb": 120,
+    "boot_disk_type": "pd-balanced",
+    "image_family": "common-cu129-ubuntu-2204-nvidia-580",
+    "image_project": "deeplearning-platform-release",
+    "max_hours": 2,
+    "n": 257
+  }
+}

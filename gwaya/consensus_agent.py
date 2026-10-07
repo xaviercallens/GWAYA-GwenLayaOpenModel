@@ -1,6 +1,6 @@
 """
-anse/gwaya/consensus_agent.py
-=============================
+gwaya/consensus_agent.py
+========================
 GWAYA v4 pipeline for small local code models: sample, ground, test, repair, or abstain.
 
 What it adds over the v3 best-of-N + repair optimizer (each piece can be switched off so the
@@ -200,6 +200,14 @@ class ConsensusRepairAgent:
         marker = "AssertionError: "
         if marker in text:
             return f"{lhs} returned {text.split(marker, 1)[1][:200]}"
+        # Try to extract from failure details if available
+        failures = res.details.get("failures", [])
+        if failures and len(failures) > 0:
+            # The first failure message should contain the AssertionError for our injected assert
+            failure_msg = failures[0]
+            if marker in failure_msg:
+                return f"{lhs} returned {failure_msg.split(marker, 1)[1][:200]}"
+            return f"evaluating {lhs} failed: {failure_msg[-200:]}"
         return f"evaluating {lhs} failed: {text[-200:]}"
 
     def _first_failing_assert(self, c: Candidate, public: str | None, trusted: list[int]) -> str:

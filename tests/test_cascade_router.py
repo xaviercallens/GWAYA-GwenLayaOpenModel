@@ -6,13 +6,22 @@ Unit tests for GWAYA Speculative Cascade Router.
 from __future__ import annotations
 
 import os
-
-os.environ["GWAYA_ALLOW_UNISOLATED"] = "1"
-
 import pytest
 
 from gwaya.cascade_router import GwayaCascadeRouter, CascadeResult
 from gwaya.low_tier_engine import VerificationLevel
+
+
+@pytest.fixture(scope="module", autouse=True)
+def allow_unisolated():
+    """Allow unisolated execution for this test module."""
+    old_val = os.environ.get("GWAYA_ALLOW_UNISOLATED")
+    os.environ["GWAYA_ALLOW_UNISOLATED"] = "1"
+    yield
+    if old_val is None:
+        os.environ.pop("GWAYA_ALLOW_UNISOLATED", None)
+    else:
+        os.environ["GWAYA_ALLOW_UNISOLATED"] = old_val
 
 
 def test_cascade_returns_tier1_on_early_success():

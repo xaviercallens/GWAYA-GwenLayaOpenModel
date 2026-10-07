@@ -1,6 +1,6 @@
 """
-anse/gwaya/generators.py
-========================
+gwaya/generators.py
+===================
 Local low-tier code generators for GWAYA (LT1).
 
 ``OllamaGenerator`` talks to a local Ollama server (default ``qwen2.5-coder:1.5b``) and is

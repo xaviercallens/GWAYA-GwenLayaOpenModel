@@ -1,11 +1,21 @@
-import os
-os.environ["GWAYA_ALLOW_UNISOLATED"] = "1"
-
 import json
 import pytest
+import os
 
 from gwaya import agent as agent_mod
 from gwaya.test_harness import isolation_available
+
+
+@pytest.fixture(scope="module", autouse=True)
+def allow_unisolated():
+    """Allow unisolated execution for this test module."""
+    old_val = os.environ.get("GWAYA_ALLOW_UNISOLATED")
+    os.environ["GWAYA_ALLOW_UNISOLATED"] = "1"
+    yield
+    if old_val is None:
+        os.environ.pop("GWAYA_ALLOW_UNISOLATED", None)
+    else:
+        os.environ["GWAYA_ALLOW_UNISOLATED"] = old_val
 
 
 def test_model_ladder_by_vram():

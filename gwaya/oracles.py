@@ -1,25 +1,33 @@
 """
-anse/gwaya/oracles.py
-=====================
+gwaya/oracles.py
+================
 Compiler-in-the-Loop Oracles for GWAYA v3 MCTS and Zero-Trust Verification.
 
 Provides deterministic compiler oracles:
   - RustCompilerOracle: verifies Rust syntax, borrow checking, and typing via rustc / cargo check.
   - Lean4CompilerOracle: verifies Lean 4 formal proofs and syntax via lean CLI.
+  - CppCompilerOracle: verifies C++ syntax and type correctness via g++ / clang++.
+  - GoCompilerOracle: verifies Go syntax and type correctness via go build.
   - PythonCompilerOracle: verifies AST syntax and sandboxed execution.
+
+All compiler oracles (Lean, Rust, C++, Go) are sandboxed via bwrap when available.
 """
 from __future__ import annotations
 
 import ast
+import json
 import logging
 import os
 import re
+import secrets
 import shutil
 import subprocess  # nosec B404
 import tempfile
 import time
 from dataclasses import dataclass, field
 from typing import Any
+
+from gwaya.sandbox import run_in_sandbox
 
 logger = logging.getLogger("GwayaOracles")
 
@@ -75,9 +83,6 @@ def rust_placeholder_violations(code: str) -> list[str]:
 
 
 class RustCompilerOracle:
-    def verify(self, code: str) -> OracleResult:
-        return self.verify_snippet(code)
-
     """
     Evaluates Rust code candidates using `rustc` metadata emission or `cargo check`.
     Flags syntax errors, borrow checker violations, and lifetime errors in <100ms.
@@ -88,10 +93,13 @@ class RustCompilerOracle:
         self.timeout_s = timeout_s
         self.available = bool(shutil.which(self.rustc_path))
 
+    def verify(self, code: str) -> OracleResult:
+        return self.verify_snippet(code)
+
     def verify_snippet(self, code: str) -> OracleResult:
         """
         Compiles a Rust snippet as a library (`--emit=metadata`) to verify type soundness
-        and borrow correctness without code generation overhead.
+        and borrow correctness without code generation overhead, in a sandboxed environment.
         """
         if not self.available:
             return OracleResult(
@@ -122,40 +130,25 @@ class RustCompilerOracle:
         if not has_fn and not has_main:
             code_to_compile = f"pub fn _gwaya_check() {{\n{code}\n}}"
 
-        with tempfile.NamedTemporaryFile("w", suffix=".rs", delete=False) as f:
-            f.write(code_to_compile)
-            temp_path = f.name
+        source_file = "candidate.rs"
+        try:
+            cmd = [
+                self.rustc_path,
+                "--crate-type=lib",
+                "--emit=metadata",
+                "--out-dir",
+                "/work/out",
+                f"/work/{source_file}",
+            ]
+            success, stdout, stderr, timed_out = run_in_sandbox(
+                cmd,
+                timeout_s=self.timeout_s,
+                mem_mb=2048,
+                cpu_s=int(self.timeout_s) + 5,
+                files={source_file: code_to_compile},
+            )
 
-        with tempfile.TemporaryDirectory() as out_dir:
-            try:
-                cmd = [
-                    self.rustc_path,
-                    "--crate-type=lib",
-                    "--emit=metadata",
-                    "--out-dir",
-                    out_dir,
-                    temp_path,
-                ]
-                res = subprocess.run(  # nosec B603
-                    cmd,
-                    capture_output=True,
-                    text=True,
-                    timeout=self.timeout_s,
-                )
-                latency_ms = (time.perf_counter() - t0) * 1000.0
-                success = res.returncode == 0
-                err_msg = res.stderr.strip() if not success else ""
-
-                return OracleResult(
-                    success=success,
-                    compiler="rustc",
-                    error_message=err_msg,
-                    stdout=res.stdout,
-                    stderr=res.stderr,
-                    latency_ms=round(latency_ms, 2),
-                    details={"returncode": res.returncode},
-                )
-            except subprocess.TimeoutExpired:
+            if timed_out:
                 latency_ms = (time.perf_counter() - t0) * 1000.0
                 return OracleResult(
                     success=False,
@@ -163,17 +156,153 @@ class RustCompilerOracle:
                     error_message=f"Compilation timed out after {self.timeout_s}s",
                     latency_ms=round(latency_ms, 2),
                 )
-            except Exception as exc:
-                latency_ms = (time.perf_counter() - t0) * 1000.0
+
+            latency_ms = (time.perf_counter() - t0) * 1000.0
+            err_msg = stderr.strip() if not success else ""
+
+            return OracleResult(
+                success=success,
+                compiler="rustc",
+                error_message=err_msg,
+                stdout=stdout,
+                stderr=stderr,
+                latency_ms=round(latency_ms, 2),
+                details={"returncode": 0 if success else 1},
+            )
+        except Exception as exc:
+            latency_ms = (time.perf_counter() - t0) * 1000.0
+            return OracleResult(
+                success=False,
+                compiler="rustc",
+                error_message=f"Sandbox error: {str(exc)}",
+                latency_ms=round(latency_ms, 2),
+            )
+
+    def verify_with_test(self, code: str, test_spec: str, timeout_s: float = 5.0) -> OracleResult:
+        """
+        Compiles and executes Rust candidate with test assertions.
+        Test spec should be Rust code with assert!() calls.
+        Success requires all assertions to pass and proper nonce-tagged result output.
+        """
+        from gwaya.ast_audit import ZeroStubAudit
+
+        t0 = time.perf_counter()
+
+        # Run ZeroStubAudit first
+        audit_result = ZeroStubAudit.audit_rust_code(code)
+        if not audit_result.is_clean:
+            return OracleResult(
+                success=False,
+                compiler="rustc",
+                error_message="STUB_DETECTED: " + "; ".join(audit_result.violations),
+                latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                details={"reason": "stub", "violations": audit_result.violations},
+            )
+
+        if not self.available:
+            return OracleResult(
+                success=False,
+                compiler="rustc",
+                error_message="UNVERIFIED: rustc toolchain not installed (fail-closed, E=1e6)",
+                latency_ms=0.0,
+                details={"unverified": True, "reason": "toolchain_missing"},
+            )
+
+        # Count assertions in test spec
+        test_count = test_spec.count("assert!")
+        if test_count == 0:
+            return OracleResult(
+                success=False,
+                compiler="rustc",
+                error_message="INVALID_SPEC: test spec contains no assert!() calls",
+                latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                details={"reason": "no_asserts"},
+            )
+
+        nonce = secrets.token_hex(16)
+        rust_program = _build_rust_test_program(code, test_spec, nonce)
+
+        try:
+            # Compile and run in a single bash command within the sandbox
+            bash_cmd = f"{self.rustc_path} -o /work/test /work/main.rs && /work/test"
+            success, stdout, stderr, timed_out = run_in_sandbox(
+                ["/bin/bash", "-c", bash_cmd],
+                timeout_s=timeout_s,
+                mem_mb=2048,
+                cpu_s=int(timeout_s) + 5,
+                files={"main.rs": rust_program},
+            )
+
+            if timed_out:
                 return OracleResult(
                     success=False,
                     compiler="rustc",
-                    error_message=str(exc),
-                    latency_ms=round(latency_ms, 2),
+                    error_message=f"Rust compilation/execution timed out after {timeout_s}s",
+                    latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                    details={"reason": "timeout", "total": test_count},
                 )
-            finally:
-                if os.path.exists(temp_path):
-                    os.unlink(temp_path)
+
+            # Check if compilation/execution succeeded
+            if not success:
+                if "error" in stderr.lower() or "cannot find" in stderr.lower():
+                    return OracleResult(
+                        success=False,
+                        compiler="rustc",
+                        error_message=f"Compilation failed: {stderr.strip()[:500]}",
+                        latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                        details={"reason": "compilation_failed"},
+                    )
+                # If it failed but looks like a runtime issue, check for panic
+                return OracleResult(
+                    success=False,
+                    compiler="rustc",
+                    error_message="Test assertion failed (panicked)",
+                    stderr=stderr[:500] if stderr else "",
+                    latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                    details={"reason": "assertion_failed"},
+                )
+
+            # Parse the nonce-tagged result from stdout
+            result = _parse_rust_test_result(stdout, nonce)
+            if not result:
+                return OracleResult(
+                    success=False,
+                    compiler="rustc",
+                    error_message="No nonce-tagged result found in test output",
+                    stdout=stdout[-500:] if stdout else "",
+                    latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                    details={"reason": "missing_result"},
+                )
+
+            passed = result.get("passed", 0)
+            total = result.get("total", test_count)
+
+            if passed == total and total == test_count:
+                return OracleResult(
+                    success=True,
+                    compiler="rustc",
+                    stdout=stdout[-500:] if stdout else "",
+                    latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                    details={"passed": passed, "total": total, "reason": "all_tests_passed"},
+                )
+            else:
+                failure_msg = result.get("first_failure", "Unknown assertion failure")
+                return OracleResult(
+                    success=False,
+                    compiler="rustc",
+                    error_message=f"Test assertion failed: {failure_msg[:200]}",
+                    stdout=stdout[-500:] if stdout else "",
+                    latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                    details={"passed": passed, "total": total, "reason": "assertion_failed"},
+                )
+        except Exception as exc:
+            latency_ms = (time.perf_counter() - t0) * 1000.0
+            return OracleResult(
+                success=False,
+                compiler="rustc",
+                error_message=f"Sandbox error: {str(exc)}",
+                latency_ms=round(latency_ms, 2),
+            )
 
 
 class Lean4CompilerOracle:
@@ -181,17 +310,44 @@ class Lean4CompilerOracle:
         return self.verify_snippet(code)
 
     """
-    Evaluates Lean 4 candidates using `lean` CLI.
+    Evaluates Lean 4 candidates using `lean` CLI in a sandboxed environment.
     Enforces that theorems compile cleanly and verifies whether unacknowledged `sorry` exists.
+    Prevents arbitrary code execution via #eval, #reduce, and other IO tactics.
     """
 
-    def __init__(self, lean_path: str | None = None, timeout_s: float = 15.0) -> None:
+    def __init__(
+        self,
+        lean_path: str | None = None,
+        timeout_s: float = 15.0,
+        project_dir: str | os.PathLike | None = None,
+        mem_mb: int = 2048,
+    ) -> None:
+        """
+        project_dir: a pinned Lean+Mathlib lake project (see gwaya/lean_project.py). When given,
+        the project's toolchain `lean` is used with LEAN_PATH pointing at its built oleans, the
+        project is mounted read-only in the sandbox and /work is the only writable path. If the
+        project is absent or unbuilt the oracle is unavailable (fail-closed UNVERIFIED), it never
+        falls back to a Mathlib-less lean. Mathlib imports are slow: pass a larger timeout_s.
+        """
+        self.project = None
+        self.mem_mb = mem_mb
+        if project_dir is not None:
+            from .lean_project import discover
+
+            self.project = discover(project_dir)
+            self.lean_path = str(self.project.lean_bin) if self.project else "lean"
+            self.timeout_s = timeout_s
+            self.available = self.project is not None
+            return
         if lean_path:
             self.lean_path = lean_path
         else:
+            # Search in PATH, then ELAN_HOME, then ~/.elan/bin
+            elan_home = os.environ.get("ELAN_HOME", os.path.expanduser("~/.elan"))
+            elan_paths = f"{elan_home}/bin"
             self.lean_path = (
                 shutil.which("lean") or
-                shutil.which("lean", path="/mnt/data/home/xavkal/.elan/bin:/mnt/data/xdev-cache/home-cache/.elan/bin") or
+                shutil.which("lean", path=elan_paths) or
                 "lean"
             )
         self.timeout_s = timeout_s
@@ -207,6 +363,13 @@ class Lean4CompilerOracle:
     _ESCAPE_RE = re.compile(r"\b(sorry|admit|native_decide|axiom|unsafe|implemented_by|extern)\b")
     # Declarations without a name cannot be passed to `#print axioms`, so they are rejected (fail-closed).
     _UNAUDITABLE_RE = re.compile(r"^\s*(?:@\[[^\]]*\]\s*)*(example\b|instance\s*[:\[{(])", re.MULTILINE)
+    # Dangerous Lean constructs that could execute arbitrary code or IO
+    _DANGEROUS_LEAN_RE = re.compile(
+        r"(?:#eval|#reduce|run_cmd|run_elab|run_meta|"
+        r"\belab\b|\bmacro\b|\bsyntax\b|"
+        r"\binitialize\b|\bbuiltin_initialize\b|\bopen\s+Lean\b|"
+        r"\bmacro_rules\b|\belab_rules\b|\bdeclare_syntax_cat\b|#exit\b)"
+    )
 
     @classmethod
     def _lexical_flaws(cls, code: str) -> list[str]:
@@ -214,6 +377,12 @@ class Lean4CompilerOracle:
         stripped = re.sub(r"/-.*?-/", " ", code, flags=re.DOTALL)
         stripped = re.sub(r"--[^\n]*", " ", stripped)
         flaws = set(cls._ESCAPE_RE.findall(stripped))
+
+        # Check for dangerous constructs that could execute arbitrary code
+        if cls._DANGEROUS_LEAN_RE.search(stripped):
+            dangerous = cls._DANGEROUS_LEAN_RE.findall(stripped)
+            flaws.update(dangerous)
+
         if cls._UNAUDITABLE_RE.search(stripped):
             flaws.add("anonymous_declaration")
         return sorted(flaws)
@@ -225,6 +394,11 @@ class Lean4CompilerOracle:
         return "".join(f"\n#print axioms {n}" for n in names) + ("\n" if names else "")
 
     @classmethod
+    def _audit_count(cls, stdout: str) -> int:
+        """Number of `#print axioms` answers in the output."""
+        return len(re.findall(r"depends on axioms:|does not depend on any axioms", stdout))
+
+    @classmethod
     def _disallowed_axioms(cls, stdout: str, allow_sorry: bool) -> list[str]:
         allowed = cls.STANDARD_AXIOMS | ({"sorryAx"} if allow_sorry else frozenset())
         found: set[str] = set()
@@ -232,12 +406,16 @@ class Lean4CompilerOracle:
             found.update(a.strip() for a in group.split(",") if a.strip())
         return sorted(found - allowed)
 
-    def _interpret_run(self, res: subprocess.CompletedProcess, allow_sorry: bool, latency_ms: float) -> OracleResult:
-        """Success requires exit status 0 AND an axiom closure within STANDARD_AXIOMS."""
+    def _interpret_run(self, res: subprocess.CompletedProcess, allow_sorry: bool, latency_ms: float, expected_audits: int = 0) -> OracleResult:
+        """Success requires exit status 0, an axiom closure within STANDARD_AXIOMS, and an answer
+        for every `#print axioms` probe (a truncated run must not pass unaudited)."""
         success = res.returncode == 0
         err_msg = "" if success else (res.stderr.strip() or res.stdout.strip())
         bad_axioms = self._disallowed_axioms(res.stdout, allow_sorry) if success else []
-        if bad_axioms:
+        if success and self._audit_count(res.stdout) < expected_audits:
+            success = False
+            err_msg = f"Axiom audit incomplete: expected {expected_audits} #print axioms answers"
+        elif bad_axioms:
             success = False
             err_msg = f"Proof depends on non-standard axioms {bad_axioms} (#print axioms)"
         return OracleResult(
@@ -252,8 +430,9 @@ class Lean4CompilerOracle:
 
     def verify_snippet(self, code: str, allow_sorry: bool = False) -> OracleResult:
         """
-        Runs Lean 4 on snippet. Fails if lean exits non-zero or if `sorry` is present
-        without allow_sorry=True.
+        Runs Lean 4 on snippet in a sandboxed environment. Fails if lean exits non-zero
+        or if `sorry` is present without allow_sorry=True. Prevents arbitrary code execution
+        via #eval, #reduce, and other IO tactics.
         """
         t0 = time.perf_counter()
 
@@ -265,7 +444,7 @@ class Lean4CompilerOracle:
                 compiler="lean4",
                 error_message=f"Unsound or unauditable construct(s) {forbidden} detected in formal proof",
                 latency_ms=round(latency_ms, 2),
-                details={"flaw": "unacknowledged_sorry", "forbidden": forbidden},
+                details={"flaw": "unauditable_construct", "forbidden": forbidden},
             )
 
         if not self.available:
@@ -277,38 +456,57 @@ class Lean4CompilerOracle:
                 details={"unverified": True, "reason": "toolchain_missing"},
             )
 
-        with tempfile.NamedTemporaryFile("w", suffix=".lean", delete=False) as f:
-            f.write(code + self._axiom_probe(code))
-            temp_path = f.name
+        source_file = "candidate.lean"
+        source_content = code + self._axiom_probe(code)
 
         try:
-            cmd = [self.lean_path, temp_path]
-            res = subprocess.run(  # nosec B603
+            run_kwargs: dict = {}
+            if self.project is not None:
+                # Mathlib project mounted read-only; /work is the only writable path.
+                cmd = [self.lean_path, "-M", str(self.mem_mb), f"/work/{source_file}"]
+                run_kwargs = {
+                    "ro_binds": list(self.project.ro_binds),
+                    "env": {"LEAN_PATH": self.project.lean_path_env},
+                }
+            else:
+                cmd = [self.lean_path, f"/work/{source_file}"]
+            success, stdout, stderr, timed_out = run_in_sandbox(
                 cmd,
-                capture_output=True,
-                text=True,
-                timeout=self.timeout_s,
+                timeout_s=self.timeout_s,
+                mem_mb=self.mem_mb,
+                cpu_s=int(self.timeout_s) + 5,
+                files={source_file: source_content},
+                **run_kwargs,
             )
-            return self._interpret_run(res, allow_sorry, (time.perf_counter() - t0) * 1000.0)
-        except subprocess.TimeoutExpired:
-            latency_ms = (time.perf_counter() - t0) * 1000.0
-            return OracleResult(
-                success=False,
-                compiler="lean4",
-                error_message=f"Lean 4 verification timed out after {self.timeout_s}s",
-                latency_ms=round(latency_ms, 2),
+
+            if timed_out:
+                latency_ms = (time.perf_counter() - t0) * 1000.0
+                return OracleResult(
+                    success=False,
+                    compiler="lean4",
+                    error_message=f"Lean 4 verification timed out after {self.timeout_s}s",
+                    latency_ms=round(latency_ms, 2),
+                )
+
+            # For sandboxed execution, synthesize a CompletedProcess-like result
+            class _SandboxResult:
+                def __init__(self, success, stdout, stderr):
+                    self.returncode = 0 if success else 1
+                    self.stdout = stdout
+                    self.stderr = stderr
+
+            res = _SandboxResult(success, stdout, stderr)
+            return self._interpret_run(
+                res, allow_sorry, (time.perf_counter() - t0) * 1000.0, expected_audits=len(self._DECL_RE.findall(code))
             )
         except Exception as exc:
             latency_ms = (time.perf_counter() - t0) * 1000.0
             return OracleResult(
                 success=False,
                 compiler="lean4",
-                error_message=str(exc),
+                error_message=f"Sandbox error: {str(exc)}",
                 latency_ms=round(latency_ms, 2),
             )
-        finally:
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
 
 
 class PythonCompilerOracle:
@@ -406,7 +604,7 @@ class PythonCompilerOracle:
     def verify_with_test(self, code: str, test_spec: str, timeout_s: float = 5.0) -> OracleResult:
         """
         Executes the candidate and then the test spec in the isolated harness
-        (`anse.gwaya.test_harness`). Success requires a nonce-tagged harness record with every
+        (`gwaya.test_harness`). Success requires a nonce-tagged harness record with every
         assert passing; the process exit code is never trusted. Without bwrap isolation the
         result is UNVERIFIED unless GWAYA_ALLOW_UNISOLATED=1 is set.
         """
@@ -439,6 +637,7 @@ class PythonCompilerOracle:
 class CppCompilerOracle:
     """
     Verifies C++ snippets via clang++ or g++ -fsyntax-only to ensure type/syntax correctness.
+    Runs in a sandboxed environment to prevent arbitrary code execution.
     """
     def __init__(self, timeout_s: float = 10.0) -> None:
         self.timeout_s = timeout_s
@@ -457,7 +656,7 @@ class CppCompilerOracle:
             )
 
         t0 = time.perf_counter()
-        
+
         # Prevent empty or whitespace-only code
         if not code.strip():
             return OracleResult(
@@ -466,11 +665,8 @@ class CppCompilerOracle:
                 error_message="STUB_DETECTED: Empty code",
                 details={"reason": "stub"}
             )
-            
-        with tempfile.NamedTemporaryFile("w", suffix=".cpp", delete=False) as f:
-            f.write(code)
-            temp_path = f.name
 
+        source_file = "candidate.cpp"
         try:
             cmd = [
                 self.compiler_cmd,
@@ -478,50 +674,335 @@ class CppCompilerOracle:
                 "-std=c++20",
                 "-Wall",
                 "-Werror=return-type",
-                temp_path,
+                f"/work/{source_file}",
             ]
-            res = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=self.timeout_s
+            success, stdout, stderr, timed_out = run_in_sandbox(
+                cmd,
+                timeout_s=self.timeout_s,
+                mem_mb=2048,
+                cpu_s=int(self.timeout_s) + 5,
+                files={source_file: code},
             )
+
+            if timed_out:
+                return OracleResult(
+                    success=False,
+                    compiler="cpp",
+                    error_message=f"C++ verification timed out after {self.timeout_s}s",
+                )
+
             latency = (time.perf_counter() - t0) * 1000.0
-            
-            if res.returncode == 0:
+
+            if success:
                 return OracleResult(
                     success=True,
                     compiler="cpp",
-                    stdout=res.stdout,
-                    stderr=res.stderr,
+                    stdout=stdout,
+                    stderr=stderr,
                     latency_ms=round(latency, 2),
                 )
             else:
                 return OracleResult(
                     success=False,
                     compiler="cpp",
-                    error_message=res.stderr.strip() or "Syntax error",
-                    stdout=res.stdout,
-                    stderr=res.stderr,
+                    error_message=stderr.strip() or "Syntax error",
+                    stdout=stdout,
+                    stderr=stderr,
                     latency_ms=round(latency, 2),
                 )
-        except subprocess.TimeoutExpired:
-            return OracleResult(
-                success=False,
-                compiler="cpp",
-                error_message=f"C++ verification timed out after {self.timeout_s}s",
-            )
         except Exception as exc:
+            latency = (time.perf_counter() - t0) * 1000.0
             return OracleResult(
                 success=False,
                 compiler="cpp",
-                error_message=str(exc),
+                error_message=f"Sandbox error: {str(exc)}",
+                latency_ms=round(latency, 2),
             )
-        finally:
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
+
+    def verify_with_test(self, code: str, test_spec: str, timeout_s: float = 10.0) -> OracleResult:
+        """
+        Compiles and executes C++ candidate with test assertions.
+        Test spec should be C++ code with assert() calls.
+        Success requires all assertions to pass and proper nonce-tagged result output.
+        """
+        from gwaya.ast_audit import ZeroStubAudit
+
+        t0 = time.perf_counter()
+
+        # Run ZeroStubAudit first
+        audit_result = ZeroStubAudit.audit_cpp_code(code)
+        if not audit_result.is_clean:
+            return OracleResult(
+                success=False,
+                compiler="cpp",
+                error_message="STUB_DETECTED: " + "; ".join(audit_result.violations),
+                latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                details={"reason": "stub", "violations": audit_result.violations},
+            )
+
+        if not self.available:
+            return OracleResult(
+                success=False,
+                compiler="cpp",
+                error_message="UNVERIFIED: clang++/g++ not installed (fail-closed, E=1e6)",
+                latency_ms=0.0,
+                details={"unverified": True, "reason": "toolchain_missing"},
+            )
+
+        # Build combined C++ program with candidate and test runner
+        test_count = test_spec.count("assert(")
+        if test_count == 0:
+            return OracleResult(
+                success=False,
+                compiler="cpp",
+                error_message="INVALID_SPEC: test spec contains no assert() calls",
+                latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                details={"reason": "no_asserts"},
+            )
+
+        nonce = secrets.token_hex(16)
+        cpp_program = _build_cpp_test_program(code, test_spec, nonce)
+
+        try:
+            # Compile and run in a single bash command within the sandbox
+            bash_cmd = f"{self.compiler_cmd} -std=c++20 -o /work/test /work/test.cpp && /work/test"
+            success, stdout, stderr, timed_out = run_in_sandbox(
+                ["/bin/bash", "-c", bash_cmd],
+                timeout_s=timeout_s,
+                mem_mb=2048,
+                cpu_s=int(timeout_s) + 5,
+                files={"test.cpp": cpp_program},
+            )
+
+            if timed_out:
+                return OracleResult(
+                    success=False,
+                    compiler="cpp",
+                    error_message=f"C++ compilation/execution timed out after {timeout_s}s",
+                    latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                    details={"reason": "timeout", "total": test_count},
+                )
+
+            # Check if compilation/execution succeeded
+            if not success:
+                if "error" in stderr.lower() or "undefined" in stderr.lower():
+                    return OracleResult(
+                        success=False,
+                        compiler="cpp",
+                        error_message=f"Compilation failed: {stderr.strip()[:500]}",
+                        latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                        details={"reason": "compilation_failed"},
+                    )
+                # If it failed but looks like a runtime issue, check for assertion
+                return OracleResult(
+                    success=False,
+                    compiler="cpp",
+                    error_message="Test assertion failed (Aborted)",
+                    stderr=stderr[:500] if stderr else "",
+                    latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                    details={"reason": "assertion_failed"},
+                )
+
+            # Parse the nonce-tagged result from stdout
+            result = _parse_cpp_test_result(stdout, nonce)
+            if not result:
+                return OracleResult(
+                    success=False,
+                    compiler="cpp",
+                    error_message="No nonce-tagged result found in test output",
+                    stdout=stdout[-500:] if stdout else "",
+                    latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                    details={"reason": "missing_result"},
+                )
+
+            passed = result.get("passed", 0)
+            total = result.get("total", test_count)
+
+            if passed == total and total == test_count:
+                return OracleResult(
+                    success=True,
+                    compiler="cpp",
+                    stdout=stdout[-500:] if stdout else "",
+                    latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                    details={"passed": passed, "total": total, "reason": "all_tests_passed"},
+                )
+            else:
+                failure_msg = result.get("first_failure", "Unknown assertion failure")
+                return OracleResult(
+                    success=False,
+                    compiler="cpp",
+                    error_message=f"Test assertion failed: {failure_msg[:200]}",
+                    stdout=stdout[-500:] if stdout else "",
+                    latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                    details={"passed": passed, "total": total, "reason": "assertion_failed"},
+                )
+        except Exception as exc:
+            latency = (time.perf_counter() - t0) * 1000.0
+            return OracleResult(
+                success=False,
+                compiler="cpp",
+                error_message=f"Sandbox error: {str(exc)}",
+                latency_ms=round(latency, 2),
+            )
+
+
+def _build_rust_test_program(candidate: str, test_spec: str, nonce: str) -> str:
+    """Build a Rust program that combines candidate code with test execution and nonce output."""
+    # For Rust, we'll execute the test spec and count successes
+    # Simple approach: count assert! calls in spec as total tests
+    total_asserts = test_spec.count("assert!")
+
+    # Indent the test spec properly
+    indented_test_spec = "\n".join("    " + line for line in test_spec.split("\n"))
+
+    lines = [
+        "#![allow(warnings)]",
+        candidate,
+        "",
+        "fn main() {",
+        "    let mut passed = 0;",
+        f"    let total = {total_asserts};",
+        "",
+        "    // Run tests - any panic means failure",
+        indented_test_spec,
+        "",
+        "    // All tests passed if we got here",
+        "    passed = total;",
+        "",
+        '    // Output result with nonce',
+        f'    println!("{{{{\\\"nonce\\\": \\\"{nonce}\\\", \\\"passed\\\": {{}}, \\\"total\\\": {{}}, \\\"stage\\\": \\\"complete\\\", \\\"first_failure\\\": \\\"\\\"}}}}", passed, total);',
+        "}",
+    ]
+    return "\n".join(lines)
+
+
+def _build_cpp_test_program(candidate: str, test_spec: str, nonce: str) -> str:
+    """Build a C++ program that combines candidate code with test execution and nonce output."""
+    # Count assert calls in test spec
+    total_asserts = test_spec.count("assert(")
+
+    return f"""
+#include <iostream>
+#include <iomanip>
+#include <cassert>
+
+{candidate}
+
+int main() {{
+    int passed = 0;
+    int total = {total_asserts};
+
+    try {{
+        {test_spec}
+        // All asserts passed
+        passed = total;
+    }} catch (...) {{
+        // Assertion failed, passed stays 0
+    }}
+
+    // Output result with nonce
+    std::cout << "{{";
+    std::cout << "\\\"nonce\\\": \\\"{nonce}\\\", ";
+    std::cout << "\\\"passed\\\": " << passed << ", ";
+    std::cout << "\\\"total\\\": " << total << ", ";
+    std::cout << "\\\"stage\\\": \\\"complete\\\", ";
+    std::cout << "\\\"first_failure\\\": \\\"\\\"";
+    std::cout << "}}" << std::endl;
+
+    return 0;
+}}
+""".strip()
+
+
+def _build_go_test_program(candidate: str, test_spec: str, nonce: str) -> str:
+    """Build a Go program that combines candidate code with test execution and nonce output."""
+    # For Go, count if statements or other test indicators
+    # Simple approach: each "if " could be a test assertion
+    total_tests = test_spec.count("if ")
+    if total_tests == 0:
+        total_tests = 1  # At least one test
+
+    return f"""
+package main
+
+import (
+    "fmt"
+)
+
+{candidate}
+
+func main() {{
+    passed := 0
+    total := {total_tests}
+
+    // Run tests
+    defer func() {{
+        if r := recover(); r != nil {{
+            // panic means test failed
+            passed = 0
+        }} else {{
+            // No panic means all tests passed
+            passed = total
+        }}
+
+        // Output result with nonce
+        fmt.Printf(`{{"nonce": "{nonce}", "passed": %d, "total": %d, "stage": "complete", "first_failure": ""}}` + "\\n", passed, total)
+    }}()
+
+    {test_spec}
+}}
+""".strip()
+
+
+def _parse_rust_test_result(stdout: str, nonce: str) -> dict[str, Any] | None:
+    """Parse Rust test result from stdout output."""
+    for line in stdout.splitlines():
+        line = line.strip()
+        if not (line.startswith("{") and nonce in line):
+            continue
+        try:
+            record = json.loads(line)
+            if record.get("nonce") == nonce:
+                return record
+        except json.JSONDecodeError:
+            continue
+    return None
+
+
+def _parse_cpp_test_result(stdout: str, nonce: str) -> dict[str, Any] | None:
+    """Parse C++ test result from stdout output."""
+    for line in stdout.splitlines():
+        line = line.strip()
+        if not (line.startswith("{") and nonce in line):
+            continue
+        try:
+            record = json.loads(line)
+            if record.get("nonce") == nonce:
+                return record
+        except json.JSONDecodeError:
+            continue
+    return None
+
+
+def _parse_go_test_result(stdout: str, nonce: str) -> dict[str, Any] | None:
+    """Parse Go test result from stdout output."""
+    for line in stdout.splitlines():
+        line = line.strip()
+        if not (line.startswith("{") and nonce in line):
+            continue
+        try:
+            record = json.loads(line)
+            if record.get("nonce") == nonce:
+                return record
+        except json.JSONDecodeError:
+            continue
+    return None
 
 
 class GoCompilerOracle:
     """
     Verifies Go snippets via 'go build' to ensure type/syntax correctness.
+    Runs in a sandboxed environment to prevent arbitrary code execution.
     """
     def __init__(self, timeout_s: float = 10.0) -> None:
         self.timeout_s = timeout_s
@@ -538,7 +1019,7 @@ class GoCompilerOracle:
             )
 
         t0 = time.perf_counter()
-        
+
         if not code.strip():
             return OracleResult(
                 success=False,
@@ -546,56 +1027,174 @@ class GoCompilerOracle:
                 error_message="STUB_DETECTED: Empty code",
                 details={"reason": "stub"}
             )
-            
+
         code_to_compile = code
         # Go files need a package declaration.
         if "package " not in code:
             code_to_compile = f"package main\n\n{code}"
 
-        with tempfile.TemporaryDirectory() as temp_dir:
-            temp_path = os.path.join(temp_dir, "main.go")
-            with open(temp_path, "w") as f:
-                f.write(code_to_compile)
+        source_file = "main.go"
+        try:
+            cmd = [
+                self.go_path,
+                "build",
+                "-o",
+                "/work/main",
+                f"/work/{source_file}",
+            ]
+            success, stdout, stderr, timed_out = run_in_sandbox(
+                cmd,
+                timeout_s=self.timeout_s,
+                mem_mb=2048,
+                cpu_s=int(self.timeout_s) + 5,
+                files={source_file: code_to_compile},
+            )
 
-            try:
-                cmd = [
-                    self.go_path,
-                    "build",
-                    "-o",
-                    os.devnull,
-                    temp_path,
-                ]
-                res = subprocess.run(
-                    cmd, capture_output=True, text=True, timeout=self.timeout_s
-                )
-                latency = (time.perf_counter() - t0) * 1000.0
-                
-                if res.returncode == 0:
-                    return OracleResult(
-                        success=True,
-                        compiler="go",
-                        stdout=res.stdout,
-                        stderr=res.stderr,
-                        latency_ms=round(latency, 2),
-                    )
-                else:
-                    return OracleResult(
-                        success=False,
-                        compiler="go",
-                        error_message=res.stderr.strip() or "Syntax error",
-                        stdout=res.stdout,
-                        stderr=res.stderr,
-                        latency_ms=round(latency, 2),
-                    )
-            except subprocess.TimeoutExpired:
+            if timed_out:
                 return OracleResult(
                     success=False,
                     compiler="go",
                     error_message=f"Go verification timed out after {self.timeout_s}s",
                 )
-            except Exception as exc:
+
+            latency = (time.perf_counter() - t0) * 1000.0
+
+            if success:
+                return OracleResult(
+                    success=True,
+                    compiler="go",
+                    stdout=stdout,
+                    stderr=stderr,
+                    latency_ms=round(latency, 2),
+                )
+            else:
                 return OracleResult(
                     success=False,
                     compiler="go",
-                    error_message=str(exc),
+                    error_message=stderr.strip() or "Syntax error",
+                    stdout=stdout,
+                    stderr=stderr,
+                    latency_ms=round(latency, 2),
                 )
+        except Exception as exc:
+            latency = (time.perf_counter() - t0) * 1000.0
+            return OracleResult(
+                success=False,
+                compiler="go",
+                error_message=f"Sandbox error: {str(exc)}",
+                latency_ms=round(latency, 2),
+            )
+
+    def verify_with_test(self, code: str, test_spec: str, timeout_s: float = 10.0) -> OracleResult:
+        """
+        Compiles and executes Go candidate with test code.
+        Test spec should be Go code with test assertions (panic on failure).
+        Success requires all test assertions to pass and proper nonce-tagged result output.
+        """
+        from gwaya.ast_audit import ZeroStubAudit
+
+        t0 = time.perf_counter()
+
+        # Run ZeroStubAudit first
+        audit_result = ZeroStubAudit.audit_go_code(code)
+        if not audit_result.is_clean:
+            return OracleResult(
+                success=False,
+                compiler="go",
+                error_message="STUB_DETECTED: " + "; ".join(audit_result.violations),
+                latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                details={"reason": "stub", "violations": audit_result.violations},
+            )
+
+        if not self.available:
+            return OracleResult(
+                success=False,
+                compiler="go",
+                error_message="UNVERIFIED: go compiler not installed (fail-closed, E=1e6)",
+                latency_ms=0.0,
+                details={"unverified": True, "reason": "toolchain_missing"},
+            )
+
+        # Count assertions in test spec (each "if" with panic is a test)
+        test_count = test_spec.count("if ")
+        if test_count == 0:
+            test_count = 1  # At least one test
+
+        if not test_spec.strip():
+            return OracleResult(
+                success=False,
+                compiler="go",
+                error_message="INVALID_SPEC: test spec is empty",
+                latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                details={"reason": "no_asserts"},
+            )
+
+        nonce = secrets.token_hex(16)
+        go_program = _build_go_test_program(code, test_spec, nonce)
+
+        try:
+            # Run the Go program directly with go run
+            cmd = [
+                self.go_path,
+                "run",
+                "/work/main.go",
+            ]
+            success, stdout, stderr, timed_out = run_in_sandbox(
+                cmd,
+                timeout_s=timeout_s,
+                mem_mb=2048,
+                cpu_s=int(timeout_s) + 5,
+                files={"main.go": go_program},
+            )
+
+            if timed_out:
+                return OracleResult(
+                    success=False,
+                    compiler="go",
+                    error_message=f"Go execution timed out after {timeout_s}s",
+                    latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                    details={"reason": "timeout", "total": test_count},
+                )
+
+            # Parse the nonce-tagged result from stdout
+            result = _parse_go_test_result(stdout, nonce)
+            if not result:
+                return OracleResult(
+                    success=False,
+                    compiler="go",
+                    error_message="No nonce-tagged result found in test output",
+                    stdout=stdout[-500:] if stdout else "",
+                    stderr=stderr[-500:] if stderr else "",
+                    latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                    details={"reason": "missing_result"},
+                )
+
+            passed = result.get("passed", 0)
+            total = result.get("total", test_count)
+
+            if passed == total and total == test_count:
+                return OracleResult(
+                    success=True,
+                    compiler="go",
+                    stdout=stdout[-500:] if stdout else "",
+                    latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                    details={"passed": passed, "total": total, "reason": "all_tests_passed"},
+                )
+            else:
+                failure_msg = result.get("first_failure", "Unknown test failure")
+                return OracleResult(
+                    success=False,
+                    compiler="go",
+                    error_message=f"Test failure: {failure_msg}",
+                    stdout=stdout[-500:] if stdout else "",
+                    latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                    details={"passed": passed, "total": total, "reason": "test_failed"},
+                )
+        except Exception as exc:
+            latency = (time.perf_counter() - t0) * 1000.0
+            return OracleResult(
+                success=False,
+                compiler="go",
+                error_message=f"Sandbox error: {str(exc)}",
+                latency_ms=round(latency, 2),
+            )
