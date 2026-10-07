@@ -37,6 +37,9 @@ generation of the night.
 | D11 | H8 quant factor on full E, 9B bf16/q8_0/q4 | Only if G1 sub-task (e) runs: 9B on a 300-item subsample; reported as an **exploratory estimate**, no TOST decision | A +-2 pt TOST is unattainable at n=300. |
 | D12 | S7 endpoint 4-6 cold samples, cap 2.5 | E1: 4 cold samples, cap 2.0, only if G1 completed, the Laya head exists, L4 Cloud Run quota is present and the exact commands are authorized; else H14 NOT RUN | cut_order drops cold samples 5-6; no Cloud Build spend. |
 | D13 | Primary E items verified on CPU only | Unchanged | (listed to make clear it is kept) |
+| D14 | L0: llama-server `-t 8` | `-t 4` (still `--parallel 2`). Measured: `-t 8` gave 0.28-0.30 tok/s because 3 foreign CPU-bound python jobs (not ours, not touched) hold ~3 of 8 logical cores and the thread barrier stalls; `-t 4` gave 3.4 tok/s (llama-bench `-t 2/3/4` = 2.2/3.2/3.4 tg) | Throughput |
+| D15 | L0 tok/s on 10 MBPP+ prompts at the default token budget | `max_tokens` = 64, not 256, to fit the 0.75 h wall clock at ~3 tok/s | Wall clock |
+| D16 | Source-controlled bug fix: `gwaya/domains/math_check.py::_to_sympy_src` rejects multi-letter words | With sympy installed, `answers_equivalent('banana','apple')` returned False (words read as free symbols) instead of None (undecided); `tests/test_domains.py::test_unparseable_is_undecided` failed. Words now return None. Single-letter algebra (x+1 vs x+2) is unchanged | Fail-closed correctness |
 
 ### Hypothesis status for this run
 

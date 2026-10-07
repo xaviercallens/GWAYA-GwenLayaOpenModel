@@ -64,6 +64,7 @@ class TestEquivalence:
     def test_unparseable_is_undecided(self):
         assert answers_equivalent("banana", "apple")[0] is None
         assert answers_equivalent("(1,2)", "(2,1)")[0] is None
+        assert answers_equivalent("banana", "banana")[1] == "string_exact"
 
     def test_exact_string_match_ok(self):
         assert answers_equivalent("(1,2)", "(1,2)") == (True, "string_exact")
