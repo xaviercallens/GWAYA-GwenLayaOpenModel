@@ -40,3 +40,11 @@ Verdict: **trustworthy, continue** (G1 expected SKIPPED; L2 next).
 - Main risk: **mean tokens per item (196.6) is assumed, not measured (D19).** At 1.29 tok/s the 4B tier makes about 18.6k tokens in 4 h. If real completions run close to max_new_tokens 1024 (typical for math without thinking), L3 will finish only about 20 to 40 items and paired n will be far below 80. L2 should log the mean completion tokens of its first about 10 items to the stage log. n_d must not change after the freeze, and truncation is reported as is. H1 is already underpowered at n = 80 (power 0.05 at the 3 pt MEI) and will be reported as inconclusive if it is not significant.
 - GPU slot: GPUS_ALL_REGIONS is still 1.0/1.0, held by socreateai-agora-hermes-node1 (00:10, 00:20, 00:31). Expect G1 and E1 to be SKIPPED.
 - Spend: ~$0.84 of $45 (L1 spent $0.0, storage is negligible). The two TPU ledger lines still have no `usd_estimate`.
+
+## L2 (2B generation on E-night), night 2026-10-07
+
+- Ran `run_study.py --stage night_L2` (plan `experiments/night/plan_night.json`, D21) against llama-server 2B Q4_K_M on 127.0.0.1:8091, greedy, thinking off, max_new_tokens 1024, `--cpu-pid` for per-call CPU-seconds. Status COMPLETE (log ends DONE), 80 of 80 items (python 28, rust 26, math 26), about 72 min wall (limit 3 h).
+- `$NIGHT/cache/candidates_2b.jsonl`: 80 lines, every line has non-empty `token_logprobs` and `cpu_seconds` (checked). Server CPU total 16498 s, client wall total 4313 s.
+- Finish reasons: 75 stop, 5 length (truncated at 1024 tokens). Mean completion tokens 194.1 (python 118.8, rust 98.5, math 371.0), versus the 196.6 assumed in D19: the assumption held for the 2B tier. Mode was generate, so nothing is scored yet.
+- Code: logprob parser for llama.cpp format, `proc_cpu_seconds`, SIGINT handled as PARTIAL; 3 new tests in `tests/test_run_study.py` (20 pass).
+- Note: the 4B server was stopped; L3 must start it again (same flags, model Qwen3.5-4B-Q4_K_M.gguf).
