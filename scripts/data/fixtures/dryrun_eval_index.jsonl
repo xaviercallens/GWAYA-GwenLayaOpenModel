@@ -1,0 +1,2 @@
+{"eval_set": "fixture-eval-python", "item_id": "fx_e1", "domain": "python", "role": "eval", "fields": {"prompt": "Write f that returns the sum of the squares of all odd numbers in a list of integers, ignoring negative values and non-integer entries, and returns zero for an empty list.", "solution": "def f(xs):\n    return 0"}}
+{"eval_set": "fixture-eval-math", "item_id": "fx_e2", "domain": "math", "role": "eval", "fields": {"prompt": "Compute the exact value of the sum of the first nine hundred and ninety nine positive cubes divided by seven."}}

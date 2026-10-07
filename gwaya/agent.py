@@ -1,10 +1,10 @@
 """
-anse/gwaya/agent.py
-===================
+gwaya/agent.py
+==============
 ``gwaya-agent``: a small local coding agent for a standard NVIDIA RTX GPU (or CPU) using Ollama.
 
-    uv run python -m anse.gwaya.agent doctor
-    uv run python -m anse.gwaya.agent ask "write is_prime(n)" --test "assert is_prime(7) and not is_prime(8)"
+    uv run python -m gwaya.agent doctor
+    uv run python -m gwaya.agent ask "write is_prime(n)" --test "assert is_prime(7) and not is_prime(8)"
 
 Contract (what it does and does not claim):
 * Code is only reported ``VERIFIED`` if it passed a check that was actually executed in the bwrap sandbox

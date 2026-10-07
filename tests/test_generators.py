@@ -1,4 +1,4 @@
-"""Unit tests for anse.gwaya.generators (LT1). The live test needs GWAYA_OLLAMA_TESTS=1."""
+"""Unit tests for gwaya.generators (LT1). The live test needs GWAYA_OLLAMA_TESTS=1."""
 from __future__ import annotations
 
 import os

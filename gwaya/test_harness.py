@@ -1,6 +1,6 @@
 """
-anse/gwaya/test_harness.py
-==========================
+gwaya/test_harness.py
+=====================
 Isolated, bypass-resistant execution of a candidate against a test specification.
 
 Why this exists (audit probes P1-P3): the previous implementation appended the test spec to
@@ -10,14 +10,18 @@ any spec, and the "Tier-1 sandbox" had full host filesystem, network and environ
 Design
 ------
 * A trusted runner script (``_RUNNER_SOURCE``) is the entry point, not the candidate.
-* The parent sends a random nonce on stdin. The runner reads it, then closes stdin, before
-  any candidate code runs.
-* The runner executes the candidate, then each top-level statement of the spec in order.
-  Every statement containing an ``assert`` is one test. Any ``BaseException`` (including
-  ``SystemExit`` raised inside candidate functions) counts as a failure.
-* Only after all statements ran does the runner print one JSON record tagged with the nonce.
-  The parent accepts a pass only if that record exists, carries the nonce, reports the
-  number of tests the parent counted itself, and ``passed == total``. Exit code is ignored.
+* The runner does NOT store the nonce in module globals. Instead, it is read from stdin
+  into a closure-local variable before any candidate code runs.
+* The runner is forked into a parent (supervisor) and child (executor) process:
+  - CHILD: Executes the candidate, then each top-level statement of the spec in order.
+    Every statement containing an ``assert`` is one test. Any ``BaseException`` (including
+    ``SystemExit`` raised inside candidate functions) counts as a failure. The child writes
+    one line per test to a pipe: "PASS" or "FAIL <error>". The child cannot name or modify
+    the supervisor's record pipe and cannot forge the nonce or aggregate count.
+  - PARENT (supervisor): Waits for the child to finish on the result pipe. For each line,
+    counts tests and tracks passes. After the child exits, writes one JSON record tagged
+    with the nonce (known only to parent). The parent validates that the child reported
+    the expected number of tests and that all reported PASS/FAIL counts match.
 * Execution happens under ``bwrap``: no network, empty environment, host ``/tmp``, ``/home``,
   ``/mnt``, ``/media``, ``/root`` hidden (only the interpreter's venv is re-mounted
   read-only), rlimits on CPU, address space, file size and open files, wall-clock timeout
@@ -29,10 +33,15 @@ Design
 Threat model (honest scope)
 ---------------------------
 Defends against early exit, exit-code spoofing, ``atexit``/``excepthook`` tricks, rebinding
-``AssertionError``, host file or network access, and environment-secret leakage. It does
-NOT defend against a candidate that deliberately introspects the interpreter (``gc``,
-``sys._getframe``) to steal the nonce and forge a record; that requires out-of-process
-evaluation of results and is out of scope here.
+``AssertionError``, host file or network access, environment-secret leakage, and introspection
+attacks on the nonce (``gc``, ``sys._getframe``) by keeping the nonce in the parent process
+only, not in the child's globals or memory.
+
+Does NOT defend against:
+- A child that deliberately exhausts the pipe with junk data (the parent enforces a line limit)
+- A child that intentionally crashes and lets the parent's rlimit kill it without reporting
+  (this is detected as a failed child exit)
+- Forged parent-side code in the runner script itself (the parent is trusted)
 """
 from __future__ import annotations
 
@@ -55,53 +64,118 @@ SANDBOX_WORKDIR = "/work"
 _MAX_REPORTED_OUTPUT = 4000
 
 # The runner deliberately captures every builtin it needs before candidate code runs.
+# It uses fork() to separate parent (nonce holder, judge) from child (executor).
+# The nonce is read only by parent into a closure; child never sees it.
 _RUNNER_SOURCE = r'''
-import sys as _sys
-_nonce = _sys.stdin.readline().strip()
+import sys as _sys, os as _os
+_stdin_nonce = _sys.stdin.readline().strip()
 _sys.stdin.close()
-import ast as _ast, json as _json, os as _os, traceback as _tb
-_dumps, _write, _stdout_fd = _json.dumps, _os.write, 1
-_BaseException, _compile, _exec, _len = BaseException, compile, exec, len
 
-def _emit(record):
-    record["nonce"] = _nonce
-    _write(_stdout_fd, ("\n" + _dumps(record) + "\n").encode())
+import ast as _ast, json as _json, traceback as _tb
+_dumps, _write, _read, _stdout_fd = _json.dumps, _os.write, _os.read, 1
+_BaseException, _compile, _exec, _encode = BaseException, compile, exec, str.encode
 
 def _short(exc):
     msg = "".join(_tb.format_exception_only(type(exc), exc)).strip()
     return msg[:500]
 
-_candidate = open("candidate.py", encoding="utf-8").read()
-_spec_src = open("spec.py", encoding="utf-8").read()
-_ns = {"__name__": "candidate"}
-try:
-    _exec(_compile(_candidate, "candidate.py", "exec"), _ns)
-except _BaseException as _e:
-    _emit({"passed": 0, "total": -1, "stage": "import", "first_failure": _short(_e)})
-    _os._exit(0)
+_read_fd, _write_fd = _os.pipe()
+_child_pid = _os.fork()
 
-_tree = _ast.parse(_spec_src)
-_passed, _total, _first, _failed = 0, 0, None, []
-_lines = _spec_src.splitlines()
-for _stmt in _tree.body:
-    _is_test = any(isinstance(_n, _ast.Assert) for _n in _ast.walk(_stmt))
-    _idx = _total
-    _total += 1 if _is_test else 0
-    _src = "\n".join(_lines[_stmt.lineno - 1:_stmt.end_lineno])
+if _child_pid == 0:
+    # CHILD PROCESS: execute candidate and spec, report results line-by-line
+    _os.close(_read_fd)
+
+    _candidate = open("candidate.py", encoding="utf-8").read()
+    _spec_src = open("spec.py", encoding="utf-8").read()
+    _ns = {"__name__": "candidate"}
+
     try:
-        _exec(_compile(_ast.Module(body=[_stmt], type_ignores=[]), "spec.py", "exec"), _ns)
-        _passed += 1 if _is_test else 0
+        _exec(_compile(_candidate, "candidate.py", "exec"), _ns)
     except _BaseException as _e:
-        if _is_test:
-            _failed.append(_idx)
-        if _first is None:
-            _first = _src.strip()[:300] + " -> " + _short(_e)
-        if not _is_test:
-            _remaining = _tree.body[_tree.body.index(_stmt) + 1:]
-            _total += sum(1 for _s in _remaining if any(isinstance(_n, _ast.Assert) for _n in _ast.walk(_s)))
+        _write(_write_fd, (b"FAIL_IMPORT: " + _short(_e).encode()[:500] + b"\n"))
+        _os._exit(0)
+
+    _tree = _ast.parse(_spec_src)
+    _lines = _spec_src.splitlines()
+    for _stmt in _tree.body:
+        _is_test = any(isinstance(_n, _ast.Assert) for _n in _ast.walk(_stmt))
+
+        try:
+            _exec(_compile(_ast.Module(body=[_stmt], type_ignores=[]), "spec.py", "exec"), _ns)
+            if _is_test:
+                _write(_write_fd, b"PASS\n")
+        except _BaseException as _e:
+            if _is_test:
+                _write(_write_fd, (b"FAIL: " + _short(_e).encode()[:500] + b"\n"))
+            else:
+                # Non-test statement failed; treat as a setup error
+                _write(_write_fd, (b"FAIL_SETUP: " + _short(_e).encode()[:500] + b"\n"))
+                _os.close(_write_fd)
+                _os._exit(0)
+
+    _os.close(_write_fd)
+    _os._exit(0)
+else:
+    # PARENT PROCESS: hold nonce, read results, aggregate, judge
+    _os.close(_write_fd)
+    _nonce = _stdin_nonce
+
+    _passed, _total = 0, 0
+    _results = []
+    _buffer = b""
+
+    try:
+        while True:
+            _chunk = _read(_read_fd, 4096)
+            if not _chunk:
+                break
+            _buffer += _chunk
+    except OSError:
+        pass
+
+    _os.close(_read_fd)
+
+    _failures = []
+    for _line in _buffer.decode("utf-8", errors="replace").splitlines():
+        _line = _line.strip()
+        if not _line:
+            continue
+        if _line == "PASS":
+            _passed += 1
+            _total += 1
+            _results.append("pass")
+        elif _line.startswith("FAIL_IMPORT:"):
+            _total += 1
+            _results.append("import_failed")
+            _failures.append(_line[len("FAIL_IMPORT: "):])
             break
-_emit({"passed": _passed, "total": _total, "stage": "spec", "first_failure": _first, "failed": _failed})
-_os._exit(0)
+        elif _line.startswith("FAIL_SETUP:"):
+            _results.append("setup_failed")
+            _failures.append(_line[len("FAIL_SETUP: "):])
+            break
+        elif _line.startswith("FAIL:"):
+            _total += 1
+            _results.append("failed")
+            _failures.append(_line[len("FAIL: "):])
+        else:
+            _total += 1
+            _results.append("failed")
+            _failures.append(_line)
+
+    _os.waitpid(_child_pid, 0)
+
+    _record = {
+        "nonce": _nonce,
+        "passed": _passed,
+        "total": _total,
+        "stage": "spec",
+        "results": _results,
+    }
+    if _failures:
+        _record["failures"] = _failures
+    _write(_stdout_fd, _encode("\n" + _dumps(_record) + "\n"))
+    _os._exit(0)
 '''
 
 
@@ -258,14 +332,34 @@ def _launch(argv: list[str], work: Path, nonce: str, timeout_s: float, mem_mb: i
 
 
 def _judge_record(record: dict[str, Any], expected_total: int) -> tuple[int, str]:
-    """Checks the runner's record against the parent's own assert count; '' means pass."""
+    """Checks the runner's record against the parent's own assert count; '' means pass.
+
+    With the fork-based architecture, the child reports individual test results (PASS/FAIL/FAIL_IMPORT)
+    and the parent aggregates them. We validate:
+    1. The total number of tests reported matches what we counted
+    2. All tests passed (passed == total)
+    3. No import failures or setup failures
+    """
     passed, total = int(record.get("passed", 0)), int(record.get("total", -1))
-    if record.get("stage") == "import":
-        return passed, f"IMPORT_FAILED: {record.get('first_failure')}"
+    results = record.get("results", [])
+
+    # Check for import failure
+    if "import_failed" in results:
+        return 0, f"IMPORT_FAILED: candidate could not be imported"
+
+    # Check for setup failure (non-test statement that failed)
+    if "setup_failed" in results:
+        failure_msg = ""
+        failures = record.get("failures", [])
+        if failures:
+            failure_msg = f": {failures[0][:200]}"
+        return 0, f"SETUP_FAILED: test spec has invalid setup code{failure_msg}"
+
     if total != expected_total:
         return passed, f"RESULT_MISMATCH: harness reported {total} tests, spec has {expected_total}"
     if passed != total:
-        return passed, f"TEST_FAILED ({passed}/{total} passed): {record.get('first_failure')}"
+        failed_count = sum(1 for r in results if r == "failed")
+        return passed, f"TEST_FAILED ({passed}/{total} passed, {failed_count} failed)"
     return passed, ""
 
 
@@ -316,6 +410,13 @@ def run_candidate_tests(
                      isolation, t0, reason="no_result", total=expected_total, output_tail=tail)
 
     passed, error = _judge_record(record, expected_total)
+    # Reconstruct failed indices from results list
+    results = record.get("results", [])
+    failed_idx = [i for i, result in enumerate(results) if result == "failed"]
+    details = {"failed_idx": failed_idx}
+    # Include failure messages if available
+    if "failures" in record:
+        details["failures"] = record["failures"]
     return HarnessResult(
         success=(error == ""),
         passed=passed,
@@ -324,5 +425,5 @@ def run_candidate_tests(
         isolation=isolation,
         duration_ms=round((time.perf_counter() - t0) * 1000.0, 2),
         stdout_tail=tail,
-        details={"failed_idx": [int(i) for i in record.get("failed", [])]},
+        details=details,
     )

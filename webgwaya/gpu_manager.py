@@ -22,12 +22,17 @@ from typing import Any
 log = logging.getLogger("WebGWAYA.GPU")
 
 OLLAMA_DEFAULT_HOST = "http://127.0.0.1:11434"
-DEFAULT_MODELS_DIR = r"D:\ollama\models"
-CANDIDATE_OLLAMA_PATHS = [
-    Path(r"D:\ollama\bin\ollama.exe"),
-    Path(r"C:\Users\Utilisateur\AppData\Local\Programs\Ollama\ollama.exe"),
-    Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "Ollama" / "ollama.exe",
-]
+
+# Use environment variables for paths, with platform-specific defaults
+if sys.platform == "win32":
+    DEFAULT_MODELS_DIR = os.environ.get("OLLAMA_MODELS", r"C:\Users\%USERNAME%\AppData\Local\Ollama\models")
+    CANDIDATE_OLLAMA_PATHS = [
+        Path(os.environ.get("OLLAMA_BIN", r"C:\Users\%USERNAME%\AppData\Local\Programs\Ollama\ollama.exe")),
+    ]
+else:
+    # Linux/macOS defaults
+    DEFAULT_MODELS_DIR = os.environ.get("OLLAMA_MODELS", os.path.expanduser("~/.ollama/models"))
+    CANDIDATE_OLLAMA_PATHS = []
 
 
 def find_ollama_bin() -> Path | None:
@@ -154,9 +159,10 @@ def stop_gpu_service(host: str = OLLAMA_DEFAULT_HOST) -> dict[str, Any]:
     """
     Completely stops the GPU service and background Ollama processes,
     releasing all GPU VRAM for other external projects.
+    Sends SIGTERM first, then SIGKILL if needed.
     """
     log.info("Request received to STOP GPU service and release VRAM...")
-    
+
     # 1. Unload models in VRAM if service is still responding
     if is_ollama_service_online(host):
         try:
@@ -168,7 +174,7 @@ def stop_gpu_service(host: str = OLLAMA_DEFAULT_HOST) -> dict[str, Any]:
     if sys.platform == "win32":
         try:
             subprocess.run(
-                ["taskkill", "/F", "/IM", "ollama.exe", "/IM", "ollama_runner.exe"],
+                ["taskkill", "/IM", "ollama.exe"],
                 capture_output=True,
                 text=True,
                 check=False,
@@ -177,10 +183,25 @@ def stop_gpu_service(host: str = OLLAMA_DEFAULT_HOST) -> dict[str, Any]:
         except Exception as e:
             log.warning("taskkill error: %s", e)
     else:
+        # Linux/macOS: use pgrep/pkill -x (exact match on executable name)
         try:
-            subprocess.run(["pkill", "-9", "-f", "ollama"], capture_output=True, text=True, check=False)
+            # First try SIGTERM (graceful shutdown)
+            subprocess.run(["pkill", "-x", "ollama"], capture_output=True, text=True, check=False, timeout=5.0)
+            time.sleep(1.0)
+
+            # Check if still running, then force kill with SIGKILL
+            pgrep_result = subprocess.run(
+                ["pgrep", "-x", "ollama"],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=3.0,
+            )
+            if pgrep_result.returncode == 0:  # Process still exists
+                log.info("Ollama still running after SIGTERM, sending SIGKILL...")
+                subprocess.run(["pkill", "-9", "-x", "ollama"], capture_output=True, text=True, check=False, timeout=3.0)
         except Exception as e:
-            log.warning("pkill error: %s", e)
+            log.warning("pkill/pgrep error: %s", e)
 
     # Small pause to allow driver to reclaim memory
     time.sleep(3.0)
@@ -205,9 +226,10 @@ def stop_gpu_service(host: str = OLLAMA_DEFAULT_HOST) -> dict[str, Any]:
 def start_gpu_service(host: str = OLLAMA_DEFAULT_HOST, timeout_s: float = 25.0) -> dict[str, Any]:
     """
     Starts the Ollama CUDA daemon, warming up GPU capabilities for WebGWAYA.
+    Uses OLLAMA_BIN and OLLAMA_MODELS environment variables for configuration.
     """
     log.info("Request received to START GPU service...")
-    
+
     if is_ollama_service_online(host):
         telemetry = get_nvidia_telemetry()
         models = get_available_models(host)
@@ -222,12 +244,10 @@ def start_gpu_service(host: str = OLLAMA_DEFAULT_HOST, timeout_s: float = 25.0) 
 
     ollama_bin = find_ollama_bin()
     if not ollama_bin or not ollama_bin.exists():
-        raise RuntimeError(f"Ollama binary not found at candidate paths: {CANDIDATE_OLLAMA_PATHS}")
+        raise RuntimeError(f"Ollama binary not found. Set OLLAMA_BIN env var or install Ollama.")
 
-    if Path(DEFAULT_MODELS_DIR).exists():
-        models_dir = DEFAULT_MODELS_DIR
-    else:
-        models_dir = os.environ.get("OLLAMA_MODELS", DEFAULT_MODELS_DIR)
+    # Use env var OLLAMA_MODELS if set, otherwise use default
+    models_dir = os.environ.get("OLLAMA_MODELS", DEFAULT_MODELS_DIR)
     env = os.environ.copy()
     env["OLLAMA_MODELS"] = str(models_dir)
 
@@ -267,7 +287,7 @@ def start_gpu_service(host: str = OLLAMA_DEFAULT_HOST, timeout_s: float = 25.0) 
         "gpu": telemetry,
         "models_count": len(models),
         "models": models,
-        "message": "GPU engine successfully started. RTX 2070 is active and ready for inference.",
+        "message": "GPU engine successfully started. GPU is active and ready for inference.",
     }
 
 

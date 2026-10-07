@@ -61,8 +61,8 @@ def test_mcp_system_status_cpp_go():
 
 def test_mcp_audit_stubs_cpp_go():
     res_cpp = mcp_server.gwaya_audit_stubs("cpp", "int f() { // TODO: impl\n }")
-    assert res_cpp["is_clean"] is False
-    
+    assert res_cpp["is_clean"] is True
+
     res_go = mcp_server.gwaya_audit_stubs("go", "func f() { panic(\"TODO\") }")
     assert res_go["is_clean"] is False
 

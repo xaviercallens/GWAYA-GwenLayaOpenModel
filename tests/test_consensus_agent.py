@@ -1,10 +1,20 @@
 """ConsensusRepairAgent with a scripted generator and the real bwrap sandbox."""
 import os
-os.environ["GWAYA_ALLOW_UNISOLATED"] = "1"
-
 import pytest
 
 from gwaya.consensus_agent import ConsensusRepairAgent
+
+
+@pytest.fixture(scope="module", autouse=True)
+def allow_unisolated():
+    """Allow unisolated execution for this test module."""
+    old_val = os.environ.get("GWAYA_ALLOW_UNISOLATED")
+    os.environ["GWAYA_ALLOW_UNISOLATED"] = "1"
+    yield
+    if old_val is None:
+        os.environ.pop("GWAYA_ALLOW_UNISOLATED", None)
+    else:
+        os.environ["GWAYA_ALLOW_UNISOLATED"] = old_val
 PUBLIC = "assert f(2) == 4\n"
 GOAL = "Write f(x) that doubles x."
 

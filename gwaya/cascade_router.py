@@ -154,6 +154,7 @@ class GwayaCascadeRouter:
                     telemetry={
                         "early_exit": True,
                         "saved_tiers": len(self.ladder) - (tier_idx + 1),
+                        "tokens_per_s_method": "estimated_from_reference_table",
                         "speculative_speedup": f"{round(tok_s / 71.4, 2)}x" if tok_s else "1.0x",
                     },
                 )
@@ -182,7 +183,11 @@ class GwayaCascadeRouter:
             trajectory=trajectory,
             proof_token=fallback_token,
             level=fallback_level,
-            telemetry={"early_exit": False, "ladder_exhausted": True},
+            telemetry={
+                "early_exit": False,
+                "ladder_exhausted": True,
+                "tokens_per_s_method": "estimated_from_reference_table",
+            },
         )
 
     @staticmethod

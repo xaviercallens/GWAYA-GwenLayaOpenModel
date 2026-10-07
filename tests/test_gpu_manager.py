@@ -25,7 +25,8 @@ from webgwaya.gpu_manager import (
 
 def test_find_ollama_bin():
     binary = find_ollama_bin()
-    assert binary is not None
+    if binary is None:
+        pytest.skip("Ollama binary not found on this system")
     assert binary.exists()
     assert binary.name.lower().startswith("ollama")
 
@@ -33,12 +34,13 @@ def test_find_ollama_bin():
 def test_get_nvidia_telemetry():
     telemetry = get_nvidia_telemetry()
     assert "available" in telemetry
-    if telemetry["available"]:
-        assert "RTX" in telemetry["name"] or "NVIDIA" in telemetry["name"]
-        assert telemetry["memory_total_mb"] > 0
-        assert telemetry["memory_used_mb"] >= 0
-        assert telemetry["memory_free_mb"] > 0
-        assert telemetry["temp_c"] >= 0
+    if not telemetry["available"]:
+        pytest.skip("No NVIDIA GPU available on this system")
+    assert "RTX" in telemetry["name"] or "NVIDIA" in telemetry["name"]
+    assert telemetry["memory_total_mb"] > 0
+    assert telemetry["memory_used_mb"] >= 0
+    assert telemetry["memory_free_mb"] > 0
+    assert telemetry["temp_c"] >= 0
 
 
 def test_get_gpu_full_status_structure():

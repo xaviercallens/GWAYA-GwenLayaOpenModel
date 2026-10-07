@@ -1,6 +1,6 @@
 """
-anse/gwaya/grounding.py
-=======================
+gwaya/grounding.py
+==================
 Static *grounding* checks: does the code refer only to names, modules and attributes that exist?
 
 Small code models hallucinate APIs: an undefined helper, ``import numpyx``, ``math.cube_root``.

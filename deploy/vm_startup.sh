@@ -5,7 +5,12 @@
 set -uo pipefail
 md() { curl -sf -H 'Metadata-Flavor: Google' "http://metadata.google.internal/computeMetadata/v1/instance/$1"; }
 IMAGE="$(md attributes/IMAGE)"; LAKE="$(md attributes/LAKE)"; TAG="$(md attributes/RUN_TAG)"
-N="$(md attributes/N)"; REQUIRE_GPU="$(md attributes/REQUIRE_GPU)"
+N="$(md attributes/N 2>/dev/null || echo '')"; REQUIRE_GPU="$(md attributes/REQUIRE_GPU)"
+STAGE="$(md attributes/STAGE 2>/dev/null || echo '')"; GPU_KIND="$(md attributes/GPU_KIND 2>/dev/null || echo l4)"
+# Staged GwenLaya run: state lives flat under $LAKE/runs/<stage>/ (run_study --lake-sync layout); legacy runs use runs/<tag>/out
+if [ -n "$STAGE" ]; then STATE="$LAKE/runs/$STAGE"; OUT_PREFIX="$STATE"; else STATE="$LAKE/runs/$TAG"; OUT_PREFIX="$STATE/out"; fi
+STAGE_RC=""  # set only when the stage command itself returned; stays empty on preemption/SIGTERM
+MODEL="$(md attributes/MODEL 2>/dev/null || echo '')"  # optional; defaults to first available if not specified
 NAME="$(md name)"; ZONE="$(md zone | awk -F/ '{print $NF}')"
 LOG=/var/log/gwaya_startup.log
 log() { echo "[$(date -Is)] $*" | tee -a "$LOG"; }
@@ -13,9 +18,22 @@ log() { echo "[$(date -Is)] $*" | tee -a "$LOG"; }
 finish() {
   rc=$?
   log "finishing (rc=$rc); final sync then self-delete"
-  [ -d /data/out ] && gcloud storage rsync -r /data/out "$LAKE/runs/$TAG/out" >> "$LOG" 2>&1
-  gcloud storage cp "$LOG" "$LAKE/runs/$TAG/startup.log" > /dev/null 2>&1
-  echo "rc=$rc finished=$(date -Is)" | gcloud storage cp - "$LAKE/runs/$TAG/DONE" > /dev/null 2>&1
+  [ -d /data/out ] && gcloud storage rsync -r /data/out "$OUT_PREFIX" >> "$LOG" 2>&1
+  if [ -n "$STAGE" ]; then
+    # adapters, quantized weights and results go to their own gwenlaya_v4/ prefixes (never outside it)
+    [ -d /data/adapters ] && gcloud storage rsync -r /data/adapters "$LAKE/adapters" >> "$LOG" 2>&1
+    [ -d /data/quantized ] && gcloud storage rsync -r /data/quantized "$LAKE/quantized" >> "$LOG" 2>&1
+    [ -d "/data/results/$STAGE" ] && gcloud storage rsync -r "/data/results/$STAGE" "$LAKE/results/$STAGE" >> "$LOG" 2>&1
+    gcloud storage cp "$LOG" "$STATE/startup_${NAME}.log" > /dev/null 2>&1
+    # DONE only when the stage command returned (COMPLETE or FAILED); a preempted/expired VM leaves no marker so the launcher relaunches
+    if [ -n "$STAGE_RC" ]; then
+      st=COMPLETE; [ "$STAGE_RC" != 0 ] && st=FAILED
+      echo "$st rc=$STAGE_RC finished=$(date -Is)" | gcloud storage cp - "$STATE/DONE" > /dev/null 2>&1
+    fi
+  else
+    gcloud storage cp "$LOG" "$STATE/startup.log" > /dev/null 2>&1
+    echo "rc=$rc finished=$(date -Is)" | gcloud storage cp - "$STATE/DONE" > /dev/null 2>&1
+  fi
   gcloud compute instances delete "$NAME" --zone "$ZONE" --quiet >> "$LOG" 2>&1
 }
 trap finish EXIT
@@ -56,25 +74,47 @@ fi
 GPU_FLAGS="${GPU_FLAGS:---gpus all}"
 command -v docker > /dev/null || { log "docker missing"; exit 5; }
 mkdir -p /data/model /data/datasets /data/out
-log "restoring model, dataset and resume state from $LAKE"
-gcloud storage cp "$LAKE/model/ollama_models.tar" /data/model/ >> "$LOG" 2>&1 || exit 6
-gcloud storage cp -r "$LAKE/datasets/mbpp-sanitized" /data/datasets/ >> "$LOG" 2>&1 || exit 6
-gcloud storage rsync -r "$LAKE/runs/$TAG/out" /data/out >> "$LOG" 2>&1 || log "no prior state for $TAG (fresh run)"
+if [ -n "$STAGE" ]; then
+  log "restoring inputs, adapters, quantized weights and resume state for stage $STAGE from $LAKE"
+  gcloud storage rsync -r "$LAKE/datasets" /data/datasets >> "$LOG" 2>&1 || exit 6
+  mkdir -p /data/adapters /data/quantized
+  gcloud storage rsync -r "$LAKE/adapters" /data/adapters >> "$LOG" 2>&1 || log "no adapters in the lake yet"
+  gcloud storage rsync -r "$LAKE/quantized" /data/quantized >> "$LOG" 2>&1 || log "no quantized weights in the lake yet"
+  gcloud storage rsync -r "$STATE" /data/out >> "$LOG" 2>&1 || log "no prior state for $STAGE (fresh run)"
+else
+  log "restoring model, dataset and resume state from $LAKE"
+  gcloud storage cp "$LAKE/model/ollama_models.tar" /data/model/ >> "$LOG" 2>&1 || exit 6
+  gcloud storage cp -r "$LAKE/datasets/mbpp-sanitized" /data/datasets/ >> "$LOG" 2>&1 || exit 6
+  gcloud storage rsync -r "$LAKE/runs/$TAG/out" /data/out >> "$LOG" 2>&1 || log "no prior state for $TAG (fresh run)"
+fi
 
 gcloud auth configure-docker us-east4-docker.pkg.dev -q >> "$LOG" 2>&1
 log "pulling $IMAGE"
 docker pull "$IMAGE" >> "$LOG" 2>&1 || {
+  [ -n "$STAGE" ] && { log "stage image pull failed; no lake fallback for stage images"; exit 7; }
   log "registry pull failed; loading image tar from the lake"
   gcloud storage cp "$LAKE/images/gwaya-bench.tar.gz" /data/ >> "$LOG" 2>&1 && docker load -i /data/gwaya-bench.tar.gz >> "$LOG" 2>&1 || exit 7
 }
 
-( while true; do sleep 90; gcloud storage rsync -r /data/out "$LAKE/runs/$TAG/out" > /dev/null 2>&1; done ) &
+# <= 15 min commit interval for stages (plan.json spend_rules); legacy runs keep 90 s
+SYNC_EVERY=90; [ -n "$STAGE" ] && SYNC_EVERY=600
+( while true; do sleep "$SYNC_EVERY"; gcloud storage rsync -r /data/out "$OUT_PREFIX" > /dev/null 2>&1; done ) &
 SYNC_PID=$!
 
-log "running benchmark (N=$N)"
+if [ -n "$STAGE" ]; then
+  log "running stage $STAGE on $GPU_KIND"
+  docker run --rm $GPU_FLAGS --security-opt seccomp=unconfined --security-opt apparmor=unconfined --security-opt systempaths=unconfined \
+    --cap-add SYS_ADMIN -v /data:/data -e GWAYA_STAGE="$STAGE" -e GWAYA_GPU="$GPU_KIND" -e GWAYA_REQUIRE_GPU="$REQUIRE_GPU" \
+    "$IMAGE" >> "$LOG" 2>&1
+  STAGE_RC=$?
+  kill "$SYNC_PID" 2>/dev/null
+  log "stage $STAGE container exited rc=$STAGE_RC"
+  exit "$STAGE_RC"
+fi
+log "running benchmark (N=$N, model=$MODEL)"
 # bwrap needs user namespaces; this VM is disposable so relax the container's seccomp/apparmor profile.
 docker run --rm $GPU_FLAGS --security-opt seccomp=unconfined --security-opt apparmor=unconfined --security-opt systempaths=unconfined \
-  --cap-add SYS_ADMIN -v /data:/data -e GWAYA_N="$N" -e GWAYA_REQUIRE_GPU="$REQUIRE_GPU" "$IMAGE" >> "$LOG" 2>&1
+  --cap-add SYS_ADMIN -v /data:/data -e GWAYA_N="$N" -e GWAYA_REQUIRE_GPU="$REQUIRE_GPU" ${MODEL:+-e GWAYA_MODEL="$MODEL"} "$IMAGE" >> "$LOG" 2>&1
 RC=$?
 kill "$SYNC_PID" 2>/dev/null
 log "benchmark container exited rc=$RC"

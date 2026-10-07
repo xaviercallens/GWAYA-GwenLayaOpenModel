@@ -35,7 +35,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from run_low_tier_benchmark import (  # noqa: E402
+from scripts.run_benchmark import (  # noqa: E402
     CachedGenerator,
     load_mbpp,
     make_optimizer,

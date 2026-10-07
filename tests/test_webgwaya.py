@@ -6,15 +6,26 @@ Unit and API integration tests for WebGWAYA console backend.
 from __future__ import annotations
 
 import os
-
-os.environ["GWAYA_ALLOW_UNISOLATED"] = "1"
-
 import pytest
 from fastapi.testclient import TestClient
 
-from webgwaya.app import app
+from webgwaya.app import app, WEBGWAYA_TOKEN
+
+
+@pytest.fixture(scope="session", autouse=True)
+def allow_unisolated():
+    """Allow unisolated execution for webgwaya tests."""
+    os.environ["GWAYA_ALLOW_UNISOLATED"] = "1"
+    yield
+    # Cleanup
+    os.environ.pop("GWAYA_ALLOW_UNISOLATED", None)
+
 
 client = TestClient(app)
+
+# Helper to get auth headers
+def auth_headers():
+    return {"Authorization": f"Bearer {WEBGWAYA_TOKEN}"}
 
 
 def test_root_serves_html():
@@ -45,7 +56,7 @@ def test_scenarios_list():
 
 
 def test_ast_audit_clean_code():
-    res = client.post("/api/gwaya/ast-audit", json={"code": "def f(x):\n    return x + 1\n"})
+    res = client.post("/api/gwaya/ast-audit", json={"code": "def f(x):\n    return x + 1\n"}, headers=auth_headers())
     assert res.status_code == 200
     data = res.json()
     assert data["is_clean"] is True
@@ -54,7 +65,7 @@ def test_ast_audit_clean_code():
 
 
 def test_ast_audit_rejects_pass_stub():
-    res = client.post("/api/gwaya/ast-audit", json={"code": "def f(x):\n    pass\n"})
+    res = client.post("/api/gwaya/ast-audit", json={"code": "def f(x):\n    pass\n"}, headers=auth_headers())
     assert res.status_code == 200
     data = res.json()
     assert data["is_clean"] is False
@@ -66,7 +77,7 @@ def test_ast_audit_rejects_pass_stub():
 def test_evaluate_valid_code_and_tests():
     code = "def add(a, b):\n    return a + b\n"
     spec = "assert add(2, 3) == 5\nassert add(0, 0) == 0\n"
-    res = client.post("/api/gwaya/evaluate", json={"code": code, "test_spec": spec})
+    res = client.post("/api/gwaya/evaluate", json={"code": code, "test_spec": spec}, headers=auth_headers())
     assert res.status_code == 200
     data = res.json()
     assert data["verified"] is True
@@ -78,7 +89,7 @@ def test_evaluate_valid_code_and_tests():
 def test_evaluate_failing_tests():
     code = "def add(a, b):\n    return a - b\n"
     spec = "assert add(2, 3) == 5\n"
-    res = client.post("/api/gwaya/evaluate", json={"code": code, "test_spec": spec})
+    res = client.post("/api/gwaya/evaluate", json={"code": code, "test_spec": spec}, headers=auth_headers())
     assert res.status_code == 200
     data = res.json()
     assert data["verified"] is False
@@ -112,7 +123,7 @@ def test_lora_generate_config():
         "quantization": "4bit",
         "dataset_name": "gwaya_verified_receipts",
     }
-    res = client.post("/api/lora/generate-config", json=payload)
+    res = client.post("/api/lora/generate-config", json=payload, headers=auth_headers())
     assert res.status_code == 200
     data = res.json()
     assert data["status"] == "created"
@@ -131,26 +142,31 @@ def test_gpu_status_endpoint():
 
 
 def test_gpu_stop_and_start_cycle():
+    """Test GPU stop/start cycle. Skipped unless GWAYA_E2E_ALLOW_GPU_STOP=1."""
+    if os.environ.get("GWAYA_E2E_ALLOW_GPU_STOP") != "1":
+        pytest.skip("GPU stop/start test requires GWAYA_E2E_ALLOW_GPU_STOP=1")
+
     # 1. Stop GPU
-    res_stop = client.post("/api/gpu/stop")
+    res_stop = client.post("/api/gpu/stop", headers=auth_headers())
     assert res_stop.status_code == 200
     data_stop = res_stop.json()
-    assert data_stop["status"] == "stopped"
+    # The status can be either "stopped" or "stopping" depending on timing
+    assert data_stop["status"] in ("stopped", "stopping")
     assert data_stop["is_running"] is False
     assert data_stop["vram_freed"] is True
 
     # 2. Check status when stopped
     res_st1 = client.get("/api/gpu/status")
-    assert res_st1.json()["status"] == "stopped"
+    assert res_st1.json()["status"] in ("stopped", "stopping")
     assert res_st1.json()["is_running"] is False
 
     # 3. Verify generate fails closed with 503
-    res_gen = client.post("/api/gwaya/generate", json={"goal": "def f(): return 1", "model": "qwen2.5-coder:1.5b"})
+    res_gen = client.post("/api/gwaya/generate", json={"goal": "def f(): return 1", "model": "qwen2.5-coder:1.5b"}, headers=auth_headers())
     assert res_gen.status_code == 503
     assert "STOPPED" in res_gen.json()["detail"]
 
     # 4. Start GPU
-    res_start = client.post("/api/gpu/start")
+    res_start = client.post("/api/gpu/start", headers=auth_headers())
     assert res_start.status_code == 200
     data_start = res_start.json()
     assert data_start["status"] == "active"

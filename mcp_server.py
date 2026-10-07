@@ -27,6 +27,7 @@ from fastmcp import FastMCP
 
 from gwaya.ast_audit import ZeroStubAudit
 from gwaya.generators import OllamaGenerator
+from gwaya import gwenlaya
 from gwaya.low_tier_engine import LowTierModelOptimizer, ModelTier
 from gwaya.oracles import (
     Lean4CompilerOracle,
@@ -129,18 +130,20 @@ def gwaya_audit_stubs(language: str, code: str) -> Dict[str, Any]:
 def gwaya_verify_code(language: str, code: str, test_spec: str = "") -> Dict[str, Any]:
     """
     Verify candidate code using GWAYA's fail-closed verification oracles.
+    First runs ZeroStubAudit to reject placeholder code.
+
     - Python: Syntactic AST check, non-triviality check, and sandboxed Bubblewrap execution if test_spec is provided.
-    - Rust: Fail-closed type, syntax, and borrow checker via 'rustc --emit=metadata'.
+    - Rust: Fail-closed type, syntax, and borrow checker via 'rustc --emit=metadata'; with test_spec, builds and runs tests.
     - Lean 4: Fail-closed syntax & Lean 4 kernel with '#print axioms' soundness audit.
-    - C++: Syntax and type check via 'clang++ -fsyntax-only'.
-    - Go: Syntax and compilation check via 'go build -o /dev/null'.
+    - C++: Syntax and type check via 'clang++ -fsyntax-only'; with test_spec, builds and runs tests with assertions.
+    - Go: Syntax and compilation check via 'go build'; with test_spec, runs code with test assertions.
 
     Missing toolchains return UNVERIFIED (fail-closed) rather than false approval.
 
     Args:
         language: 'python', 'rust', 'lean', 'cpp', or 'go'.
         code: Candidate code snippet.
-        test_spec: Optional test assertion code (for Python).
+        test_spec: Optional test assertion code (works for all languages).
     """
     lang = language.lower().strip()
 
@@ -150,13 +153,22 @@ def gwaya_verify_code(language: str, code: str, test_spec: str = "") -> Dict[str
         else:
             res = _py_oracle.verify(code)
     elif lang in ("rust", "rs"):
-        res = _rust_oracle.verify(code)
+        if test_spec.strip():
+            res = _rust_oracle.verify_with_test(code, test_spec)
+        else:
+            res = _rust_oracle.verify(code)
     elif lang in ("lean", "lean4"):
         res = _lean_oracle.verify(code)
     elif lang in ("cpp", "c++"):
-        res = _cpp_oracle.verify(code)
+        if test_spec.strip():
+            res = _cpp_oracle.verify_with_test(code, test_spec)
+        else:
+            res = _cpp_oracle.verify(code)
     elif lang in ("go", "golang"):
-        res = _go_oracle.verify(code)
+        if test_spec.strip():
+            res = _go_oracle.verify_with_test(code, test_spec)
+        else:
+            res = _go_oracle.verify(code)
     else:
         return {
             "success": False,
@@ -213,6 +225,44 @@ def gwaya_repair_code(
         "telemetry": res.telemetry,
         "level": str(res.level),
     }
+
+
+@mcp.tool()
+def gwaya_answer(
+    prompt: str,
+    domain: str = "python",
+    tests: str = "",
+    reference_answer: str = "",
+    formal_statement: str = "",
+    allow_escalation: bool = True,
+) -> Dict[str, Any]:
+    """
+    GwenLaya combined answer: route to a tier, generate, run the domain's fail-closed checker,
+    and return a calibrated verdict.
+
+    Returns {answer, verdict, p_correct, evidence, tier, cost_s}. verdict is one of VERIFIED
+    (executed gate checks passed), LIKELY_CORRECT, LIKELY_WRONG (answer withheld), ESCALATE,
+    ABSTAIN. p_correct is null unless a calibration is loaded (GWENLAYA_CALIBRATION) and a
+    scorer is wired; VERIFIED is never inferred from p. Pass only gate-visible checks.
+
+    Args:
+        prompt: The task description.
+        domain: 'python', 'rust', 'lean4' or 'math'.
+        tests: Gate-visible test code (python/rust).
+        reference_answer: Reference answer (math).
+        formal_statement: Theorem statement that must be preserved (lean4).
+        allow_escalation: Allow moving to higher tiers when undecided.
+    """
+    if domain not in gwenlaya.DOMAINS:
+        return {"error": f"unsupported domain {domain!r}; expected one of {list(gwenlaya.DOMAINS)}"}
+    if not prompt.strip():
+        return {"error": "prompt must be non-empty"}
+    try:
+        return gwenlaya.get_system().answer(
+            prompt, domain, gwenlaya.payload_for(domain, tests, reference_answer, formal_statement),
+            allow_escalation=allow_escalation)
+    except Exception as exc:  # noqa: BLE001 - tool must report, not crash the server
+        return {"error": f"{type(exc).__name__}: {exc}"}
 
 
 if __name__ == "__main__":

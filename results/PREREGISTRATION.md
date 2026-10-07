@@ -1,6 +1,6 @@
 # Pre-registration: GWAYA low-tier optimizer on MBPP-sanitized
 
-Written 2026-10-03 before any measured run of `scripts/run_low_tier_benchmark.py`.
+Written 2026-10-03 before any measured run of `scripts/run_benchmark.py`.
 
 **History (disclosed).** An earlier 3-problem run on hand-written problems gave
 A0 = A1 = A2 = A3 = A4 = 100 % (delta 0.0, gate FAIL): the problems were too easy and arms

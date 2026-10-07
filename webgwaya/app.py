@@ -17,13 +17,15 @@ import json
 import logging
 import os
 import re
+import secrets
 import subprocess
 import sys
 import time
+import uuid
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -42,6 +44,7 @@ from gwaya.low_tier_engine import (
     extract_code_block,
 )
 from gwaya.cascade_router import GwayaCascadeRouter
+from gwaya import gwenlaya
 from gwaya.oracles import PythonCompilerOracle
 from webgwaya.gpu_manager import (
     get_available_models,
@@ -61,21 +64,116 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("WebGWAYA")
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Security Configuration
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Bearer token for API access - env var or auto-generated
+WEBGWAYA_TOKEN = os.environ.get("WEBGWAYA_TOKEN")
+if not WEBGWAYA_TOKEN:
+    WEBGWAYA_TOKEN = secrets.token_urlsafe(32)
+    log.warning("WEBGWAYA_TOKEN not set. Generated token: %s", WEBGWAYA_TOKEN)
+
+# RAG allowlist roots - default to repo root, can add extras via env
+RAG_ROOTS = [ROOT]
+if "WEBGWAYA_RAG_ROOTS" in os.environ:
+    extra_roots = os.environ["WEBGWAYA_RAG_ROOTS"].split(os.pathsep)
+    RAG_ROOTS.extend(Path(r) for r in extra_roots if r)
+
+# Model name validation regex: alphanumeric, dots, colons, slashes, hyphens, max 64 chars, no '..'
+MODEL_NAME_PATTERN = re.compile(r"^[A-Za-z0-9._:/-]{1,64}$")
+
 app = FastAPI(title="WebGWAYA - GwenLaya Open Model Console", version="3.1.1")
 
+# Host header validation middleware (DNS rebinding guard)
+@app.middleware("http")
+async def validate_host_header(request: Request, call_next):
+    """Reject requests with non-localhost Host headers (DNS rebinding guard)."""
+    host = request.headers.get("host", "").lower()
+    # Allow: localhost, 127.0.0.1, testserver (for FastAPI TestClient)
+    # Reject: any other host (DNS rebinding protection)
+    if host and not (
+        host.startswith("127.0.0.1")
+        or host.startswith("localhost")
+        or host == "testserver"  # FastAPI TestClient
+    ):
+        raise HTTPException(status_code=400, detail="Invalid Host header")
+    return await call_next(request)
+
+# CORS: allow only localhost origins, no credentials with wildcard
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=[
+        "http://127.0.0.1:8000",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+        "http://localhost:8000",
+        "http://localhost:3000",
+        "http://localhost:5173",
+    ],
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "Authorization"],
 )
+
+async def verify_token(request: Request):
+    """Verify bearer token for protected endpoints."""
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+    token = auth_header[7:]
+    if token != WEBGWAYA_TOKEN:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return token
 
 STATIC_DIR = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 CHROMA_DIR = ROOT / "chroma_db"
 oracle = PythonCompilerOracle()
+
+def validate_rag_path(folder_path: str) -> Path:
+    """
+    Validate that folder_path resolves inside the allowlist.
+    Rejects symlink escapes and paths outside allowlist.
+    """
+    try:
+        target = Path(folder_path).resolve()
+        # Ensure no symlink escapes
+        target.relative_to(target)  # Sanity check
+
+        # Check if target is inside any allowed root
+        for allowed_root in RAG_ROOTS:
+            allowed_resolved = allowed_root.resolve()
+            try:
+                target.relative_to(allowed_resolved)
+                return target
+            except ValueError:
+                continue
+
+        raise HTTPException(
+            status_code=400,
+            detail=f"Folder path outside allowlist: {folder_path}"
+        )
+    except (ValueError, OSError) as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid folder path: {str(e)}"
+        )
+
+def validate_model_name(base_model: str) -> str:
+    """
+    Validate base_model parameter against pattern.
+    Rejects '..' to prevent directory traversal.
+    """
+    if ".." in base_model:
+        raise HTTPException(status_code=400, detail="Invalid model name: contains '..'")
+    if not MODEL_NAME_PATTERN.match(base_model):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid model name: must match ^[A-Za-z0-9._:/-]{1,64}$"
+        )
+    return base_model
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Pre-loaded Coding Scenarios
@@ -339,16 +437,16 @@ async def get_gpu_status():
 
 
 @app.post("/api/gpu/stop")
-async def stop_gpu():
+async def stop_gpu(token: str = Depends(verify_token)):
     """Stops the Ollama CUDA service and releases GPU VRAM for external workloads."""
-    result = stop_gpu_service()
+    result = await asyncio.to_thread(stop_gpu_service)
     return result
 
 
 @app.post("/api/gpu/start")
-async def start_gpu():
+async def start_gpu(token: str = Depends(verify_token)):
     """Starts the Ollama CUDA service and brings the local RTX GPU online."""
-    result = start_gpu_service()
+    result = await asyncio.to_thread(start_gpu_service)
     return result
 
 
@@ -358,7 +456,7 @@ async def get_scenarios():
 
 
 @app.post("/api/gwaya/ast-audit")
-async def audit_ast(req: AstAuditRequest):
+async def audit_ast(req: AstAuditRequest, token: str = Depends(verify_token)):
     code = extract_code_block(req.code, "python")
     audit = ZeroStubAudit.audit_python_code(code)
     
@@ -393,12 +491,12 @@ async def audit_ast(req: AstAuditRequest):
 
 
 @app.post("/api/gwaya/evaluate")
-async def evaluate_code(req: EvaluateRequest):
+async def evaluate_code(req: EvaluateRequest, token: str = Depends(verify_token)):
     code = extract_code_block(req.code, "python")
     t0 = time.perf_counter()
 
-    # 1. AST ZeroStubAudit
-    audit = ZeroStubAudit.audit_python_code(code)
+    # 1. AST ZeroStubAudit - run in thread to avoid blocking
+    audit = await asyncio.to_thread(ZeroStubAudit.audit_python_code, code)
     stub_violations = [] if audit.is_clean else audit.violations
 
     # 2. Syntax & CC
@@ -416,8 +514,8 @@ async def evaluate_code(req: EvaluateRequest):
 
     # 3. Grounding & Hallucination audit
     g_flags = grounding_flags(code, "")
-    
-    # 4. Isolated Execution
+
+    # 4. Isolated Execution - run in thread to avoid blocking
     test_res = None
     tests_passed = 0
     tests_total = 0
@@ -425,7 +523,9 @@ async def evaluate_code(req: EvaluateRequest):
     is_success = False
 
     if req.test_spec and not stub_violations and not syn_err:
-        test_res = oracle.verify_with_test(code, req.test_spec, timeout_s=10.0)
+        test_res = await asyncio.to_thread(
+            oracle.verify_with_test, code, req.test_spec, 10.0
+        )
         tests_passed = int(test_res.details.get("passed", 0))
         tests_total = int(test_res.details.get("total", 0))
         is_success = bool(test_res.success)
@@ -458,7 +558,7 @@ async def evaluate_code(req: EvaluateRequest):
 
 
 @app.post("/api/gwaya/generate")
-async def generate_solution(req: GenerateRequest):
+async def generate_solution(req: GenerateRequest, token: str = Depends(verify_token)):
     if not is_ollama_service_online():
         raise HTTPException(
             status_code=503,
@@ -478,12 +578,14 @@ async def generate_solution(req: GenerateRequest):
         # Raw Zero-Shot
         opt = LowTierModelOptimizer(tier=tier, generator_fn=inner_gen)
         prompt = opt._build_base_prompt(req.goal, "python", prompt_context, req.test_spec)
-        code = inner_gen(prompt, temperature=req.temperature, max_tokens=req.max_tokens)
+        code = await asyncio.to_thread(
+            inner_gen, prompt, req.temperature, req.max_tokens
+        )
         if inner_gen.last_stats:
             tokens_generated = inner_gen.last_stats.completion_tokens
             eval_ms = inner_gen.last_stats.eval_ms
 
-        eval_res = await evaluate_code(EvaluateRequest(code=code, test_spec=req.test_spec, goal=req.goal))
+        eval_res = await evaluate_code(EvaluateRequest(code=code, test_spec=req.test_spec, goal=req.goal), token=token)
         duration_ms = round((time.perf_counter() - t0) * 1000.0, 1)
         tok_s = tokens_generated / (eval_ms / 1000.0) if eval_ms > 0 else 0.0
 
@@ -502,14 +604,18 @@ async def generate_solution(req: GenerateRequest):
     elif req.mode in ("A4_cascade", "cascade"):
         # Speculative Multi-Model Cascade Router
         router = GwayaCascadeRouter()
-        cascade_res = router.route_and_solve(
-            goal=req.goal,
-            domain="python",
-            context=prompt_context,
-            test_spec=req.test_spec if req.test_spec else None,
+        cascade_res = await asyncio.to_thread(
+            router.route_and_solve,
+            req.goal,
+            "python",
+            prompt_context,
+            req.test_spec if req.test_spec else None,
         )
         duration_ms = round((time.perf_counter() - t0) * 1000.0, 1)
-        eval_res = await evaluate_code(EvaluateRequest(code=cascade_res.selected_code, test_spec=req.test_spec, goal=req.goal))
+        eval_res = await evaluate_code(
+            EvaluateRequest(code=cascade_res.selected_code, test_spec=req.test_spec, goal=req.goal),
+            token=token
+        )
 
         return {
             "mode": "A4_cascade",
@@ -536,11 +642,12 @@ async def generate_solution(req: GenerateRequest):
         opt.config.max_repair_attempts = max_rep
         opt.config.temperature = req.temperature
 
-        res = opt.optimize_and_solve(
-            goal=req.goal,
-            domain="python",
-            context=prompt_context,
-            test_spec=req.test_spec if req.test_spec else None,
+        res = await asyncio.to_thread(
+            opt.optimize_and_solve,
+            req.goal,
+            "python",
+            prompt_context,
+            req.test_spec if req.test_spec else None,
         )
 
         duration_ms = round((time.perf_counter() - t0) * 1000.0, 1)
@@ -548,7 +655,10 @@ async def generate_solution(req: GenerateRequest):
         if inner_gen.last_stats and inner_gen.last_stats.eval_ms > 0:
             tok_s = inner_gen.last_stats.completion_tokens / (inner_gen.last_stats.eval_ms / 1000.0)
 
-        eval_res = await evaluate_code(EvaluateRequest(code=res.selected_code, test_spec=req.test_spec, goal=req.goal))
+        eval_res = await evaluate_code(
+            EvaluateRequest(code=res.selected_code, test_spec=req.test_spec, goal=req.goal),
+            token=token
+        )
 
         return {
             "mode": f"A{max_rep if max_rep == 1 else 3}_optimizer",
@@ -563,6 +673,28 @@ async def generate_solution(req: GenerateRequest):
             "tokens_per_s": round(tok_s, 1),
             "latency_ms": duration_ms,
         }
+
+
+class AnswerRequest(BaseModel):
+    prompt: str = Field(..., min_length=1, max_length=20000)
+    domain: str = Field("python", pattern="^(python|rust|lean4|math)$")
+    tests: str = Field("", max_length=20000)
+    reference_answer: str = Field("", max_length=2000)
+    formal_statement: str = Field("", max_length=20000)
+    allow_escalation: bool = True
+
+
+@app.post("/api/gwaya/answer")
+async def gwenlaya_answer(req: AnswerRequest, token: str = Depends(verify_token)):
+    """GwenLaya combined answer (route, generate, gate, calibrated verdict). Auth required."""
+    payload = gwenlaya.payload_for(req.domain, req.tests, req.reference_answer, req.formal_statement)
+    try:
+        return await asyncio.to_thread(
+            gwenlaya.get_system().answer, req.prompt, req.domain, payload,
+            allow_escalation=req.allow_escalation)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("gwenlaya answer failed: %s", exc)
+        raise HTTPException(status_code=500, detail=f"{type(exc).__name__}: {exc}"[:300])
 
 
 @app.get("/api/benchmark/results")
@@ -597,10 +729,53 @@ async def get_benchmark_results():
 async def get_audit_insights():
     """
     Returns empirical architectural audit findings and recommendations derived from RTX hardware benchmarking.
+    Metrics are loaded at request time from results/gwaya_v3_multi_model/*.json.
     """
+    benchmark_dir = ROOT / "results" / "gwaya_v3_multi_model"
+    comparison_file = benchmark_dir / "multi_model_comparison.json"
+
+    # Load benchmark data if available
+    benchmarks = {}
+    if comparison_file.exists():
+        try:
+            benchmarks = json.loads(comparison_file.read_text())
+        except (json.JSONDecodeError, OSError) as e:
+            log.warning("Could not load benchmark data: %s", e)
+
+    # Extract metrics from benchmarks or use fallbacks
+    def get_benchmark_metric(model_key: str, metric_path: list[str], default: Any) -> Any:
+        """Extract a metric from the nested benchmark dict."""
+        data = benchmarks.get(model_key, {})
+        for key in metric_path:
+            if isinstance(data, dict):
+                data = data.get(key)
+            else:
+                return default
+        return data if data is not None else default
+
+    # Count tasks from benchmark data
+    n_tasks_0_5b = get_benchmark_metric("qwen2.5-coder:0.5b", ["n_tasks"], 20)
+    n_tasks_1_5b = get_benchmark_metric("qwen2.5-coder:1.5b", ["n_tasks"], 20)
+    n_tasks_7b = get_benchmark_metric("qwen2.5-coder:7b", ["n_tasks"], 20)
+
+    # Extract pass rates
+    pass_0_5b = get_benchmark_metric("qwen2.5-coder:0.5b", ["pass_at_1", "A3_gwaya_v3"], 45.0)
+    pass_1_5b = get_benchmark_metric("qwen2.5-coder:1.5b", ["pass_at_1", "A3_gwaya_v3"], 80.0)
+    pass_7b = get_benchmark_metric("qwen2.5-coder:7b", ["pass_at_1", "A3_gwaya_v3"], 95.0)
+
+    # Extract precision metrics
+    precision_0_5b = get_benchmark_metric("qwen2.5-coder:0.5b", ["gate_verification_precision", "hidden_pass_given_verified_pct"], 52.9)
+    precision_1_5b = get_benchmark_metric("qwen2.5-coder:1.5b", ["gate_verification_precision", "hidden_pass_given_verified_pct"], 84.2)
+    precision_7b = get_benchmark_metric("qwen2.5-coder:7b", ["gate_verification_precision", "hidden_pass_given_verified_pct"], 100.0)
+
+    # Extract tokens per second
+    tok_s_0_5b = get_benchmark_metric("qwen2.5-coder:0.5b", ["performance", "tokens_per_s"], 226.9)
+    tok_s_1_5b = get_benchmark_metric("qwen2.5-coder:1.5b", ["performance", "tokens_per_s"], 135.1)
+    tok_s_7b = get_benchmark_metric("qwen2.5-coder:7b", ["performance", "tokens_per_s"], 71.4)
+
     return {
         "hardware": {
-            "device": "NVIDIA GeForce RTX 2070 8GB",
+            "device": "NVIDIA GeForce RTX 2070 8GB (reference)",
             "compute_capability": "7.5 (Turing Tensor Cores)",
             "driver": "591.86",
             "cuda": "13.1",
@@ -608,12 +783,12 @@ async def get_audit_insights():
         "empirical_findings": [
             {
                 "finding": "Throughput Scaling Inversion",
-                "detail": "0.5B runs at 226.9 tok/s (3.2x faster than 7B at 71.4 tok/s). For standard boilerplate and leaf subtasks, 0.5B consumes 70% less energy.",
+                "detail": f"0.5B runs at {tok_s_0_5b:.1f} tok/s ({tok_s_0_5b/tok_s_7b:.1f}x faster than 7B at {tok_s_7b:.1f} tok/s). For standard boilerplate and leaf subtasks, 0.5B consumes 70% less energy.",
                 "action": "Use Speculative Cascade routing to attempt 0.5B first with fail-closed gate.",
             },
             {
                 "finding": "Gate Verification Precision Disparity",
-                "detail": "GWAYA gate precision is 100% on 7B, 89.5% on 3B, 84.2% on 1.5B, and 52.9% on 0.5B. Small models produce false passes on weak self-tests.",
+                "detail": f"GWAYA gate precision is {precision_7b:.1f}% on 7B, 89.5% on 3B, {precision_1_5b:.1f}% on 1.5B, and {precision_0_5b:.1f}% on 0.5B. Small models produce false passes on weak self-tests.",
                 "action": "Require strict hidden verification test suites for small models before certifying verified=True.",
             },
             {
@@ -628,10 +803,33 @@ async def get_audit_insights():
             },
         ],
         "cascade_benchmarks": {
-            "tier_1_slm": {"model": "qwen2.5-coder:0.5b", "tok_s": 226.9, "vram_mb": 481, "pass_rate_pct": 45.0},
-            "tier_2_mlm": {"model": "qwen2.5-coder:1.5b", "tok_s": 135.1, "vram_mb": 1180, "pass_rate_pct": 80.0},
-            "tier_3_heavy": {"model": "qwen2.5-coder:7b", "tok_s": 71.4, "vram_mb": 4683, "pass_rate_pct": 95.0},
-            "cascade_effective": {"effective_tok_s": 182.4, "effective_pass_rate_pct": 95.0, "latency_speedup": "2.4x"},
+            "tier_1_slm": {
+                "model": "qwen2.5-coder:0.5b",
+                "tok_s": tok_s_0_5b,
+                "vram_mb": 481,
+                "pass_rate_pct": pass_0_5b,
+                "n_tasks": n_tasks_0_5b,
+            },
+            "tier_2_mlm": {
+                "model": "qwen2.5-coder:1.5b",
+                "tok_s": tok_s_1_5b,
+                "vram_mb": 1180,
+                "pass_rate_pct": pass_1_5b,
+                "n_tasks": n_tasks_1_5b,
+            },
+            "tier_3_heavy": {
+                "model": "qwen2.5-coder:7b",
+                "tok_s": tok_s_7b,
+                "vram_mb": 4683,
+                "pass_rate_pct": pass_7b,
+                "n_tasks": n_tasks_7b,
+            },
+            "cascade_effective": {
+                "effective_tok_s": 182.4,
+                "effective_pass_rate_pct": 95.0,
+                "latency_speedup": "2.4x",
+                "note": "estimated_from_reference_table",
+            },
         },
     }
 
@@ -641,13 +839,14 @@ async def get_audit_insights():
 # ─────────────────────────────────────────────────────────────────────────────
 
 @app.post("/api/rag/index-folder")
-async def index_folder(req: RagIndexRequest):
+async def index_folder(req: RagIndexRequest, token: str = Depends(verify_token)):
+    # Validate folder path is inside allowlist FIRST (before ChromaDB check)
+    folder = validate_rag_path(req.folder_path)
+    if not folder.exists():
+        raise HTTPException(status_code=400, detail=f"Directory does not exist")
+
     if not CHROMA_AVAILABLE:
         raise HTTPException(status_code=500, detail="ChromaDB not installed or unavailable")
-
-    folder = Path(req.folder_path)
-    if not folder.exists():
-        raise HTTPException(status_code=400, detail=f"Directory '{req.folder_path}' does not exist")
 
     col = get_chroma_collection()
     if col is None:
@@ -769,9 +968,20 @@ async def get_lora_datasets():
     return datasets
 
 
+def _display_path(path: Path) -> str:
+    """Repo-relative path when inside the repo, else the absolute path."""
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
 @app.post("/api/lora/generate-config")
-async def generate_lora_config(req: LoraConfigRequest):
-    out_dir = ROOT / "lora_configs"
+async def generate_lora_config(req: LoraConfigRequest, token: str = Depends(verify_token)):
+    # Validate base_model parameter
+    validate_model_name(req.base_model)
+
+    out_dir = Path(os.environ.get("WEBGWAYA_LORA_DIR", ROOT / "lora_configs"))
     out_dir.mkdir(parents=True, exist_ok=True)
 
     config_payload = {
@@ -798,16 +1008,23 @@ async def generate_lora_config(req: LoraConfigRequest):
         "created_at": time.strftime("%Y-%m-%d %H:%M:%S"),
     }
 
-    config_file = out_dir / f"lora_{req.base_model.replace(':', '_')}.json"
+    # Sanitize filename and use repr() for model name in script
+    safe_model_name = req.base_model.replace(":", "_").replace("/", "_")
+    config_file = out_dir / f"lora_{safe_model_name}.json"
     config_file.write_text(json.dumps(config_payload, indent=2), encoding="utf-8")
 
-    # Generate a runnable Python training script using Hugging Face PEFT/TRL
-    train_script = f"""# Auto-generated by WebGWAYA LoRA Admin
+    # Generate a configuration-only scaffold for Python training using Hugging Face PEFT/TRL.
+    # This is a config template, not a fully runnable training loop; requires user to add dataset loading and training logic.
+    # Use repr() to safely embed model name
+    model_repr = json.dumps(req.base_model)
+    train_script = f"""# Config-only scaffold: auto-generated by WebGWAYA LoRA Admin
+# NOTE: This is a configuration template. To use it, add dataset loading and training logic.
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 
-print("Configuring LoRA fine-tuning for {req.base_model}...")
+base_model = {model_repr}
+print(f"Configuring LoRA fine-tuning for {{base_model}}...")
 peft_config = LoraConfig(
     r={req.r},
     lora_alpha={req.lora_alpha},
@@ -816,15 +1033,16 @@ peft_config = LoraConfig(
     bias="none",
     task_type="CAUSAL_LM",
 )
-print("LoRA Config successfully initialized. Ready for training loop.")
+print("LoRA Config scaffold initialized. Add dataset loading and training loop to complete.")
 """
-    script_file = out_dir / f"train_{req.base_model.replace(':', '_')}.py"
+    script_file = out_dir / f"train_{safe_model_name}.py"
     script_file.write_text(train_script, encoding="utf-8")
 
     return {
         "status": "created",
-        "config_path": str(config_file.relative_to(ROOT)),
-        "train_script_path": str(script_file.relative_to(ROOT)),
+        "config_path": _display_path(config_file),
+        "train_script_path": _display_path(script_file),
+        "train_script_type": "config-only scaffold (requires user to add dataset/training logic)",
         "config": config_payload,
     }
 

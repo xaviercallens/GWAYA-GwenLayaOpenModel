@@ -23,12 +23,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from anse.gwaya.oracles import (  # noqa: E402
+from gwaya.oracles import (  # noqa: E402
     Lean4CompilerOracle,
     PythonCompilerOracle,
     RustCompilerOracle,
 )
-from anse.orchestration.dichotomic_decomposer import ZeroStubAudit  # noqa: E402
+from gwaya.ast_audit import ZeroStubAudit  # noqa: E402
 
 CORPUS: list[dict] = [
     # ---- Python ----

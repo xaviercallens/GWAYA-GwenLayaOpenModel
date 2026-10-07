@@ -1,0 +1,4 @@
+# GwenLaya pre-registration design freeze. Format: sha256  path. A later edit appends a new dated block; the last line per path must match the file (tests/test_gwenlaya_plan.py).
+# 2026-10-07 revision 2 (red-team blocking items resolved; see docs/PROPOSAL_REVIEW.md section 6). Not the pre-E freeze addendum, which is TBD.
+49c431585b4b597933c33028811d7dd76404a44e26f5294c47c765be294ade35  docs/GWENLAYA_PREREGISTRATION.md
+fc1de133fe83fd86c0909b2c4882cd8af6bef7ba9e13da82df7310e492e8b18d  experiments/plan.json

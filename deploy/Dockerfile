@@ -13,7 +13,7 @@ COPY --from=ghcr.io/astral-sh/uv:0.5.14 /uv /usr/local/bin/uv
 
 WORKDIR /app
 # Dependency layer first (cache-friendly). CPU torch: the benchmark never uses torch for compute,
-# it is only imported by anse/__init__.py, and the CUDA wheels would add several GB.
+# it is only imported by gwaya/__init__.py, and the CUDA wheels would add several GB.
 COPY pyproject.toml ./
 RUN uv venv --python 3.12 /opt/venv \
  && VIRTUAL_ENV=/opt/venv uv pip install --index-url https://download.pytorch.org/whl/cpu torch \
@@ -24,5 +24,5 @@ ENV PATH=/opt/venv/bin:$PATH \
     PYTHONPATH=/app \
     OLLAMA_MODELS=/data/ollama/models \
     OLLAMA_HOST=127.0.0.1:11434
-RUN chmod +x /app/deploy/gwaya_bench/container_entry.sh
-ENTRYPOINT ["/app/deploy/gwaya_bench/container_entry.sh"]
+RUN chmod +x /app/deploy/container_entry.sh
+ENTRYPOINT ["/app/deploy/container_entry.sh"]
