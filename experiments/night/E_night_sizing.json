@@ -1,0 +1,44 @@
+{
+ "tok_s_sequential_wall": {
+  "L2": 2.734493655963084,
+  "L3": 1.2917951431233825
+ },
+ "mean_tokens_per_item_assumed": 196.6,
+ "mean_tokens_by_domain_assumed": {
+  "python": 132.0,
+  "rust": 221.0,
+  "math": 241.7
+ },
+ "margin": 0.85,
+ "n_by_stage": {
+  "L2": 127,
+  "L3": 80
+ },
+ "binding_stage": "L3",
+ "n_total": 80,
+ "n_d": {
+  "python": 28,
+  "rust": 26,
+  "math": 26
+ },
+ "sum_n_d": 80,
+ "power_at_sum_n_d": {
+  "6 pts (8%/2%)": {
+   "alpha_0.025": 0.261,
+   "alpha_0.05/3": 0.206
+  },
+  "4 pts (5%/1%)": {
+   "alpha_0.025": 0.115,
+   "alpha_0.05/3": 0.104
+  },
+  "3 pts (4%/1%)": {
+   "alpha_0.025": 0.052,
+   "alpha_0.05/3": 0.049
+  },
+  "2 pts (3%/1%)": {
+   "alpha_0.025": 0.017,
+   "alpha_0.05/3": 0.016
+  }
+ },
+ "token_estimate_basis": "ASSUMED: 1.25 x Qwen-token length of the reference solution + 20 (python); 1.6 x its Python sibling (rust); reference-solution length + 20 (math); capped at 1024. Not measured; see addendum."
+}

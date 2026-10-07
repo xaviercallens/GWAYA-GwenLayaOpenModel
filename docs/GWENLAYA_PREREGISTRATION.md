@@ -788,7 +788,7 @@ second seed, and S7 cold samples 5–6. The primaries (H1, H3) need only S2, S3,
 
 ## Addenda
 
-- Freeze addendum (before E is generated): `TBD`.
+- Freeze addendum (before E is generated), night run 2026-10-07 (E-night, C0-lite): `docs/FREEZE_ADDENDUM_NIGHT_2026-10-07.md`, sha256 `ac2970983ef45eb027de65194d42cadd41483dfd35cd2a866efc64247b02376c`. It holds the manifest hash (`experiments/night/manifest_eval.json`), n_d, the cross-fitting procedure, arms and the power statement. The full-study freeze addendum (calibrators fit on C) remains `TBD`.
 - Power re-check on C: `TBD`.
 - Design effect: `TBD`.
 - Support matrix from S1: `TBD`.
