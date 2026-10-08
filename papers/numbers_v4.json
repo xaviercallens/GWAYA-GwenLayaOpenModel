@@ -18,12 +18,12 @@
   },
   "H13": {
    "lines": 3,
-   "lines_without_usd_estimate": 2,
+   "lines_without_usd_estimate": 0,
    "note": "lines without usd_estimate are unpriced (TBD): no price is read from any other source; the verdict uses the known total only and is a lower bound. The ledger refuses over-cap stages, so H13 holds largely by construction and is not evidence about the system",
-   "seconds_without_estimate": 2706.0,
+   "seconds_without_estimate": 0.0,
    "status": "ran",
-   "usd_known_total": 0.0,
-   "verdict": "not refuted on the known lines (lower bound; unpriced lines exist)"
+   "usd_known_total": 0.8549,
+   "verdict": "not refuted"
   },
   "H14": {
    "reason": "needs E1 (D12)",
@@ -114,15 +114,15 @@
   },
   "H13.lines_without_usd_estimate": {
    "source": "/mnt/data/home/xavkal/gwaya-data/spend_ledger.jsonl",
-   "value": 2
+   "value": 0
   },
   "H13.seconds_without_estimate": {
    "source": "/mnt/data/home/xavkal/gwaya-data/spend_ledger.jsonl",
-   "value": 2706.0
+   "value": 0.0
   },
   "H13.usd_known_total": {
    "source": "/mnt/data/home/xavkal/gwaya-data/spend_ledger.jsonl",
-   "value": 0.0
+   "value": 0.8549
   },
   "arm.base.accuracy.hi": {
    "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",

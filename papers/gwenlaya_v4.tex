@@ -57,11 +57,11 @@ benchmarks that Qwen3.5 has probably seen in pretraining, not tests. The 26 math
 (a prompt-path defect, and an unregistered last-number answer extraction), and the 26 Rust items
 come from a harness that has not been validated; numbers pooled over all 80 items are shown only as
 a labelled sensitivity analysis. The budget hypothesis (H13) is not refuted on an interim basis
-(known spend \$0.00, 2,706 TPU-seconds unpriced), but the spend ledger enforces it by construction,
+(recorded spend \$0.85, estimated from catalog list prices), but the spend ledger enforces it by construction,
 so this is not evidence about the system. Review also found that the HumanEval+ gate payloads of the
 night task files contained the hidden tests; no gate ran, so no number is affected, and the files
 have been rebuilt (D25). We also report a TPU feasibility finding (Qwen2.5 generation works on a v5e chip
-via vLLM's TPU build; Qwen3.5 did not load in time; no TPU LoRA path was found for Qwen3.5 dense
+via vLLM's TPU build; Qwen3.5-4B loaded but its XLA compilation did not finish within the 25-minute limit, so it produced no tokens; no TPU LoRA path was found for Qwen3.5 dense
 or Qwen3.8), the GCP spend actually recorded, and every deviation from the registration. We
 begin by restating the retraction of a v3 claim and the failed v3 gate.
 \end{abstract}
@@ -215,7 +215,7 @@ H5 & secondary & not run & 0.25 (prior) & same\\
 H6 & secondary & not run & 0.40 (prior) & same\\
 H8 & secondary & not run & 0.30 (prior) & needs GPU (D11)\\
 H9 & secondary & deferred & 0.25 (prior) & D8\\
-H13 & systems & not refuted (interim) & 0.75 (prior) & known spend \$0.00; 2,706 TPU-s unpriced; holds by construction, Sec.~\ref{sec:spend}\\
+H13 & systems & not refuted (interim) & 0.75 (prior) & ledger \$0.85 (catalog estimate); holds by construction, Sec.~\ref{sec:spend}\\
 H14 & systems & not run & 0.50 (prior) & needs E1, which needs the GPU (D12)\\
 H15 & systems & not run & 0.70 (prior) & offline test is not the registered SIGKILL check\\
 H2 & exploratory & not run & 0.08 (prior) & no GL or B5 arm\\
@@ -227,10 +227,12 @@ H12 & exploratory & dropped & 0.12 (prior) & D8\\
 
 \paragraph{H13 (budget).} Decision rule: ledger total $\le\$40$ planned and $\le\$50$ hard, and no
 stage over $1.25\times$ its cap twice. The machine verdict (\code{numbers_v4.json}) is ``not refuted
-on the known lines (lower bound; unpriced lines exist)'': the ledger has 3 lines with a known USD
-total of 0.0, and 2 lines (2,706 seconds of TPU time) carry no \code{usd_estimate} and no
-\code{resource} field, so they break the ledger schema and are unpriced. We do not price them here
-(\TBD{} until the billing export is read), and no stage has spent anything against its cap. Two
+'': the ledger has 3 lines with a USD total of 0.8549. The two TPU lines were first recorded
+without \code{usd_estimate} and \code{resource}; they were priced on 2026-10-08 from the Cloud
+Billing Catalog list prices (on-demand v5e \$1.20 per chip-hour, us-central1; spot v5e \$0.4942 per
+chip-hour, us-west4), and the analysis was re-run (only the three H13 numbers changed). These are
+list-price estimates; the billed amount is \TBD{} until the billing export is read. No stage has
+spent anything against its cap. Two
 caveats limit what this means. First, the ledger refuses any stage that would exceed its cap, so H13
 holds largely by construction; the red-team review called its support ``close to tautological''
 (prior 0.75), and it is not evidence about the GwenLaya system. Second, H13 is a whole-study claim,
@@ -403,16 +405,14 @@ Read from \url{/mnt/data/home/xavkal/gwaya-data/spend_ledger.jsonl} (3 lines):
 \begin{center}\small
 \begin{tabular}{l p{7.2cm} r l}\toprule
 Time & Item & Seconds & USD in ledger\\\midrule
-2026-10-07 21:54 & TPU smoke, attempt 1 (v5litepod-1 spot, us-west4-a; preempted) & 240 & not recorded\\
-2026-10-07 22:38 & TPU smoke (v5litepod-1 on demand, us-central1-a) & 2,466 & not recorded\\
+2026-10-07 21:54 & TPU smoke, attempt 1 (v5litepod-1 spot, us-west4-a; preempted) & 240 & 0.0330 (catalog)\\
+2026-10-07 22:38 & TPU smoke (v5litepod-1 on demand, us-central1-a) & 2,466 & 0.8220 (catalog)\\
 2026-10-08 00:35 & L1 upload to data lake (6 objects) & 13 & 0.0\\
 \bottomrule\end{tabular}\end{center}
 
-The recorded USD total is \$0.00 with 2,706 seconds of TPU time unpriced. The two TPU lines have
-neither a \code{usd_estimate} nor a \code{resource} field, so they do not meet the ledger schema
-(\code{ts, item, usd_estimate, seconds, resource}). The planning documents carry a figure of about
-\$0.84 for that TPU time; it comes from the task description, not from the ledger, a price list or
-a bill, and no verdict in this paper uses it. The night's GPU (\$2.00) and endpoint
+The recorded USD total is \$0.85 (0.8549), all from the two TPU smoke tests, priced from the
+Cloud Billing Catalog list prices shown above; these lines originally lacked \code{usd_estimate}
+and \code{resource} and were completed on 2026-10-08. The night's GPU (\$2.00) and endpoint
 (\$2.00) caps were not used. Local CPU work cost nothing on GCP. The billed amount is \TBD{} until
 the billing export is read.
 
@@ -497,8 +497,8 @@ python scripts/data/regen_gate_payloads_d25.py --results $NIGHT/results   # D25 
   could at best produce an inconclusive H1.
 \item Cost is server CPU-seconds on a machine shared with foreign jobs and includes idle threads; it
   is not comparable to the registered L4 GPU-seconds.
-\item Two ledger lines are unpriced and lack the \code{resource} field; the USD spend above is a
-  lower bound, and H13 holds largely by construction of the ledger.
+\item The USD spend is a list-price estimate, not the billed amount, and H13 holds largely by
+  construction of the ledger.
 \item Scored rows are not yet mirrored to the data lake as the registration requires.
 \item Lean 4, the training arms, quantization and the endpoint were not run. The TPU finding is from
   one chip, one vLLM version and a fixed time limit.

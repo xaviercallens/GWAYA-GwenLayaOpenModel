@@ -35,7 +35,7 @@ evidence.
 | H6 | secondary A | not_run | 0.40 (prior) | Same. |
 | H8 | secondary B | not_run | 0.30 (prior) | Needs G1 (GPU slot held by a foreign VM, D11). |
 | H9 | secondary C | not_run (deferred) | 0.25 (prior) | Deferred, D8. |
-| H13 | systems | not refuted (interim; known spend $0.00, 2,706 TPU-seconds unpriced) | 0.75 (prior) | Ledger check, holds by construction; see below. |
+| H13 | systems | not refuted (interim; ledger $0.85, catalog list-price estimate) | 0.75 (prior) | Ledger check, holds by construction; see below. |
 | H14 | systems | not_run | 0.50 (prior) | Needs E1, which needs G1 (D12). |
 | H15 | systems | not_run | 0.70 (prior) | See below. |
 | H2 | exploratory | not_run | 0.08 (prior) | No GL or B5 arm. |
@@ -47,12 +47,11 @@ evidence.
 ### H13 derivation
 
 Decision rule: ledger total <= 40 USD (planned) and <= 50 USD (hard); refuted if either is exceeded
-or a stage exceeds 1.25x its cap twice. numbers_v4 H13 verdict: "not refuted on the known lines
-(lower bound; unpriced lines exist)": 3 ledger lines, `usd_known_total` 0.0, 2 lines without
-`usd_estimate` (`seconds_without_estimate` 2706.0, the two TPU smoke tests; they also lack the
-`resource` field required by the ledger schema). They are unpriced (TBD) until the billing export is
-read; the ~0.84 USD planning figure comes from task text, not from the ledger, a price list or a
-bill, and is not used. No stage has a spend over its cap (G1/E1 never ran). The red-team review
+or a stage exceeds 1.25x its cap twice. numbers_v4 H13 verdict: "not refuted": 3 ledger lines,
+`usd_known_total` 0.8549. The two TPU smoke-test lines were priced on 2026-10-08 from Cloud Billing
+Catalog list prices (v5e on-demand 1.20 USD/chip-h us-central1, 2466 s; v5e spot 0.4942 USD/chip-h
+us-west4, 240 s) and the analysis was re-run; only the H13 numbers changed. The billed amount is TBD
+until the billing export is read. No stage has a spend over its cap (G1/E1 never ran). The red-team review
 (PROPOSAL_REVIEW.md, prior 0.75) notes that the ledger enforces H13 by refusing stages, so support
 is close to tautological. An earlier version of this file gave probability_true = 0.97; that was
 author judgement with no statistical basis and is withdrawn. The probability column shows the prior.
