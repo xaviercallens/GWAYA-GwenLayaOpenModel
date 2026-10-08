@@ -99,10 +99,6 @@ def check_rust(task: Task, response: str) -> CheckResult:
     if not code.strip():
         return CheckResult("FAILED", {"reason": "empty_response"})
     from gwaya.oracles import RustCompilerOracle
-    if "assert!" not in tests:
-        # the oracle only accepts specs with a literal assert!(); the real assert_eq!/assert_ne!
-        # still run (a panic fails the program), this no-op just satisfies its spec validation
-        tests += "\nassert!(true);"
     res = RustCompilerOracle().verify_with_test(
         code, tests, timeout_s=float(task.checker_payload.get("timeout_s", 10.0)))
     out = _from_oracle(res)

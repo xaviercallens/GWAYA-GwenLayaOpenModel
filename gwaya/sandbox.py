@@ -83,6 +83,7 @@ def _bwrap_argv(
     for_python: bool = True,
     ro_binds: list[str] | None = None,
     env: dict[str, str] | None = None,
+    mount_proc: bool = True,
 ) -> list[str]:
     """Build bwrap command with proper isolation and toolchain access.
 
@@ -93,6 +94,8 @@ def _bwrap_argv(
         for_python: If True, add Python interpreter at the end; if False, add bash
         ro_binds: Extra host paths bound read-only at the same path (e.g. a Mathlib lake project)
         env: Extra environment variables set inside the sandbox (e.g. LEAN_PATH)
+        mount_proc: Mount /proc. Compilers need it; running untrusted binaries should not have it,
+            so they cannot read their own memory (/proc/self/mem) or executable (/proc/self/exe).
 
     Returns:
         Argument list for bwrap (+ interpreter or bash)
@@ -106,12 +109,15 @@ def _bwrap_argv(
         elif os.path.isdir(top):
             argv += ["--ro-bind", top, top]
 
-    # Bind essential /etc files
-    for etc_file in ("/etc/ld.so.cache", "/etc/ld.so.conf", "/etc/localtime"):
-        argv += ["--ro-bind-try", etc_file, etc_file]
+    # Bind essential /etc files. /etc/alternatives is needed because Debian/Ubuntu resolve
+    # `cc` (rustc's default linker), `c++`, `ld` etc. through it; it only holds symlinks.
+    for etc_path in ("/etc/ld.so.cache", "/etc/ld.so.conf", "/etc/ld.so.conf.d", "/etc/localtime",
+                     "/etc/alternatives"):
+        argv += ["--ro-bind-try", etc_path, etc_path]
 
+    if mount_proc:
+        argv += ["--proc", "/proc"]
     argv += [
-        "--proc", "/proc",
         "--dev", "/dev",
     ]
 
@@ -254,6 +260,7 @@ def run_in_sandbox(
     files: dict[str, str] | None = None,
     ro_binds: list[str] | None = None,
     env: dict[str, str] | None = None,
+    mount_proc: bool = True,
 ) -> tuple[bool, str, str, bool]:
     """Run a command in a sandboxed environment using bwrap.
 
@@ -267,6 +274,7 @@ def run_in_sandbox(
         files: Optional dict of {relative_path: content} to create in work_dir
         ro_binds: Extra host paths mounted read-only at the same path (bwrap only)
         env: Extra environment variables (set inside bwrap, or merged into os.environ without it)
+        mount_proc: Mount /proc inside bwrap (see _bwrap_argv)
 
     Returns:
         Tuple of (success, stdout, stderr, timed_out)
@@ -310,7 +318,8 @@ def run_in_sandbox(
             # Build bwrap argv with bash, then pass the command via -c
             import shlex
             cmd_str = " ".join(shlex.quote(str(arg)) for arg in cmd)
-            argv = _bwrap_argv(bwrap, work_dir, timeout_s, for_python=False, ro_binds=ro_binds, env=env) + ["-c", cmd_str]
+            argv = _bwrap_argv(bwrap, work_dir, timeout_s, for_python=False, ro_binds=ro_binds, env=env,
+                                mount_proc=mount_proc) + ["-c", cmd_str]
             isolation = "bwrap"
         else:
             argv = cmd
