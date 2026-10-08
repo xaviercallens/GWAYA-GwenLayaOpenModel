@@ -19,7 +19,7 @@ score_one() {  # served arms...
   $PY scripts/import_remote_gens.py --tasks "$TASKS" --raw "$RAW/raw_$served.jsonl" --served "$served" \
       --quant "$Q" --out "$d" --accelerator "TPU v5e x1" > "$d/import.log" 2>&1 || { echo "import failed: $served"; return 1; }
   $PY scripts/run_study.py --plan "$PLAN" --stage night_L2 --backend openai --backend-url http://127.0.0.1:1/v1 \
-      --tasks "$TASKS" --models "$served" --quants "$Q" --arms "$@" --mode score --no-vram --out "$d" > "$d/score.log" 2>&1
+      --tasks "$TASKS" --models "$served" --quants "$Q" --arms "$@" --mode score --no-vram --check-workers "${CHECK_WORKERS:-1}" --out "$d" > "$d/score.log" 2>&1
   echo "$served: exit $? ($(date -Is))"
 }
 for spec in ${SCORE_SPECS:-"qwen2.5-coder-1.5b-bf16:base" "qwen3.5-2b-bf16:base" "qwen3.5-4b-bf16:base,gate_only"}; do

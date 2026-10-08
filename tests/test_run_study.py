@@ -41,7 +41,7 @@ def mk_tasks(n=3, gate=True):
     return out
 
 
-def make(tmp_path, arms, backend=None, mode="all", tasks=None, **kw):
+def make(tmp_path, arms, backend=None, mode="all", tasks=None, checker=checker, **kw):
     return rs.Study(stage=STAGE, plan=PLAN, tasks=tasks or mk_tasks(), models=["small", "big"], quants=["q4_K_M"],
                     arms=arms, backend=backend or FakeBackend(), out_dir=tmp_path, mode=mode, checker=checker, **kw)
 
@@ -324,3 +324,61 @@ def test_openai_backend_parses_llamacpp_logprobs_content(monkeypatch):
         "usage": {}})
     out = be.generate("m", "p", "python", 0.0, 8, 1)
     assert out["token_logprobs"] == [-1.0, -3.0] and out["mean_logprob"] == -2.0
+
+
+def test_checker_is_memoized_across_arms_but_not_across_payloads(tmp_path):
+    calls = []
+
+    def counting_checker(task, text):
+        calls.append((task.task_id, tuple(sorted(task.checker_payload)), text))
+        return checker(task, text)
+
+    be = FakeBackend()
+    st = make(tmp_path, ["base", "always_largest", "gate_only"], be, checker=counting_checker)
+    st.run()
+    # 3 tasks x {big, small}: scorer (full payload) and gate (gate payload) are separate keys,
+    # but the repeated arms (base / always_largest / gate_only) never re-run an identical check
+    uniq = {(t, keys, text) for t, keys, text in calls}
+    assert len(calls) == len(uniq), "an identical (task, payload, answer) check ran twice"
+    assert len(calls) < 3 * 2 * 4  # would be far more without memoization
+
+
+def test_memoize_distinguishes_payloads_and_texts():
+    n = []
+
+    def chk(task, text):
+        n.append(1)
+        return CheckResult("VERIFIED")
+
+    m = rs.memoize_checker(chk)
+    a = Task("python", "t", "p", {"want": "x"})
+    b = Task("python", "t", "p", {"want": "y"})
+    m(a, "ans"); m(a, "ans"); m(b, "ans"); m(a, "other")
+    assert len(n) == 3 and m.cache_size() == 3
+
+
+def _module_checker(task, text):  # module-level: picklable for the spawn process pool
+    return CheckResult("VERIFIED" if "\nok\n" in text else "FAILED")
+
+
+def test_prefetch_checks_primes_the_memo_and_matches_serial(tmp_path):
+    be = FakeBackend()
+    gen = make(tmp_path, ["base"], be, checker=_module_checker)
+    gen.run()  # fills gens.jsonl and scores serially
+    serial = [(r["task_id"], r["model"], r["score"]) for r in gen.rows.records]
+    tasks = mk_tasks()
+    st = rs.Study(stage=STAGE, plan=PLAN, tasks=tasks, models=["small", "big"], quants=["q4_K_M"], arms=["base"],
+                  backend=be, out_dir=tmp_path / "again", mode="score", checker=_module_checker)
+    import shutil
+    shutil.copy(tmp_path / "gens.jsonl", tmp_path / "again" / "gens.jsonl")
+    st = rs.Study(stage=STAGE, plan=PLAN, tasks=tasks, models=["small", "big"], quants=["q4_K_M"], arms=["base"],
+                  backend=be, out_dir=tmp_path / "again", mode="score", checker=_module_checker)
+    n = st.prefetch_checks(2)
+    assert n > 0 and st.checker.cache_size() == n
+    st.run()
+    assert sorted((r["task_id"], r["model"], r["score"]) for r in st.rows.records) == sorted(serial)
+
+
+def test_prefetch_is_a_noop_for_one_worker_or_generate_mode(tmp_path):
+    st = make(tmp_path, ["base"], FakeBackend(), checker=_module_checker)
+    assert st.prefetch_checks(1) == 0

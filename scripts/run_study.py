@@ -450,6 +450,36 @@ def consensus_key(domain: str, text: str) -> str:
     return "txt:" + hashlib.sha256(norm_code(text).encode()).hexdigest()[:16]
 
 
+def memoize_checker(checker: Callable[..., Any]) -> Callable[..., Any]:
+    """Checks are pure in (task payload, answer text), so arms that replay the same cached answer
+    (base, always_largest, gate_only, cascade, ...) execute it in the sandbox once per run.
+    The key includes the full payload, so the gate (visible tests) and the scorer (all tests)
+    never share an entry. Not persisted: a new process re-checks everything."""
+    seen: dict[tuple[str, str, str, str], Any] = {}
+
+    def wrapped(task: Task, text: str) -> Any:
+        key = (task.domain, task.task_id,
+               hashlib.sha256(json.dumps(task.checker_payload, sort_keys=True, default=str).encode()).hexdigest(),
+               hashlib.sha256(text.encode("utf-8", "replace")).hexdigest())
+        if key not in seen:
+            seen[key] = checker(task, text)
+        return seen[key]
+
+    def prime(task: Task, text: str, result: Any) -> None:
+        seen[(task.domain, task.task_id,
+              hashlib.sha256(json.dumps(task.checker_payload, sort_keys=True, default=str).encode()).hexdigest(),
+              hashlib.sha256(text.encode("utf-8", "replace")).hexdigest())] = result
+
+    wrapped.cache_size = lambda: len(seen)  # type: ignore[attr-defined]
+    wrapped.prime = prime  # type: ignore[attr-defined]
+    return wrapped
+
+
+def _run_check(args: tuple[Callable[..., Any], Task, str]) -> Any:
+    checker, task, text = args  # module-level so a spawn-context process pool can pickle it
+    return checker(task, text)
+
+
 class Study:
     def __init__(self, *, stage: dict[str, Any], plan: dict[str, Any], tasks: list[Task], models: list[str],
                  quants: list[str], arms: list[str], backend: Backend, out_dir: Path, mode: str = "all",
@@ -466,7 +496,8 @@ class Study:
         self.sampler, self.sync, self.sync_interval_s, self.log = sampler or VramSampler(enabled=False), sync, sync_interval_s, log
         if checker is None:
             from gwaya.domains.checkers import check as checker
-        self.checker = checker
+        self._raw_checker = checker
+        self.checker = memoize_checker(checker) if checker is not None else None
         self.max_tokens = dict(plan.get("generation_settings", {}).get("max_new_tokens", {}))
         # item_index = position in the task_id-sorted list, so seeds do not depend on eval order
         ordered = sorted(tasks, key=lambda t: (t.domain, t.task_id))
@@ -551,6 +582,38 @@ class Study:
                          "answered": (verdict == "VERIFIED") if gated else True,
                          "score": self._score(task, g["text"]), "gpu_s": g["gpu_s"],
                          "completion_tokens": g["completion_tokens"], **(extra or {})})
+
+    def prefetch_checks(self, workers: int, timeout_log: Callable[[str], None] | None = None) -> int:
+        """Fill the check memo for every cached greedy answer (scorer payload and gate payload) with a
+        process pool. Pure speed-up: the same checker runs on the same inputs, only concurrently, so
+        results are identical except that contention can turn a near-limit run into a timeout; callers
+        should inspect timeout rows afterwards and re-check them serially."""
+        if workers <= 1 or self.mode != "score":
+            return 0
+        from concurrent.futures import ProcessPoolExecutor
+        import multiprocessing as mp
+        by_id = {(t.domain, t.task_id): t for t in self.tasks}
+        jobs: dict[tuple[str, str, str, str], tuple[Task, str]] = {}
+        for rec in self.gens.records:
+            task = by_id.get((rec["domain"], rec["task_id"]))
+            if task is None or rec.get("temperature") != 0.0:
+                continue
+            gate_task = Task(task.domain, task.task_id, task.prompt, dict(task.checker_payload.get("__gate__", {})))
+            for t in (task, gate_task):
+                k = (t.domain, t.task_id, json.dumps(t.checker_payload, sort_keys=True, default=str),
+                     hashlib.sha256(rec["text"].encode("utf-8", "replace")).hexdigest())
+                jobs.setdefault(k, (t, rec["text"]))
+        items = list(jobs.values())
+        log = timeout_log or (lambda m: None)
+        log(f"[study] prefetching {len(items)} checks with {workers} workers")
+        done = 0
+        with ProcessPoolExecutor(max_workers=workers, mp_context=mp.get_context("spawn")) as pool:
+            for (t, text), res in zip(items, pool.map(_run_check, [(self._raw_checker, t, x) for t, x in items], chunksize=4)):
+                self.checker.prime(t, text, res)
+                done += 1
+                if done % 250 == 0:
+                    log(f"[study] prefetched {done}/{len(items)} checks")
+        return len(items)
 
     def _ladder(self, quant: str) -> list[str]:
         return [served_name(m, quant, self.quant_map)[0] for m in self.models]
@@ -779,6 +842,8 @@ def main(argv: list[str] | None = None, *, backend: Backend | None = None, check
     ap.add_argument("--sc-temperature", type=float, default=0.8)
     ap.add_argument("--lake-sync", action="store_true", help=f"copy run files to {LAKE_PREFIX}runs/<stage>/")
     ap.add_argument("--sync-interval-min", type=float, default=15.0)
+    ap.add_argument("--check-workers", type=int, default=1,
+                    help="score mode: run the sandboxed checks in this many processes before replaying the arms")
     ap.add_argument("--no-vram", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args(argv)
@@ -896,6 +961,7 @@ def main(argv: list[str] | None = None, *, backend: Backend | None = None, check
     except Exception as exc:  # noqa: BLE001
         binfo = {"error": f"{type(exc).__name__}: {exc}"[:200]}
     try:
+        study.prefetch_checks(a.check_workers, lambda m: print(m, file=sys.stderr))
         study.run()
     except CacheMiss as exc:
         status, rc = f"PARTIAL (cache miss: {exc})", 3
