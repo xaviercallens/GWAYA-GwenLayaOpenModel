@@ -70,3 +70,10 @@ GCP caps: G1 2.00 + E1 2.00 = 4.00 USD; with prior ~0.84 the planned total is 4.
 ### Outcomes
 
 Filled in after the run from the results files only. Unknown = TBD.
+
+## D23 Analysis verifier fixes (2026-10-08)
+- Scored the 80 L2 generations with `run_study.py --mode score` into `night/cache/L2score` (no new generation, no GCP spend). Arm `base` only: 14/80 VERIFIED, 66/80 FAILED or UNVERIFIED (as read from rows.jsonl).
+- Only one unregistered arm exists, so no paired comparison is possible: McNemar, paired-bootstrap deltas and Holm for H1/H2/H3/H7 stay not_run. Verifier items on McNemar and delta CIs are therefore not fixable with current data; they need a second arm.
+- `analyze_study.py` now emits a descriptive single-arm summary (accuracy, confident-wrong rate, ECE, Brier, AUROC, AURC, cost per correct, cluster bootstrap CIs) using raw confidence exp(mean_logprob). Not cross-fitted, not a pre-registered test; ECE here is for an uncalibrated score. H4-H6 remain not_run (no cross-fitted scores).
+- Renamed misleading `client_seconds_total` to `server_reported_seconds_total` (sum of gpu_s) and added `client_wall_seconds_total` (sum of wall_s).
+- Confident-wrong rate here counts every UNVERIFIED answer as wrong (answered=true for all rows), so it is an upper bound.

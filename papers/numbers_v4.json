@@ -1,7 +1,7 @@
 {
  "hypotheses": {
   "H1": {
-   "reason": "no scored rows (rows.jsonl absent or empty: generation done, scoring not yet run)",
+   "reason": "scored rows exist but only for unregistered single arm(s) ['base']: H1/H2/H3/H7 need paired registered arms (GL, B1, B2, B3, B5)",
    "status": "not_run"
   },
   "H10": {
@@ -34,11 +34,11 @@
    "status": "not_run"
   },
   "H2": {
-   "reason": "no scored rows (rows.jsonl absent or empty: generation done, scoring not yet run)",
+   "reason": "scored rows exist but only for unregistered single arm(s) ['base']: H1/H2/H3/H7 need paired registered arms (GL, B1, B2, B3, B5)",
    "status": "not_run"
   },
   "H3": {
-   "reason": "no scored rows (rows.jsonl absent or empty: generation done, scoring not yet run)",
+   "reason": "scored rows exist but only for unregistered single arm(s) ['base']: H1/H2/H3/H7 need paired registered arms (GL, B1, B2, B3, B5)",
    "status": "not_run"
   },
   "H4": {
@@ -54,7 +54,7 @@
    "status": "not_run"
   },
   "H7": {
-   "reason": "no scored rows (rows.jsonl absent or empty: generation done, scoring not yet run)",
+   "reason": "scored rows exist but only for unregistered single arm(s) ['base']: H1/H2/H3/H7 need paired registered arms (GL, B1, B2, B3, B5)",
    "status": "not_run"
   },
   "H8": {
@@ -68,13 +68,19 @@
  },
  "meta": {
   "bootstrap_rng": "numpy default_rng(seed); cluster-stratified by domain (D22)",
-  "cost_unit": "gpu_seconds",
-  "figures": [],
+  "cost_unit": "cpu_seconds",
+  "figures": [
+   "risk_coverage.png",
+   "reliability.png",
+   "cwr_by_arm.png",
+   "cost_per_correct.png"
+  ],
   "gens_files": [
-   "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl"
+   "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/gens.jsonl"
   ],
   "hash_chain_ok": {
-   "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl": true
+   "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/gens.jsonl": true,
+   "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl": true
   },
   "hypothesis_roles": {
    "H1": "primary",
@@ -95,8 +101,11 @@
   },
   "largest_tier": null,
   "n_boot": 10000,
-  "rows_files": [],
-  "seed": 0
+  "rows_files": [
+   "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl"
+  ],
+  "seed": 0,
+  "single_arm_note": "descriptive only, not a pre-registered test; confidence = exp(mean_logprob) from gens.jsonl, uncalibrated and not cross-fitted"
  },
  "numbers": {
   "H13.lines": {
@@ -115,81 +124,209 @@
    "source": "/mnt/data/home/xavkal/gwaya-data/spend_ledger.jsonl",
    "value": 0.0
   },
-  "gen.qwen3.5-2b-q4_K_M|math.client_seconds_total": {
-   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
-   "value": 2601.0669001895003
+  "arm.base.accuracy.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.25
+  },
+  "arm.base.accuracy.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.1
+  },
+  "arm.base.accuracy.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.175
+  },
+  "arm.base.answered_accuracy.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.25
+  },
+  "arm.base.answered_accuracy.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.1
+  },
+  "arm.base.answered_accuracy.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.175
+  },
+  "arm.base.aurc.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.8591743486714073
+  },
+  "arm.base.aurc.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.5858600482054122
+  },
+  "arm.base.aurc.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.7161057312894809
+  },
+  "arm.base.auroc.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.8114327122153208
+  },
+  "arm.base.auroc.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.42152754435107376
+  },
+  "arm.base.auroc.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.6179653679653679
+  },
+  "arm.base.brier.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.6863980745503795
+  },
+  "arm.base.brier.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.5714436342904413
+  },
+  "arm.base.brier.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.6301511443845994
+  },
+  "arm.base.cost_per_correct.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 2113.9036893939397
+  },
+  "arm.base.cost_per_correct.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 731.7621736111112
+  },
+  "arm.base.cost_per_correct.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 1178.4414285714286
+  },
+  "arm.base.coverage.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 1.0
+  },
+  "arm.base.coverage.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 1.0
+  },
+  "arm.base.coverage.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 1.0
+  },
+  "arm.base.cwr.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.9
+  },
+  "arm.base.cwr.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.75
+  },
+  "arm.base.cwr.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.825
+  },
+  "arm.base.ece.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.7708454167966075
+  },
+  "arm.base.ece.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.6264942576350927
+  },
+  "arm.base.ece.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.6997023420074228
+  },
+  "arm.base.n": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence)",
+   "value": 80
+  },
+  "gen.qwen3.5-2b-q4_K_M|math.client_wall_seconds_total": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/gens.jsonl (sum of wall_s)",
+   "value": 2601.1043429999995
   },
   "gen.qwen3.5-2b-q4_K_M|math.cpu_seconds_total": {
-   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/gens.jsonl",
    "value": 9910.64
   },
   "gen.qwen3.5-2b-q4_K_M|math.finish.length": {
-   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/gens.jsonl",
    "value": 4
   },
   "gen.qwen3.5-2b-q4_K_M|math.finish.stop": {
-   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/gens.jsonl",
    "value": 22
   },
   "gen.qwen3.5-2b-q4_K_M|math.mean_completion_tokens": {
-   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/gens.jsonl",
    "value": 370.96153846153845
   },
   "gen.qwen3.5-2b-q4_K_M|math.n": {
-   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/gens.jsonl",
    "value": 26
   },
-  "gen.qwen3.5-2b-q4_K_M|python.client_seconds_total": {
-   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
-   "value": 939.5115688992664
+  "gen.qwen3.5-2b-q4_K_M|math.server_reported_seconds_total": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/gens.jsonl (sum of gpu_s: server-reported total_ms)",
+   "value": 2601.0669001895003
+  },
+  "gen.qwen3.5-2b-q4_K_M|python.client_wall_seconds_total": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/gens.jsonl (sum of wall_s)",
+   "value": 939.5432339999999
   },
   "gen.qwen3.5-2b-q4_K_M|python.cpu_seconds_total": {
-   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/gens.jsonl",
    "value": 3624.84
   },
   "gen.qwen3.5-2b-q4_K_M|python.finish.length": {
-   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/gens.jsonl",
    "value": 1
   },
   "gen.qwen3.5-2b-q4_K_M|python.finish.stop": {
-   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/gens.jsonl",
    "value": 27
   },
   "gen.qwen3.5-2b-q4_K_M|python.mean_completion_tokens": {
-   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/gens.jsonl",
    "value": 118.75
   },
   "gen.qwen3.5-2b-q4_K_M|python.n": {
-   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/gens.jsonl",
    "value": 28
   },
-  "gen.qwen3.5-2b-q4_K_M|rust.client_seconds_total": {
-   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
-   "value": 772.0109696688596
+  "gen.qwen3.5-2b-q4_K_M|python.server_reported_seconds_total": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/gens.jsonl (sum of gpu_s: server-reported total_ms)",
+   "value": 939.5115688992664
+  },
+  "gen.qwen3.5-2b-q4_K_M|rust.client_wall_seconds_total": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/gens.jsonl (sum of wall_s)",
+   "value": 772.0373970000002
   },
   "gen.qwen3.5-2b-q4_K_M|rust.cpu_seconds_total": {
-   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/gens.jsonl",
    "value": 2962.6999999999994
   },
   "gen.qwen3.5-2b-q4_K_M|rust.finish.stop": {
-   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/gens.jsonl",
    "value": 26
   },
   "gen.qwen3.5-2b-q4_K_M|rust.mean_completion_tokens": {
-   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/gens.jsonl",
    "value": 98.46153846153847
   },
   "gen.qwen3.5-2b-q4_K_M|rust.n": {
-   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/gens.jsonl",
    "value": 26
   },
+  "gen.qwen3.5-2b-q4_K_M|rust.server_reported_seconds_total": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/gens.jsonl (sum of gpu_s: server-reported total_ms)",
+   "value": 772.0109696688596
+  },
   "gens.count": {
-   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/gens.jsonl",
    "value": 80
   },
   "rows.count": {
-   "source": "none",
-   "value": 0
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl",
+   "value": 80
+  },
+  "single_arm.n": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl",
+   "value": 80
   }
  },
  "schema": "gwenlaya_v4.numbers/1"

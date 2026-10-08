@@ -556,10 +556,11 @@ def arm_summary(D: dict[str, Any], nb: int, seed: int, N: Numbers, src: str, uni
 def generation_descriptives(gens: list[dict[str, Any]], N: Numbers, src: str) -> dict[str, Any]:
     cells: dict[tuple, dict[str, Any]] = {}
     for g in gens:
-        c = cells.setdefault((g["model"], g["domain"]), {"n": 0, "tok": 0, "cpu": 0.0, "gpu": 0.0, "fin": Counter(), "cpu_known": 0})
+        c = cells.setdefault((g["model"], g["domain"]), {"n": 0, "tok": 0, "cpu": 0.0, "gpu": 0.0, "wall": 0.0, "fin": Counter(), "cpu_known": 0})
         c["n"] += 1
         c["tok"] += g.get("completion_tokens") or 0
         c["gpu"] += g.get("gpu_s") or 0.0
+        c["wall"] += g.get("wall_s") or 0.0
         if g.get("cpu_seconds") is not None:
             c["cpu"] += g["cpu_seconds"]
             c["cpu_known"] += 1
@@ -568,11 +569,12 @@ def generation_descriptives(gens: list[dict[str, Any]], N: Numbers, src: str) ->
     for (m, d), c in sorted(cells.items()):
         k = f"{m}|{d}"
         out[k] = {"n": c["n"], "mean_completion_tokens": c["tok"] / c["n"], "cpu_seconds_total": c["cpu"] if c["cpu_known"] else None,
-                  "client_seconds_total": c["gpu"], "finish_reasons": dict(c["fin"])}
+                  "server_reported_seconds_total": c["gpu"], "client_wall_seconds_total": c["wall"], "finish_reasons": dict(c["fin"])}
         N.add(f"gen.{k}.n", c["n"], src)
         N.add(f"gen.{k}.mean_completion_tokens", out[k]["mean_completion_tokens"], src)
         N.add(f"gen.{k}.cpu_seconds_total", out[k]["cpu_seconds_total"], src)
-        N.add(f"gen.{k}.client_seconds_total", c["gpu"], src)
+        N.add(f"gen.{k}.server_reported_seconds_total", c["gpu"], src + " (sum of gpu_s: server-reported total_ms)")
+        N.add(f"gen.{k}.client_wall_seconds_total", c["wall"], src + " (sum of wall_s)")
         for fr, cnt in c["fin"].items():
             N.add(f"gen.{k}.finish.{fr}", cnt, src)
     return out
@@ -760,9 +762,28 @@ def analyze(rows_files: list[Path], gens_files: list[Path], tasks_file: Path | N
         hyp.update(run_h1_h3(D, n_boot, seed, N, rsrc, unit))
         hyp.update(run_exploratory(D, n_boot, seed, N, rsrc))
     else:
-        reason = "no scored rows (rows.jsonl absent or empty: generation done, scoring not yet run)"
+        if rows:
+            reason = ("scored rows exist but only for unregistered single arm(s) "
+                      f"{sorted({r.get('arm') for r in rows})}: H1/H2/H3/H7 need paired registered arms (GL, B1, B2, B3, B5)")
+        else:
+            reason = "no scored rows (rows.jsonl absent or empty: generation done, scoring not yet run)"
         for h in ("H1", "H3", "H2", "H7"):
             hyp[h] = {"status": "not_run", "reason": reason}
+        # descriptive single-arm summary (NOT a pre-registered hypothesis): raw confidence = exp(mean token logprob),
+        # not cross-fitted, so ECE/Brier/AUROC/AURC here are uncalibrated-score descriptives
+        extra = sorted({r.get("arm") for r in rows if r.get("arm")} - set(ARM_NAMES.values()))
+        if extra:
+            lp = {(g["task_id"], g["model"], g.get("seed")): g.get("mean_logprob") for g in gens}
+            for r in rows:
+                v = lp.get((r["task_id"], r["model"], r.get("seed")))
+                if r.get("confidence") is None and v is not None:
+                    r["confidence"] = v
+            D = build_arrays(rows, {a: a for a in extra}, task_clusters, cost_fn)
+            if D["n"]:
+                N.add("single_arm.n", D["n"], rsrc)
+                arms = arm_summary(D, n_boot, seed, N, rsrc + " + gens mean_logprob (raw confidence)", unit)
+                N.meta["single_arm_note"] = ("descriptive only, not a pre-registered test; confidence = exp(mean_logprob) "
+                                             "from gens.jsonl, uncalibrated and not cross-fitted")
     hyp.update(run_secondary(scores, task_info, n_boot, seed, N, str(scores_file) if scores_file else "no scores file"))
     hyp["H13"] = ledger_h13(ledger, N)
     for h, st in STATUS.items():
