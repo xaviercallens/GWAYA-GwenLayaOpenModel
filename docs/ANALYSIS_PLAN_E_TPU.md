@@ -55,3 +55,20 @@ evidence for any registered hypothesis.
 Single greedy sample; one hardware/engine; contamination of public benchmarks by pretraining is possible;
 tau for raw-confidence selection is not set on a held-out split; the 4B tier is the largest available, so
 B2/B5 are "largest of two", not the registered 9B/27B; CPU contention can cause spurious timeouts (A8).
+
+## Amendments (made after the first analysis run; the original text above is unchanged, sha256 1f2fa2c1...)
+Dated 2026-10-08. These were decided after seeing the first results and are labelled as post-hoc.
+
+1. **A7 excludes math.** The first run reported a pooled CPU-vs-TPU McNemar p of 0.0004 driven entirely by
+   math (CPU 0/26 versus TPU 15/26). The CPU night math generations came from the defective code prompt
+   (D24/D28), so that difference measures the defect, not the engine. A7 is restricted to Python and Rust.
+   Seeing the pooled number before deciding is a researcher degree of freedom; the reason (a documented
+   defect found before this run) is independent of the outcome.
+2. **A8 became a correction procedure.** The serial re-check found tasks that fail in the parallel run but
+   pass alone (contention timeouts). Those tasks are re-scored serially for all arms
+   (`scripts/tpu/serial_overlay.py`); the originals stay untouched, the overlay takes precedence in
+   `analyze_e_tpu.py`, and every corrected row is listed in the numbers file under
+   `serial_recheck_corrections`. Only failures can be spurious, so only non-passing rows were re-checked.
+   Checks that time out even when run alone remain FAILED and are counted and reported.
+3. **Cascade cost reading.** The first run showed the cascade is not cheaper than always-largest for this
+   2B/4B pair. This is reported as the result; no tuning of the gate or the pair was done afterwards.

@@ -16,7 +16,7 @@ SPEC = [
 ]
 
 
-def make():
+def make_inputs():
     tasks = [{"domain": d, "task_id": t, "cluster": f"c-{t}"} for d, t, *_ in SPEC]
     rows, gens = [], []
     for d, t, cs, cl, gl, gs, lp in SPEC:
@@ -32,6 +32,11 @@ def make():
         rows.append({"arm": "gwenlaya", "model": L if esc else S, "domain": d, "task_id": t,
                      "score": "VERIFIED" if final_cor else "FAILED", "answered": bool(final_gate),
                      "gpu_s": 4.0 if esc else 1.0, "tiers_invoked": [S, L] if esc else [S]})
+    return tasks, rows, gens
+
+
+def make():
+    tasks, rows, gens = make_inputs()
     return E.build(tasks, rows, gens, S, L)
 
 
@@ -121,3 +126,23 @@ def test_build_rejects_missing_rows():
     tasks = [{"domain": "python", "task_id": "x", "cluster": "c"}]
     with pytest.raises(SystemExit):
         E.build(tasks, [], [], S, L)
+
+
+def test_night_comparison_excludes_math_and_says_why():
+    D = make()
+    rows = [{"arm": "base", "domain": d, "task_id": t, "score": "VERIFIED" if cs else "FAILED"} for d, t, cs, *_ in SPEC]
+    out = E.night_compare(D, rows, {(d, t) for d, t, *_ in SPEC})
+    assert "math" not in out["by_domain"] and out["domains"] == ["python", "rust"]
+    assert out["n_common"] == 9 and "defective" in out["excluded"]["math"]
+
+
+
+def test_overlay_rows_take_precedence_and_are_reported():
+    tasks, rows, gens = make_inputs()
+    overlay = [{"arm": "base", "model": S, "domain": "python", "task_id": "p1", "score": "VERIFIED"}]
+    before = E.build(tasks, rows, gens, S, L)
+    after = E.build(tasks, rows + overlay, gens, S, L)
+    i = before.keys.index(("python", "p1"))
+    assert not before.models[S]["cor"][i] and after.models[S]["cor"][i]
+    assert E.overlay_corrections(rows, overlay) == [["base", S, "python", "p1", "FAILED", "VERIFIED"]]
+    assert E.overlay_corrections(rows, [dict(overlay[0], score="FAILED")]) == []  # unchanged score is not a correction

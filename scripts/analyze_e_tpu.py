@@ -194,8 +194,13 @@ def night_compare(D: Data, night_rows: list[dict], night_ids: set[tuple[str, str
     cpu = {(r["domain"], r["task_id"]): r["score"] == "VERIFIED" for r in night_rows if r["arm"] == "base"}
     idx = [i for i, k in enumerate(D.keys) if k in cpu and k in night_ids]
     tpu = D.models[D.small]["cor"]
-    out: dict[str, Any] = {"n_common": len(idx), "by_domain": {}}
-    for d in (*DOMAINS, SEL):
+    # Math is excluded: the CPU night math generations went through the defective code prompt (D24/D28),
+    # so a CPU-vs-TPU math difference measures that defect, not the engine. Amendment to the analysis plan.
+    keep = ("python", "rust")
+    idx = [i for i in idx if D.dom[i] in keep]
+    out: dict[str, Any] = {"n_common": len(idx), "domains": list(keep), "by_domain": {},
+                           "excluded": {"math": "CPU night math used the defective code prompt (D24/D28); not comparable"}}
+    for d in (*keep, SEL):
         j = [i for i in idx if d == SEL or D.dom[i] == d]
         a = np.array([cpu[D.keys[i]] for i in j])
         b = np.array([tpu[i] for i in j])
@@ -203,6 +208,17 @@ def night_compare(D: Data, night_rows: list[dict], night_ids: set[tuple[str, str
                                "agree": int((a == b).sum()), "cpu_only": int((a & ~b).sum()), "tpu_only": int((~a & b).sum()),
                                "p_mcnemar_two_sided": mcnemar_exact(int((a & ~b).sum()), int((~a & b).sum()), "two-sided")}
     return out
+
+
+def overlay_corrections(orig: list[dict], overlay: list[dict]) -> list[list]:
+    """Rows whose score the serial re-check changed: [arm, model, domain, task_id, was, now]."""
+    was = {(r["arm"], r.get("model"), r["domain"], r["task_id"]): r["score"] for r in orig}
+    out = set()
+    for r in overlay:
+        k = (r["arm"], r.get("model"), r["domain"], r["task_id"])
+        if k in was and was[k] != r["score"]:
+            out.add((*k, was[k], r["score"]))
+    return [list(x) for x in sorted(out, key=str)]
 
 
 def analyze(D: Data, n_boot: int, seed: int) -> dict[str, Any]:
@@ -269,10 +285,10 @@ def write_tables(path: Path, R: dict, D: Data, night: dict | None) -> None:
                  f"{f(r, f'A5.cost_ratio_cascade_over_large.{d}')} & {f(r, f'A5.escalated.{d}')}\\\\")
     L += ["\\bottomrule\\end{tabular}\\end{table}", ""]
     if night:
-        L += ["\\begin{table}[t]\\centering\\small", "\\caption{Same raw protocol, 80 night tasks: Qwen3.5-2B q4\\_K\\_M "
+        L += ["\\begin{table}[t]\\centering\\small", "\\caption{Same raw protocol, night Python and Rust tasks (math excluded: the CPU math used a defective prompt): Qwen3.5-2B q4\\_K\\_M "
               "llama.cpp CPU versus bf16 vLLM TPU. Hardware, quantisation and engine all differ.}\\label{tab:e-night}",
               "\\begin{tabular}{lccccc}\\toprule", "Domain & $n$ & CPU pass & TPU pass & agree & McNemar $p$\\\\\\midrule"]
-        for d in (*DOMAINS, SEL):
+        for d in (*night["domains"], SEL):
             b = night["by_domain"][d]
             L.append(f"{d} & {b['n']} & {b['cpu_pass']} & {b['tpu_pass']} & {b['agree']} & {b['p_mcnemar_two_sided']:.3f}\\\\")
         L += ["\\bottomrule\\end{tabular}\\end{table}"]
@@ -324,6 +340,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--large", default="qwen3.5-4b-bf16")
     ap.add_argument("--night-cpu", type=Path, help="night L2fix rows.jsonl (CPU q4 arm)")
     ap.add_argument("--night-tasks", type=Path)
+    ap.add_argument("--overlay-tiers", type=Path, help="serial re-score rows (scripts/tpu/serial_overlay.py) that take precedence")
+    ap.add_argument("--overlay-coder", type=Path)
     ap.add_argument("--n-boot", type=int, default=10000)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--out-numbers", type=Path, required=True)
@@ -332,10 +350,16 @@ def main(argv: list[str] | None = None) -> int:
     a = ap.parse_args(argv)
 
     tasks = read_jsonl(a.tasks)
-    coder = None
-    if a.coder:
-        coder = (read_jsonl(a.coder / "rows.jsonl"), read_jsonl(a.coder / "gens.jsonl"), a.coder_name)
-    D = build(tasks, read_jsonl(a.tiers / "rows.jsonl"), read_jsonl(a.tiers / "gens.jsonl"), a.small, a.large, coder)
+    tier_rows = read_jsonl(a.tiers / "rows.jsonl")
+    coder_rows = read_jsonl(a.coder / "rows.jsonl") if a.coder else []
+    corrections: dict[str, list] = {}
+    for label, orig, ov_path in (("tiers", tier_rows, a.overlay_tiers), ("coder", coder_rows, a.overlay_coder)):
+        if ov_path and Path(ov_path).exists():
+            ov = read_jsonl(ov_path)
+            corrections[label] = overlay_corrections(orig, ov)
+            orig.extend(ov)  # later rows win in build()
+    coder = (coder_rows, read_jsonl(a.coder / "gens.jsonl"), a.coder_name) if a.coder else None
+    D = build(tasks, tier_rows, read_jsonl(a.tiers / "gens.jsonl"), a.small, a.large, coder)
     R = analyze(D, a.n_boot, a.seed)
     night = None
     if a.night_cpu and a.night_tasks:
@@ -345,6 +369,7 @@ def main(argv: list[str] | None = None) -> int:
                     "models": list(D.models), "plan": "docs/ANALYSIS_PLAN_E_TPU.md",
                     "cost_unit": "accelerator chip-seconds (chunk wall time split by token share)",
                     "sources": {"tiers": str(a.tiers), "coder": str(a.coder) if a.coder else None, "tasks": str(a.tasks)}},
+           "serial_recheck_corrections": corrections,
            **R, "A7_night_cpu_vs_tpu": night}
     a.out_numbers.parent.mkdir(parents=True, exist_ok=True)
     a.out_numbers.write_text(json.dumps(out, indent=1))
