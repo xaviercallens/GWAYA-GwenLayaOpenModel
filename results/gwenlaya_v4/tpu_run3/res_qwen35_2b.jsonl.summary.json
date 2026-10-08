@@ -1,0 +1,21 @@
+{
+ "model": "Qwen/Qwen3.5-2B",
+ "n": 80,
+ "load_s": 106.2,
+ "gen_s": 99.7,
+ "completion_tokens": 25568,
+ "tok_per_s": 256.3,
+ "by_domain": {
+  "python": {
+   "FAILED": 28
+  },
+  "rust": {
+   "VERIFIED": 6,
+   "FAILED": 20
+  },
+  "math": {
+   "UNVERIFIED": 10,
+   "VERIFIED": 16
+  }
+ }
+}

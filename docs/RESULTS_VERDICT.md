@@ -14,15 +14,25 @@ gate verdict and no gate verdict was recorded; math scoring used an unregistered
 fallback (D24); the HumanEval+ gate payloads leaked the hidden tests (D25, no number affected);
 primary Holm is back to the registered m = 2 (D26).
 
+**Revised 2026-10-08 for v3.3.1** (branch `fix/math-and-rescore`; D27-D30 in `docs/DEVIATIONS.md`).
+numbers_v4 is now built from the re-scored rows `night/cache/L2fix/rows.jsonl` (copy in
+`results/gwenlaya_v4/night_L2fix/rows.jsonl`; same generations). Additional sources:
+`results/gwenlaya_v4/rust_harness_validation.json` and `results/gwenlaya_v4/tpu_run3/`
+(`summary.json`, `*.rescored.jsonl`, `status.jsonl`). Changes: the v3.3.0 Rust result (0/26) was a
+sandbox link failure and is withdrawn; the fixed harness gives Rust 6/26 (D27). Math is scored
+boxed-only by default and all 26 night math items are UNDECIDED (D28). Python unchanged (D29). A
+descriptive, unregistered TPU run was added (D30). Ledger now 5 lines, 1.5399 USD.
+
 ## Bottom line
 
 **No pre-registered test ran.** The only scored data are 80 items from one unregistered arm
 (`base`, Qwen3.5-2B q4_K_M, CPU). H1, H3 (primaries) and H2, H7 need paired registered arms
 (GL, B1, B2, B3, B5). H4-H6 need a cross-fitted scores file, which does not exist. Only H13 has a decision rule that
 can be evaluated; it is not refuted on the known lines, but it holds largely by construction (the
-ledger refuses over-cap stages), so it is not evidence about the system. Every probability for a hypothesis that did
-not run is the **red-team prior** from `docs/DEVIATIONS.md` ("Hypothesis status for this run"), not
-evidence.
+ledger refuses over-cap stages), so it is not evidence about the system. Every probability in the
+table below, including H13's, is the **red-team prior** from `docs/DEVIATIONS.md` ("Hypothesis
+status for this run"), written before any data, not evidence. The Rust correction and the TPU run
+(v3.3.1) are descriptive and change no verdict.
 
 ## Verdicts
 
@@ -35,7 +45,7 @@ evidence.
 | H6 | secondary A | not_run | 0.40 (prior) | Same. |
 | H8 | secondary B | not_run | 0.30 (prior) | Needs G1 (GPU slot held by a foreign VM, D11). |
 | H9 | secondary C | not_run (deferred) | 0.25 (prior) | Deferred, D8. |
-| H13 | systems | not refuted (interim; ledger $0.85, catalog list-price estimate) | 0.75 (prior) | Ledger check, holds by construction; see below. |
+| H13 | systems | not refuted (interim; ledger $1.54, catalog list-price estimate) | 0.75 (prior) | Ledger check, holds by construction; see below. |
 | H14 | systems | not_run | 0.50 (prior) | Needs E1, which needs G1 (D12). |
 | H15 | systems | not_run | 0.70 (prior) | See below. |
 | H2 | exploratory | not_run | 0.08 (prior) | No GL or B5 arm. |
@@ -47,11 +57,12 @@ evidence.
 ### H13 derivation
 
 Decision rule: ledger total <= 40 USD (planned) and <= 50 USD (hard); refuted if either is exceeded
-or a stage exceeds 1.25x its cap twice. numbers_v4 H13 verdict: "not refuted": 3 ledger lines,
-`usd_known_total` 0.8549. The two TPU smoke-test lines were priced on 2026-10-08 from Cloud Billing
-Catalog list prices (v5e on-demand 1.20 USD/chip-h us-central1, 2466 s; v5e spot 0.4942 USD/chip-h
-us-west4, 240 s) and the analysis was re-run; only the H13 numbers changed. The billed amount is TBD
-until the billing export is read. No stage has a spend over its cap (G1/E1 never ran). The red-team review
+or a stage exceeds 1.25x its cap twice. numbers_v4 H13 verdict: "not refuted": 5 ledger lines,
+0 without `usd_estimate`, `usd_known_total` 1.5399. Lines: TPU smoke attempt 1 (spot, 240 s,
+0.0329), TPU smoke (on demand, 2466 s, 0.822), L1 upload (13 s, 0.0), TPU run #2 (on demand, 1073 s,
+0.3577), TPU run #3 (on demand, 982 s, 0.3273). Prices are Cloud Billing Catalog list prices (v5e
+on-demand 1.20 USD/chip-h; v5e spot 0.494237 USD/chip-h). The billed amount is TBD until the
+billing export is read. G1/E1 never ran. The red-team review
 (PROPOSAL_REVIEW.md, prior 0.75) notes that the ledger enforces H13 by refusing stages, so support
 is close to tautological. An earlier version of this file gave probability_true = 0.97; that was
 author judgement with no statistical basis and is withdrawn. The probability column shows the prior.
@@ -86,15 +97,55 @@ Headline, Python only (n = 28):
 | AURC | 0.438 | 0.221-0.712 |
 | cost per pass (server CPU-seconds) | 330 | 174-726 |
 
-Outcome counts (script output): python 11 PASS_HIDDEN / 17 FAIL_HIDDEN / 0 UNDECIDED; rust 0 / 13 /
-13; math 3 / 18 / 5. Math answer extraction: all 26 by the unregistered last-number fallback
-(`math_extraction.boxed.n` = 0), including all 3 passes; registered boxed-only rescoring: math 0/26.
+Rust, descriptive (n = 26; v3.3.1, harness fixed and validated after scoring, D27):
 
-Sensitivity only (not valid estimates): pooled n = 80 as scored: pass rate 0.175 (0.10-0.25),
-mean confidence 0.875 (0.863-0.886), ECE 0.700 (0.626-0.771), Brier 0.630 (0.571-0.686), AUROC 0.618
-(0.422-0.811), AURC 0.716 (0.586-0.859), cost per pass 1178 (732-2114). Pooled with boxed-only math:
-pass rate 0.138 (0.075-0.200), ECE 0.737 (0.676-0.798), AUROC 0.758 (0.568-0.922). Math as scored:
-AUROC 0.348 (0.133-0.583). Rust: AUROC undefined (no pass).
+| Metric | Point | 95 % CI |
+|---|---|---|
+| pass rate (PASS_HIDDEN) | 0.231 | 0.077-0.385 |
+| mean raw confidence | 0.894 | 0.882-0.906 |
+| confident-wrong rate (upper bound) | 0.769 | 0.615-0.923 |
+| ECE | 0.675 | 0.549-0.813 |
+| Brier | 0.605 | 0.477-0.725 |
+| AUROC | 0.875 | 0.709-0.990 |
+| AURC | 0.557 | 0.321-0.851 |
+| cost per pass (server CPU-seconds) | 494 | 261-1552 |
+
+With 6 passes, one seed, an uncalibrated score and probable benchmark exposure, the Rust AUROC is
+not read as evidence that the score ranks Rust answers well.
+
+Outcome counts (script output, v3.3.1): python 11 PASS_HIDDEN / 17 FAIL_HIDDEN / 0 UNDECIDED; rust
+6 / 20 / 0; math 0 / 0 / 26. Math is scored boxed-only by default (D28) and no night math generation
+contains `\boxed` (`math_extraction.boxed.n` = 0). The v3.3.0 counts (rust 0/13/13, the 3 math passes
+from the last-number fallback) are superseded.
+
+Sensitivity only (not valid estimates): pooled n = 80 (boxed-only math): pass rate 0.212
+(0.125-0.300), mean confidence 0.875 (0.863-0.886), ECE 0.662 (0.585-0.741), Brier 0.589
+(0.522-0.654), AUROC 0.806 (0.675-0.917), AURC 0.601 (0.458-0.758), cost per pass 970 (629-1648).
+Math: AUROC undefined (no pass). In `tables_v4.tex` the "last-number fallback" math row and the
+"sensitivity (mixed)" pooled row now equal the boxed-only rows, because the rows were re-scored
+boxed-only; their status labels are hard-coded in the script and predate D27/D28.
+
+## Descriptive TPU run #3 (not a registered arm, not a test; D30)
+
+One on-demand TPU v5e chip, vllm-tpu 0.31.0, bf16, greedy (temperature 0), max_tokens 1024,
+non-thinking, fixed prompts. All 80 night tasks per model. Scoring on the TPU host was invalid for
+Python (every Python item FAILED there), so all rows were re-scored locally with the same checkers;
+Rust and math re-scores equal the TPU-host status on every item. Counts from
+`results/gwenlaya_v4/tpu_run3/summary.json`; truncations from `*.rescored.jsonl`
+(`finish_reason` = length); throughput from the `SUMMARY` lines of `status.jsonl`.
+
+| Model | Python /28 | Rust /26 | Math /26 | math truncated (UNVERIFIED) | load_s | gen_s | tok_per_s |
+|---|---|---|---|---|---|---|---|
+| Qwen/Qwen3.5-2B | 11 | 6 | 16 | 9 | 106.2 | 99.7 | 256.3 |
+| Qwen/Qwen3.5-4B | 20 | 13 | 16 | 9 | 124.3 | 117.4 | 220.2 |
+| Qwen/Qwen2.5-Coder-1.5B-Instruct | 18 | 15 | 8 | 4 | 186.3 | 8.7 | 2094.2 |
+
+Qwen3.5-2B bf16 on TPU has the same Python (11/28) and Rust (6/26) counts as the q4_K_M CPU arm; the
+item-level outcome agrees on 22/28 Python and 24/26 Rust items (computed from
+`night_L2fix/rows.jsonl` vs `res_qwen35_2b.rescored.jsonl`). This is a consistency check across
+hardware and quantisation, not a test. Single sample, no logprobs, no gate, no calibration; public
+benchmarks the models have probably seen. Qwen3.5 runs through the tpu-inference PyTorch fallback
+(with `SKIP_JAX_PRECOMPILE=1`); Qwen2.5-Coder is JAX-native.
 
 Absolute scores are on public benchmarks probably seen in Qwen3.5 pretraining (prereg section 10);
 they are not clean capability estimates.
@@ -103,14 +154,16 @@ they are not clean capability estimates.
 
 1. **Math is invalid as a capability measure.** The L2 review found all 26 math completions were
    produced with the python system prompt and a ```python prefill (0/26 contain `\boxed`). The
-   scored rows are those same generations; no regeneration has happened. The 3/26 math passes came
-   from the unregistered last-number fallback (D24) and say nothing about the model's math ability.
-2. **Rust 0/26 PASS_HIDDEN with 13/26 UNDECIDED is suspicious.** The Rust harness has never been
-   validated on a passing program (D17). A zero rate with half the items undecided is as consistent
-   with a harness or toolchain problem as with model weakness. Treat it as unverified until one
-   known-good Rust solution passes end to end.
-3. **Pooled numbers mix domains and defects**, so Python (n = 28) is the only headline; pooled
-   numbers are a sensitivity analysis.
+   scored rows are those same generations; no CPU regeneration has happened. Under boxed-only
+   scoring (now the default, D28) all 26 are UNDECIDED. The prompt is fixed in code (D28); only the
+   TPU run used it.
+2. **The v3.3.0 Rust result (0/26) was wrong, caused by our harness (D27).** No Rust program could
+   link inside the sandbox. Fixed and validated on hand-written solutions (25/25 correct pass, 9/9
+   wrong fail) after the generations existed; Rust is now 6/26. The validation is not an independent
+   reference set, and one of the 26 tasks has no reference solution in it.
+3. **Pooled numbers mix domains and defects**, so Python (n = 28) stays the headline (chosen in D26,
+   before the Rust fix); Rust is a second descriptive domain; pooled numbers are a sensitivity
+   analysis.
 4. **The confidence signal is badly calibrated, and its ranking is unresolved.** On Python the
    AUROC CI (0.483-0.917) includes 0.5; ECE 0.519, with mean confidence 0.896 against a pass rate of
    0.393.
@@ -122,6 +175,6 @@ they are not clean capability estimates.
 
 ## What would change these verdicts
 
-Fix the math prompt path and regenerate the 26 math items; validate the Rust harness on one passing
-program; generate at least the B3/B5/GL arms on the same 80 items; build `scores_crossfit.jsonl`.
+Regenerate the 26 night math items on the CPU arm with the fixed prompt (D28); generate at least the
+B3/B5/GL arms on the same 80 items with the fixed harnesses; build `scores_crossfit.jsonl`.
 Only then can H1, H3, H2, H7 and H4-H6 move off not_run.

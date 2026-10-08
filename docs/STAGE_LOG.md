@@ -64,3 +64,41 @@ Verdict: **not trustworthy for the math domain. Do not start L3 as planned.** Py
 
 - `scripts/analyze_study.py` implements the pre-registered analysis (cluster-stratified paired bootstrap, exact McNemar, Holm over the kept family, ECE/Brier/AUROC/AURC, CWR, cost per correct answered item; H1, H3 primary, H4-H6 from a cross-fitted scores file, H2/H7 exploratory, H13 from the ledger). Outputs `papers/numbers_v4.json` (each number with its source), `papers/tables_v4.tex`, `papers/figures_v4/`. 14 synthetic known-answer tests in `tests/test_analyze_study.py` pass (D22).
 - Run on the current data it has only generation descriptives (no scored rows exist yet; the math prompt defect from the L2 review is still open), so H1/H2/H3/H7 are `not_run` and every arm cell is TBD. H13 reports only the 0.0 USD known in the ledger (2 lines carry no usd_estimate).
+
+## v3.3.1 corrections: Rust harness, math scoring, re-score, TPU run #3 (2026-10-08)
+
+Branch `fix/math-and-rescore`. No new CPU generation; no registered test ran. Deviations D27-D30.
+
+- **Rust harness (D27, PR #4, 8cb37ad).** In bwrap, rustc's linker `cc` resolves through
+  `/etc/alternatives`, which was not mounted, so no Rust program could link; the v3.3.0 Rust 0/26
+  was a harness artefact. The nonce-in-source forgery was reproduced and closed (nonce via stdin,
+  separate compile/run sandboxes, no `/proc` in the run sandbox, `unsafe`/`link_section`/`asm`
+  rejected); `assert_ne!` now counted. Validation: 25/25 reference solutions VERIFIED, 9/9 wrong
+  solutions FAILED (`results/gwenlaya_v4/rust_harness_validation.json`).
+- **Math and Python fixes (D28, D29, 2c1f6b1).** Prose math prompt ending in `\boxed{}`, Qwen3.x
+  non-thinking via an empty think block, boxed-only scoring by default (last-number fallback
+  opt-in), self-consistency math key fixed; uv-managed interpreter symlinks recreated so Python
+  starts inside bwrap.
+- **Re-score of the night arm.** The unchanged L2 generations were re-scored into
+  `night/cache/L2fix/rows.jsonl` (sha256 `a5e72614...70a8`; copy in `results/gwenlaya_v4/night_L2fix/`)
+  and `analyze_study.py` was rerun (numbers_v4.json sha256 `952bfc77...eb74`). Result: python 11/28
+  PASS_HIDDEN (unchanged), rust 6/26, math 0 pass / 26 UNDECIDED (boxed-only; generations still
+  invalid). Hash chains OK per numbers_v4 meta.
+- **TPU run #3 (D30).** One on-demand v5e chip (us-west4-a, 982 s, ledger 0.3273 USD catalog
+  estimate), vllm-tpu 0.31.0, bf16, greedy, max_tokens 1024, non-thinking. All 80 tasks for
+  Qwen3.5-2B, Qwen3.5-4B, Qwen2.5-Coder-1.5B-Instruct. Qwen3.5 ran via the PyTorch fallback with
+  `SKIP_JAX_PRECOMPILE=1`. TPU-host Python scoring invalid (all FAILED); all rows re-scored locally
+  (`results/gwenlaya_v4/tpu_run3/summary.json`). Python/Rust/Math passes: 2B 11/6/16, 4B 20/13/16,
+  Coder 18/15/8; math truncations at 1024 tokens (UNVERIFIED): 9, 9, 4. Descriptive only.
+- **Spend.** Ledger 5 lines, sum of usd_estimate 1.5399 USD (catalog list-price estimates; billed
+  amount TBD). TPU run #2 (1073 s, 0.3577) is in the ledger; its outputs are not used in the paper.
+- **Paper.** `papers/gwenlaya_v4.tex` revised to v3.3.1 (corrections section, Rust and math text,
+  descriptive TPU section, spend, limitations).
+
+### v3.3.1 review note
+
+Verdict: **descriptive results only; still no registered test.** Python and Rust night numbers are
+usable as descriptive results; math remains invalid until regenerated on CPU with the fixed prompt.
+The Rust validation was done after the generations existed and uses hand-written solutions, not an
+independent reference set. The TPU 2B counts match the CPU arm in aggregate but not item by item
+(22/28 Python and 24/26 Rust items agree).

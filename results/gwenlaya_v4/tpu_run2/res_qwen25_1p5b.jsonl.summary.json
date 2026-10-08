@@ -1,0 +1,17 @@
+{
+ "model": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
+ "n": 54,
+ "load_s": 171.0,
+ "gen_s": 2.3,
+ "completion_tokens": 3510,
+ "tok_per_s": 1533.0,
+ "by_domain": {
+  "python": {
+   "FAILED": 28
+  },
+  "rust": {
+   "FAILED": 11,
+   "VERIFIED": 15
+  }
+ }
+}
