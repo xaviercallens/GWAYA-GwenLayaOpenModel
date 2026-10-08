@@ -25,6 +25,7 @@ import subprocess  # nosec B404
 import tempfile
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from gwaya.sandbox import run_in_sandbox
@@ -68,6 +69,22 @@ def _strip_rust_comments_and_strings(code: str) -> str:
     code = re.sub(r"//[^\n]*", "", code)
     code = re.sub(r"/\*.*?\*/", "", code, flags=re.DOTALL)
     return re.sub(r'"(?:\\.|[^"\\])*"', '""', code)
+
+
+# Constructs a test candidate never needs and that could forge the harness result: code that runs
+# before main() (and so before the nonce is read), raw memory access, or symbol/linker tricks.
+_RUST_HARNESS_ESCAPES = re.compile(
+    r"\bunsafe\b|#\s*!?\[\s*(?:link_section|no_mangle|export_name|used|link)\b|\b(?:global_asm|asm|naked_asm)!"
+)
+
+
+_RUST_ASSERT_MACRO = re.compile(r"\bassert(?:_eq|_ne)?!")
+
+
+def rust_harness_escape_violations(code: str) -> list[str]:
+    """Forbidden constructs for executed Rust candidates (comments and strings ignored)."""
+    src = _strip_rust_comments_and_strings(code)
+    return sorted({f"forbidden Rust construct '{m.group(0).strip()}'" for m in _RUST_HARNESS_ESCAPES.finditer(src)})
 
 
 def rust_placeholder_violations(code: str) -> list[str]:
@@ -208,51 +225,82 @@ class RustCompilerOracle:
                 details={"unverified": True, "reason": "toolchain_missing"},
             )
 
-        # Count assertions in test spec
-        test_count = test_spec.count("assert!")
+        # Count assertions in test spec (assert!, assert_eq!, assert_ne!; comments/strings ignored)
+        test_count = len(_RUST_ASSERT_MACRO.findall(_strip_rust_comments_and_strings(test_spec)))
         if test_count == 0:
             return OracleResult(
                 success=False,
                 compiler="rustc",
-                error_message="INVALID_SPEC: test spec contains no assert!() calls",
+                error_message="INVALID_SPEC: test spec contains no assert!/assert_eq!/assert_ne! calls",
                 latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
                 details={"reason": "no_asserts"},
             )
 
-        nonce = secrets.token_hex(16)
-        rust_program = _build_rust_test_program(code, test_spec, nonce)
+        escapes = rust_harness_escape_violations(code)
+        if escapes:
+            return OracleResult(
+                success=False,
+                compiler="rustc",
+                error_message="FORBIDDEN_CONSTRUCT: " + "; ".join(escapes),
+                latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                details={"reason": "forbidden_construct", "violations": escapes},
+            )
 
+        # The nonce is never written into the source or the binary: main() reads it from stdin
+        # before any candidate code runs, and the binary runs in a second sandbox that has only
+        # the binary (no source) and no /proc (no /proc/self/mem or /proc/self/exe).
+        nonce = secrets.token_hex(16)
+        rust_program = _build_rust_test_program(code, test_spec)
+
+        compile_dir = Path(tempfile.mkdtemp(prefix="gwaya_rustc_"))
+        run_dir = Path(tempfile.mkdtemp(prefix="gwaya_rustrun_"))
         try:
-            # Compile and run in a single bash command within the sandbox
-            bash_cmd = f"{self.rustc_path} -o /work/test /work/main.rs && /work/test"
-            success, stdout, stderr, timed_out = run_in_sandbox(
-                ["/bin/bash", "-c", bash_cmd],
+            ok, _out, cerr, c_timed_out = run_in_sandbox(
+                [self.rustc_path, "-o", "/work/test", "/work/main.rs"],
                 timeout_s=timeout_s,
                 mem_mb=2048,
                 cpu_s=int(timeout_s) + 5,
+                work_dir=compile_dir,
                 files={"main.rs": rust_program},
+            )
+            if c_timed_out:
+                return OracleResult(
+                    success=False,
+                    compiler="rustc",
+                    error_message=f"Rust compilation timed out after {timeout_s}s",
+                    latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                    details={"reason": "timeout", "stage": "compile", "total": test_count},
+                )
+            binary = compile_dir / "test"
+            if not ok or not binary.exists():
+                return OracleResult(
+                    success=False,
+                    compiler="rustc",
+                    error_message=f"Compilation failed: {cerr.strip()[:500]}",
+                    latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
+                    details={"reason": "compilation_failed"},
+                )
+            shutil.copy2(binary, run_dir / "test")
+            success, stdout, stderr, timed_out = run_in_sandbox(
+                ["/work/test"],
+                stdin_data=nonce + "\n",
+                timeout_s=timeout_s,
+                mem_mb=1024,
+                cpu_s=int(timeout_s) + 1,
+                work_dir=run_dir,
+                mount_proc=False,
             )
 
             if timed_out:
                 return OracleResult(
                     success=False,
                     compiler="rustc",
-                    error_message=f"Rust compilation/execution timed out after {timeout_s}s",
+                    error_message=f"Rust test execution timed out after {timeout_s}s",
                     latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
-                    details={"reason": "timeout", "total": test_count},
+                    details={"reason": "timeout", "stage": "run", "total": test_count},
                 )
 
-            # Check if compilation/execution succeeded
             if not success:
-                if "error" in stderr.lower() or "cannot find" in stderr.lower():
-                    return OracleResult(
-                        success=False,
-                        compiler="rustc",
-                        error_message=f"Compilation failed: {stderr.strip()[:500]}",
-                        latency_ms=round((time.perf_counter() - t0) * 1000.0, 2),
-                        details={"reason": "compilation_failed"},
-                    )
-                # If it failed but looks like a runtime issue, check for panic
                 return OracleResult(
                     success=False,
                     compiler="rustc",
@@ -303,6 +351,9 @@ class RustCompilerOracle:
                 error_message=f"Sandbox error: {str(exc)}",
                 latency_ms=round(latency_ms, 2),
             )
+        finally:
+            shutil.rmtree(compile_dir, ignore_errors=True)
+            shutil.rmtree(run_dir, ignore_errors=True)
 
 
 class Lean4CompilerOracle:
@@ -846,31 +897,29 @@ class CppCompilerOracle:
             )
 
 
-def _build_rust_test_program(candidate: str, test_spec: str, nonce: str) -> str:
-    """Build a Rust program that combines candidate code with test execution and nonce output."""
-    # For Rust, we'll execute the test spec and count successes
-    # Simple approach: count assert! calls in spec as total tests
-    total_asserts = test_spec.count("assert!")
+def _build_rust_test_program(candidate: str, test_spec: str) -> str:
+    """Candidate + a main() that reads the nonce from stdin first, runs the asserts, then reports.
 
-    # Indent the test spec properly
+    The nonce is deliberately not part of the source or the binary (see verify_with_test).
+    """
+    total_asserts = len(_RUST_ASSERT_MACRO.findall(_strip_rust_comments_and_strings(test_spec)))
     indented_test_spec = "\n".join("    " + line for line in test_spec.split("\n"))
-
     lines = [
         "#![allow(warnings)]",
         candidate,
         "",
         "fn main() {",
-        "    let mut passed = 0;",
-        f"    let total = {total_asserts};",
+        "    let __gwaya_nonce: String = {",
+        "        let mut line = String::new();",
+        "        let _ = std::io::stdin().read_line(&mut line);",
+        "        line.trim().to_string()",
+        "    };",
+        f"    let __gwaya_total = {total_asserts};",
         "",
-        "    // Run tests - any panic means failure",
+        "    // Any failing assert panics, so reaching the end means every assert passed.",
         indented_test_spec,
         "",
-        "    // All tests passed if we got here",
-        "    passed = total;",
-        "",
-        '    // Output result with nonce',
-        f'    println!("{{{{\\\"nonce\\\": \\\"{nonce}\\\", \\\"passed\\\": {{}}, \\\"total\\\": {{}}, \\\"stage\\\": \\\"complete\\\", \\\"first_failure\\\": \\\"\\\"}}}}", passed, total);',
+        '    println!("{{\\"nonce\\": \\"{}\\", \\"passed\\": {}, \\"total\\": {}, \\"stage\\": \\"complete\\", \\"first_failure\\": \\"\\"}}", __gwaya_nonce, __gwaya_total, __gwaya_total);',
         "}",
     ]
     return "\n".join(lines)
