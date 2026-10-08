@@ -4,7 +4,6 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23123923.svg)](https://doi.org/10.5281/zenodo.23123923)
 [![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Dataset-yellow)](https://huggingface.co/datasets/callensxavier/gwaya-v3-verified-report)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![CI](https://img.shields.io/badge/CI-passing-brightgreen.svg)](.github/workflows/ci.yml)
 [![Paper](https://img.shields.io/badge/Paper-PDF-red.svg)](papers/gwaya_v3_verified_report.pdf)
 
 > **GWAYA (Gwen-Laya Open Model)** is a zero-trust, fail-closed verification layer that sits between code-generating language models (such as the Qwen / Gwen series) and execution environments. 
