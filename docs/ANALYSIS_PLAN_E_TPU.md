@@ -72,3 +72,12 @@ Dated 2026-10-08. These were decided after seeing the first results and are labe
    Checks that time out even when run alone remain FAILED and are counted and reported.
 3. **Cascade cost reading.** The first run showed the cascade is not cheaper than always-largest for this
    2B/4B pair. This is reported as the result; no tuning of the gate or the pair was done afterwards.
+4. **Stability audit and policy (decided before the passing-row audit finished).** The serial overlay showed
+   that `rs/mbpp_130_max_occurrences` (Qwen3.5-4B) is not a contention artefact: the candidate iterates a Rust
+   `HashMap` and takes the first maximum, so with tied counts its result depends on the per-run random hash
+   order and it passes about half the time. A re-check of failures alone cannot see the opposite error (an
+   unstable candidate that happened to pass), so every passing Python/Rust row was re-run once more
+   (`recheck_failures.py --verified`). Policy: **headline numbers** = original scores with the serial overlay
+   applied to contention flips; **sensitivity S1** = additionally count every item that produced two different
+   outcomes in any run as not correct (fail-closed). Both are reported; if they differ by more than the
+   confidence intervals, S1 is described as the conservative reading.

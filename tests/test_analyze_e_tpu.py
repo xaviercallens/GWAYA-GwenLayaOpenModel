@@ -146,3 +146,17 @@ def test_overlay_rows_take_precedence_and_are_reported():
     assert not before.models[S]["cor"][i] and after.models[S]["cor"][i]
     assert E.overlay_corrections(rows, overlay) == [["base", S, "python", "p1", "FAILED", "VERIFIED"]]
     assert E.overlay_corrections(rows, [dict(overlay[0], score="FAILED")]) == []  # unchanged score is not a correction
+
+
+def test_conservative_sensitivity_counts_unstable_items_as_wrong():
+    D = make()
+    # p0 is correct for both tiers and the gate-verified answer of the large tier; mark it unstable for the large tier
+    assert D.mark_unstable(L, {("python", "p0"), ("python", "nope")}) == 1
+    res = E.analyze(D, n_boot=50, seed=0)
+    assert point(res, f"A1.acc.{L}.python") == pytest.approx(3 / 6)  # headline unchanged
+    assert point(res, f"S1.acc_conservative.{L}.python") == pytest.approx(2 / 6)
+    assert point(res, f"S1.n_unstable.{L}.python") == pytest.approx(1.0)
+    # p0 was answered by the gate and correct; unstable -> now confident-wrong: cwr 1/6 -> 2/6
+    assert point(res, f"S1.cwr_gate_conservative.{L}.python") == pytest.approx(2 / 6)
+    # cascade: p0 is answered by the small tier (its gate verifies), so the large tier's instability does not touch it
+    assert point(res, "S1.acc_cascade_conservative.python") == pytest.approx(point(res, "A5.acc_cascade.python"))

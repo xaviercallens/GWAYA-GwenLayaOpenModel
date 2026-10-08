@@ -47,6 +47,14 @@ class Data:
         self.n = len(self.keys)
         self.models, self.gate, self.cascade, self.small, self.large = models, gate, cascade, small, large
         self.is_dom = {d: self.dom == d for d in DOMAINS}
+        # items whose check produced two different outcomes in any run (sensitivity analysis only)
+        self.unstable = {m: np.zeros(self.n, dtype=bool) for m in models}
+
+    def mark_unstable(self, model: str, keys: set[tuple[str, str]]) -> int:
+        pos = {k: i for i, k in enumerate(self.keys)}
+        hit = [pos[k] for k in keys if k in pos]
+        self.unstable[model][hit] = True
+        return len(hit)
 
     def sel(self, idx: np.ndarray, d: str) -> np.ndarray:
         return idx if d == SEL else idx[self.is_dom[d][idx]]
@@ -174,6 +182,14 @@ def registry(D: Data) -> list[tuple[str, Callable[[np.ndarray], float]]]:
         add(f"A5.cascade_selective_cov.{d}", lambda i, d=d: _mean(C["answered"][D.sel(i, d)]))
         add(f"A5.cascade_selective_cwr.{d}", lambda i, d=d: A.cwr(C["answered"][D.sel(i, d)], cc[D.sel(i, d)]))
         add(f"A6.acc_oracle_router.{d}", lambda i, d=d: _mean((cs | cl)[D.sel(i, d)]))
+        # S1: conservative sensitivity - an item with two different check outcomes in any run is NOT correct
+        for m in M:
+            add(f"S1.acc_conservative.{m}.{d}", lambda i, m=m, d=d: _mean((M[m]["cor"] & ~D.unstable[m])[D.sel(i, d)]))
+            add(f"S1.n_unstable.{m}.{d}", lambda i, m=m, d=d: float(D.unstable[m][D.sel(i, d)].sum()))
+        stable_l = M[l]["cor"] & ~D.unstable[l]
+        add(f"S1.cwr_gate_conservative.{l}.{d}", lambda i, d=d: A.cwr(G[l][D.sel(i, d)], stable_l[D.sel(i, d)]))
+        casc_final_unstable = np.where(C["escalated"], D.unstable[l], D.unstable[s])
+        add(f"S1.acc_cascade_conservative.{d}", lambda i, d=d: _mean((cc & ~casc_final_unstable)[D.sel(i, d)]))
     return specs
 
 
@@ -340,6 +356,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--large", default="qwen3.5-4b-bf16")
     ap.add_argument("--night-cpu", type=Path, help="night L2fix rows.jsonl (CPU q4 arm)")
     ap.add_argument("--night-tasks", type=Path)
+    ap.add_argument("--unstable-audits", nargs="*", type=Path, default=[],
+                    help="recheck_failures.py JSONs (both modes); every flipped item is marked unstable for the S1 sensitivity")
     ap.add_argument("--overlay-tiers", type=Path, help="serial re-score rows (scripts/tpu/serial_overlay.py) that take precedence")
     ap.add_argument("--overlay-coder", type=Path)
     ap.add_argument("--n-boot", type=int, default=10000)
@@ -360,6 +378,12 @@ def main(argv: list[str] | None = None) -> int:
             orig.extend(ov)  # later rows win in build()
     coder = (coder_rows, read_jsonl(a.coder / "gens.jsonl"), a.coder_name) if a.coder else None
     D = build(tasks, tier_rows, read_jsonl(a.tiers / "gens.jsonl"), a.small, a.large, coder)
+    unstable_counts = {}
+    for ap_ in a.unstable_audits:
+        rep = json.loads(Path(ap_).read_text())
+        if rep["model"] in D.models:
+            hit = D.mark_unstable(rep["model"], {(x["domain"], x["task_id"]) for x in rep["flips"]})
+            unstable_counts[f"{rep['model']}:{rep.get('mode', 'non_passing')}"] = {"rechecked": rep["rechecked"], "flips": hit}
     R = analyze(D, a.n_boot, a.seed)
     night = None
     if a.night_cpu and a.night_tasks:
@@ -369,7 +393,7 @@ def main(argv: list[str] | None = None) -> int:
                     "models": list(D.models), "plan": "docs/ANALYSIS_PLAN_E_TPU.md",
                     "cost_unit": "accelerator chip-seconds (chunk wall time split by token share)",
                     "sources": {"tiers": str(a.tiers), "coder": str(a.coder) if a.coder else None, "tasks": str(a.tasks)}},
-           "serial_recheck_corrections": corrections,
+           "serial_recheck_corrections": corrections, "stability_audit": unstable_counts,
            **R, "A7_night_cpu_vs_tpu": night}
     a.out_numbers.parent.mkdir(parents=True, exist_ok=True)
     a.out_numbers.write_text(json.dumps(out, indent=1))
