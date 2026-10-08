@@ -1,0 +1,40 @@
+{
+ "flips": {
+  "qwen3.5-2b-bf16": [
+   [
+    "python",
+    "py/MBPP/271"
+   ]
+  ],
+  "qwen3.5-4b-bf16": [
+   [
+    "python",
+    "py/MBPP/271"
+   ],
+   [
+    "rust",
+    "rs/mbpp_130_max_occurrences"
+   ]
+  ]
+ },
+ "tiers": {
+  "group": "tiers",
+  "tasks": 2,
+  "models": [
+   "qwen3.5-2b-bf16",
+   "qwen3.5-4b-bf16"
+  ],
+  "arms": [
+   "base",
+   "always_smallest",
+   "always_largest",
+   "gate_only",
+   "raw_confidence",
+   "gwenlaya"
+  ]
+ },
+ "coder": {
+  "group": "coder",
+  "tasks": 0
+ }
+}

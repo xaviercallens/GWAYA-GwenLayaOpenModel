@@ -1,0 +1,43 @@
+{
+ "model": "qwen3.5-2b-bf16",
+ "rechecked": 644,
+ "flips": [
+  {
+   "domain": "python",
+   "task_id": "py/MBPP/271",
+   "was": "FAILED",
+   "now": "VERIFIED",
+   "reason": null
+  }
+ ],
+ "n_flips": 1,
+ "timeouts_when_run_alone": [
+  {
+   "domain": "rust",
+   "task_id": "rs/mbpp_131_reverse_vowels"
+  },
+  {
+   "domain": "python",
+   "task_id": "py/MBPP/260"
+  },
+  {
+   "domain": "rust",
+   "task_id": "rs/mbpp_782_odd_length_sum"
+  },
+  {
+   "domain": "rust",
+   "task_id": "rs/mbpp_617_min_Jumps"
+  },
+  {
+   "domain": "python",
+   "task_id": "py/MBPP/793"
+  }
+ ],
+ "reasons": {
+  "python:None": 289,
+  "rust:compilation_failed": 190,
+  "rust:assertion_failed": 160,
+  "rust:timeout": 3,
+  "python:timeout": 2
+ }
+}

@@ -1,0 +1,51 @@
+{
+ "model": "qwen3.5-4b-bf16",
+ "rechecked": 412,
+ "flips": [
+  {
+   "domain": "rust",
+   "task_id": "rs/mbpp_130_max_occurrences",
+   "was": "FAILED",
+   "now": "VERIFIED",
+   "reason": "all_tests_passed"
+  },
+  {
+   "domain": "python",
+   "task_id": "py/MBPP/271",
+   "was": "FAILED",
+   "now": "VERIFIED",
+   "reason": null
+  }
+ ],
+ "n_flips": 2,
+ "timeouts_when_run_alone": [
+  {
+   "domain": "rust",
+   "task_id": "rs/HumanEval_18_how_many_times"
+  },
+  {
+   "domain": "python",
+   "task_id": "py/HumanEval/39"
+  },
+  {
+   "domain": "python",
+   "task_id": "py/MBPP/781"
+  },
+  {
+   "domain": "rust",
+   "task_id": "rs/mbpp_603_get_ludic"
+  },
+  {
+   "domain": "rust",
+   "task_id": "rs/HumanEval_100_make_a_pile"
+  }
+ ],
+ "reasons": {
+  "python:None": 171,
+  "rust:compilation_failed": 102,
+  "rust:assertion_failed": 133,
+  "rust:timeout": 3,
+  "python:timeout": 2,
+  "rust:all_tests_passed": 1
+ }
+}
