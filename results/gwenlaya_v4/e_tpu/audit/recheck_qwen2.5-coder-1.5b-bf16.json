@@ -1,0 +1,35 @@
+{
+ "model": "qwen2.5-coder-1.5b-bf16",
+ "rechecked": 480,
+ "flips": [],
+ "n_flips": 0,
+ "timeouts_when_run_alone": [
+  {
+   "domain": "python",
+   "task_id": "py/HumanEval/39"
+  },
+  {
+   "domain": "python",
+   "task_id": "py/MBPP/781"
+  },
+  {
+   "domain": "rust",
+   "task_id": "rs/mbpp_160_find_solution"
+  },
+  {
+   "domain": "python",
+   "task_id": "py/MBPP/392"
+  },
+  {
+   "domain": "rust",
+   "task_id": "rs/HumanEval_100_make_a_pile"
+  }
+ ],
+ "reasons": {
+  "python:None": 184,
+  "rust:compilation_failed": 150,
+  "rust:assertion_failed": 141,
+  "python:timeout": 3,
+  "rust:timeout": 2
+ }
+}

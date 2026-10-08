@@ -1,0 +1,1442 @@
+{
+ "meta": {
+  "n_tasks": 1536,
+  "n_boot": 10000,
+  "seed": 0,
+  "small": "qwen3.5-2b-bf16",
+  "large": "qwen3.5-4b-bf16",
+  "models": [
+   "qwen3.5-2b-bf16",
+   "qwen3.5-4b-bf16",
+   "qwen2.5-coder-1.5b-bf16"
+  ],
+  "plan": "docs/ANALYSIS_PLAN_E_TPU.md",
+  "cost_unit": "accelerator chip-seconds (chunk wall time split by token share)",
+  "sources": {
+   "tiers": "/mnt/data/home/xavkal/gwaya-data/etpu/tiers",
+   "coder": "/mnt/data/home/xavkal/gwaya-data/etpu/qwen2.5-coder-1.5b-bf16",
+   "tasks": "/mnt/data/home/xavkal/gwaya-data/night/results/tasks_E_primary.d25.jsonl"
+  }
+ },
+ "serial_recheck_corrections": {
+  "tiers": [
+   [
+    "always_largest",
+    "qwen3.5-4b-bf16",
+    "python",
+    "py/MBPP/271",
+    "FAILED",
+    "VERIFIED"
+   ],
+   [
+    "always_smallest",
+    "qwen3.5-2b-bf16",
+    "python",
+    "py/MBPP/271",
+    "FAILED",
+    "VERIFIED"
+   ],
+   [
+    "base",
+    "qwen3.5-2b-bf16",
+    "python",
+    "py/MBPP/271",
+    "FAILED",
+    "VERIFIED"
+   ],
+   [
+    "base",
+    "qwen3.5-4b-bf16",
+    "python",
+    "py/MBPP/271",
+    "FAILED",
+    "VERIFIED"
+   ],
+   [
+    "gate_only",
+    "qwen3.5-2b-bf16",
+    "python",
+    "py/MBPP/271",
+    "FAILED",
+    "VERIFIED"
+   ],
+   [
+    "gate_only",
+    "qwen3.5-4b-bf16",
+    "python",
+    "py/MBPP/271",
+    "FAILED",
+    "VERIFIED"
+   ],
+   [
+    "gwenlaya",
+    "qwen3.5-2b-bf16",
+    "python",
+    "py/MBPP/271",
+    "FAILED",
+    "VERIFIED"
+   ],
+   [
+    "raw_confidence",
+    "qwen3.5-4b-bf16",
+    "python",
+    "py/MBPP/271",
+    "FAILED",
+    "VERIFIED"
+   ]
+  ]
+ },
+ "stability_audit": {
+  "qwen3.5-2b-bf16:non_passing": {
+   "rechecked": 644,
+   "flips": 1
+  },
+  "qwen3.5-4b-bf16:non_passing": {
+   "rechecked": 412,
+   "flips": 2
+  },
+  "qwen2.5-coder-1.5b-bf16:non_passing": {
+   "rechecked": 480,
+   "flips": 0
+  },
+  "qwen3.5-2b-bf16:verified": {
+   "rechecked": 392,
+   "flips": 0
+  },
+  "qwen3.5-4b-bf16:verified": {
+   "rechecked": 624,
+   "flips": 0
+  },
+  "qwen2.5-coder-1.5b-bf16:verified": {
+   "rechecked": 556,
+   "flips": 0
+  }
+ },
+ "metrics": {
+  "A1.acc.qwen3.5-2b-bf16.python": {
+   "point": 0.45179584120982985,
+   "lo": 0.40831758034026466,
+   "hi": 0.4933837429111531,
+   "n_valid": 10000
+  },
+  "A9.trunc.qwen3.5-2b-bf16.python": {
+   "point": 0.052930056710775046,
+   "lo": 0.034026465028355386,
+   "hi": 0.07183364839319471,
+   "n_valid": 10000
+  },
+  "A1.acc.qwen3.5-4b-bf16.python": {
+   "point": 0.6748582230623819,
+   "lo": 0.6351606805293005,
+   "hi": 0.7145557655954632,
+   "n_valid": 10000
+  },
+  "A9.trunc.qwen3.5-4b-bf16.python": {
+   "point": 0.00945179584120983,
+   "lo": 0.001890359168241966,
+   "hi": 0.01890359168241966,
+   "n_valid": 10000
+  },
+  "A1.acc.qwen2.5-coder-1.5b-bf16.python": {
+   "point": 0.6465028355387523,
+   "lo": 0.6049149338374291,
+   "hi": 0.6862003780718336,
+   "n_valid": 10000
+  },
+  "A9.trunc.qwen2.5-coder-1.5b-bf16.python": {
+   "point": 0.001890359168241966,
+   "lo": 0.0,
+   "hi": 0.005671077504725898,
+   "n_valid": 10000
+  },
+  "A2.meanconf.qwen3.5-2b-bf16.python": {
+   "point": 0.8982662858302777,
+   "lo": 0.8930861032186816,
+   "hi": 0.9033809971452087,
+   "n_valid": 10000
+  },
+  "A2.ece.qwen3.5-2b-bf16.python": {
+   "point": 0.4464704446204478,
+   "lo": 0.4051802037058964,
+   "hi": 0.4884703974105858,
+   "n_valid": 10000
+  },
+  "A2.brier.qwen3.5-2b-bf16.python": {
+   "point": 0.4333162522025812,
+   "lo": 0.39953691781076084,
+   "hi": 0.46779211317570435,
+   "n_valid": 10000
+  },
+  "A2.auroc.qwen3.5-2b-bf16.python": {
+   "point": 0.6486365603808975,
+   "lo": 0.6007718349047996,
+   "hi": 0.693891126590842,
+   "n_valid": 10000
+  },
+  "A2.aurc.qwen3.5-2b-bf16.python": {
+   "point": 0.4548081145520329,
+   "lo": 0.3975110248530869,
+   "hi": 0.5153558528990878,
+   "n_valid": 10000
+  },
+  "A2.meanconf.qwen3.5-4b-bf16.python": {
+   "point": 0.9271899012740697,
+   "lo": 0.9231821526665739,
+   "hi": 0.931214060114671,
+   "n_valid": 10000
+  },
+  "A2.ece.qwen3.5-4b-bf16.python": {
+   "point": 0.25233167821168784,
+   "lo": 0.2145480810386884,
+   "hi": 0.29126442505505656,
+   "n_valid": 10000
+  },
+  "A2.brier.qwen3.5-4b-bf16.python": {
+   "point": 0.2718822393990059,
+   "lo": 0.2393598593852408,
+   "hi": 0.30504943465991885,
+   "n_valid": 10000
+  },
+  "A2.auroc.qwen3.5-4b-bf16.python": {
+   "point": 0.6813725490196079,
+   "lo": 0.6308749084100126,
+   "hi": 0.7284935880937956,
+   "n_valid": 10000
+  },
+  "A2.aurc.qwen3.5-4b-bf16.python": {
+   "point": 0.20936775102895552,
+   "lo": 0.16903216947470687,
+   "hi": 0.25386126012332616,
+   "n_valid": 10000
+  },
+  "A2.meanconf.qwen2.5-coder-1.5b-bf16.python": {
+   "point": 0.9149690117451588,
+   "lo": 0.9107468884706218,
+   "hi": 0.919303749810655,
+   "n_valid": 10000
+  },
+  "A2.ece.qwen2.5-coder-1.5b-bf16.python": {
+   "point": 0.26846617620640645,
+   "lo": 0.2298475728013124,
+   "hi": 0.30885470832062273,
+   "n_valid": 10000
+  },
+  "A2.brier.qwen2.5-coder-1.5b-bf16.python": {
+   "point": 0.2839557034522922,
+   "lo": 0.25206649657749336,
+   "hi": 0.3171280362297719,
+   "n_valid": 10000
+  },
+  "A2.auroc.qwen2.5-coder-1.5b-bf16.python": {
+   "point": 0.7220502235982112,
+   "lo": 0.6743093472406303,
+   "hi": 0.7662260986060302,
+   "n_valid": 10000
+  },
+  "A2.aurc.qwen2.5-coder-1.5b-bf16.python": {
+   "point": 0.21468654461372902,
+   "lo": 0.1734469606647856,
+   "hi": 0.2607905696166199,
+   "n_valid": 10000
+  },
+  "A3.cov.qwen3.5-2b-bf16.python": {
+   "point": 0.5916824196597353,
+   "lo": 0.5500945179584121,
+   "hi": 0.6351606805293005,
+   "n_valid": 10000
+  },
+  "A3.prec.qwen3.5-2b-bf16.python": {
+   "point": 0.7635782747603834,
+   "lo": 0.7161290322580646,
+   "hi": 0.8095238095238095,
+   "n_valid": 10000
+  },
+  "A3.cwr.qwen3.5-2b-bf16.python": {
+   "point": 0.13988657844990549,
+   "lo": 0.11153119092627599,
+   "hi": 0.17013232514177692,
+   "n_valid": 10000
+  },
+  "A3.cov.qwen3.5-4b-bf16.python": {
+   "point": 0.8128544423440454,
+   "lo": 0.77882797731569,
+   "hi": 0.8468809073724007,
+   "n_valid": 10000
+  },
+  "A3.prec.qwen3.5-4b-bf16.python": {
+   "point": 0.8302325581395349,
+   "lo": 0.7948717948717948,
+   "hi": 0.8643707702223654,
+   "n_valid": 10000
+  },
+  "A3.cwr.qwen3.5-4b-bf16.python": {
+   "point": 0.13799621928166353,
+   "lo": 0.10964083175803403,
+   "hi": 0.16824196597353497,
+   "n_valid": 10000
+  },
+  "A3.cwr_all.qwen3.5-4b-bf16.python": {
+   "point": 0.32514177693761814,
+   "lo": 0.28544423440453687,
+   "hi": 0.3648393194706994,
+   "n_valid": 10000
+  },
+  "A4.cwr_b3_matched.qwen3.5-4b-bf16.python": {
+   "point": 0.21361058601134217,
+   "lo": 0.18525519848771266,
+   "hi": 0.24574669187145556,
+   "n_valid": 10000
+  },
+  "A4.delta_cwr_gate_minus_b3.qwen3.5-4b-bf16.python": {
+   "point": -0.07561436672967864,
+   "lo": -0.09829867674858224,
+   "hi": -0.05671077504725899,
+   "n_valid": 10000
+  },
+  "A5.acc_small.python": {
+   "point": 0.45179584120982985,
+   "lo": 0.40831758034026466,
+   "hi": 0.4933837429111531,
+   "n_valid": 10000
+  },
+  "A5.acc_large.python": {
+   "point": 0.6748582230623819,
+   "lo": 0.6351606805293005,
+   "hi": 0.7145557655954632,
+   "n_valid": 10000
+  },
+  "A5.acc_cascade.python": {
+   "point": 0.6483931947069943,
+   "lo": 0.6068052930056711,
+   "hi": 0.6880907372400756,
+   "n_valid": 10000
+  },
+  "A5.d_acc_cascade_minus_large.python": {
+   "point": -0.026465028355387554,
+   "lo": -0.052930056710775,
+   "hi": -0.001890359168241873,
+   "n_valid": 10000
+  },
+  "A5.d_acc_cascade_minus_small.python": {
+   "point": 0.19659735349716445,
+   "lo": 0.16257088846880907,
+   "hi": 0.23062381852551983,
+   "n_valid": 10000
+  },
+  "A5.cost_small.python": {
+   "point": 0.11541218147448015,
+   "lo": 0.10242653213610586,
+   "hi": 0.12964559234404535,
+   "n_valid": 10000
+  },
+  "A5.cost_large.python": {
+   "point": 0.20328098676748582,
+   "lo": 0.1877208081758034,
+   "hi": 0.21979663898865784,
+   "n_valid": 10000
+  },
+  "A5.cost_cascade.python": {
+   "point": 0.202577606805293,
+   "lo": 0.18061878539697543,
+   "hi": 0.22641642310964083,
+   "n_valid": 10000
+  },
+  "A5.cost_ratio_cascade_over_large.python": {
+   "point": 0.9965398634993967,
+   "lo": 0.924816192852353,
+   "hi": 1.0714796040423,
+   "n_valid": 10000
+  },
+  "A5.escalated.python": {
+   "point": 0.40831758034026466,
+   "lo": 0.3648393194706994,
+   "hi": 0.4499054820415879,
+   "n_valid": 10000
+  },
+  "A5.cost_per_correct_cascade.python": {
+   "point": 0.31243018658892124,
+   "lo": 0.27149368902190923,
+   "hi": 0.36042930661481537,
+   "n_valid": 10000
+  },
+  "A5.cost_per_correct_large.python": {
+   "point": 0.3012202857142857,
+   "lo": 0.27241382257841157,
+   "hi": 0.33350957893232314,
+   "n_valid": 10000
+  },
+  "A5.cascade_selective_cov.python": {
+   "point": 0.8544423440453687,
+   "lo": 0.8241965973534972,
+   "hi": 0.8846880907372401,
+   "n_valid": 10000
+  },
+  "A5.cascade_selective_cwr.python": {
+   "point": 0.2060491493383743,
+   "lo": 0.1720226843100189,
+   "hi": 0.24196597353497165,
+   "n_valid": 10000
+  },
+  "A6.acc_oracle_router.python": {
+   "point": 0.7069943289224953,
+   "lo": 0.667296786389414,
+   "hi": 0.7448015122873346,
+   "n_valid": 10000
+  },
+  "S1.acc_conservative.qwen3.5-2b-bf16.python": {
+   "point": 0.4499054820415879,
+   "lo": 0.4064272211720227,
+   "hi": 0.4914933837429111,
+   "n_valid": 10000
+  },
+  "S1.n_unstable.qwen3.5-2b-bf16.python": {
+   "point": 1.0,
+   "lo": 0.0,
+   "hi": 3.0,
+   "n_valid": 10000
+  },
+  "S1.acc_conservative.qwen3.5-4b-bf16.python": {
+   "point": 0.6729678638941399,
+   "lo": 0.6332703213610587,
+   "hi": 0.7126654064272212,
+   "n_valid": 10000
+  },
+  "S1.n_unstable.qwen3.5-4b-bf16.python": {
+   "point": 1.0,
+   "lo": 0.0,
+   "hi": 3.0,
+   "n_valid": 10000
+  },
+  "S1.acc_conservative.qwen2.5-coder-1.5b-bf16.python": {
+   "point": 0.6465028355387523,
+   "lo": 0.6049149338374291,
+   "hi": 0.6862003780718336,
+   "n_valid": 10000
+  },
+  "S1.n_unstable.qwen2.5-coder-1.5b-bf16.python": {
+   "point": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "n_valid": 10000
+  },
+  "S1.cwr_gate_conservative.qwen3.5-4b-bf16.python": {
+   "point": 0.13988657844990549,
+   "lo": 0.11153119092627599,
+   "hi": 0.17013232514177692,
+   "n_valid": 10000
+  },
+  "S1.acc_cascade_conservative.python": {
+   "point": 0.6465028355387523,
+   "lo": 0.6049149338374291,
+   "hi": 0.6880907372400756,
+   "n_valid": 10000
+  },
+  "A1.acc.qwen3.5-2b-bf16.rust": {
+   "point": 0.3037475345167653,
+   "lo": 0.26429980276134124,
+   "hi": 0.34516765285996054,
+   "n_valid": 10000
+  },
+  "A9.trunc.qwen3.5-2b-bf16.rust": {
+   "point": 0.029585798816568046,
+   "lo": 0.015779092702169626,
+   "hi": 0.045364891518737675,
+   "n_valid": 10000
+  },
+  "A1.acc.qwen3.5-4b-bf16.rust": {
+   "point": 0.5285996055226825,
+   "lo": 0.48520710059171596,
+   "hi": 0.5739644970414202,
+   "n_valid": 10000
+  },
+  "A9.trunc.qwen3.5-4b-bf16.rust": {
+   "point": 0.0039447731755424065,
+   "lo": 0.0,
+   "hi": 0.009861932938856016,
+   "n_valid": 10000
+  },
+  "A1.acc.qwen2.5-coder-1.5b-bf16.rust": {
+   "point": 0.42209072978303747,
+   "lo": 0.3806706114398422,
+   "hi": 0.46548323471400394,
+   "n_valid": 10000
+  },
+  "A9.trunc.qwen2.5-coder-1.5b-bf16.rust": {
+   "point": 0.0019723865877712033,
+   "lo": 0.0,
+   "hi": 0.005917159763313609,
+   "n_valid": 10000
+  },
+  "A2.meanconf.qwen3.5-2b-bf16.rust": {
+   "point": 0.9017074028478425,
+   "lo": 0.8977047476921503,
+   "hi": 0.9056340373619748,
+   "n_valid": 10000
+  },
+  "A2.ece.qwen3.5-2b-bf16.rust": {
+   "point": 0.5979598683310773,
+   "lo": 0.5590389351606715,
+   "hi": 0.6357168584290631,
+   "n_valid": 10000
+  },
+  "A2.brier.qwen3.5-2b-bf16.rust": {
+   "point": 0.5539165531981318,
+   "lo": 0.5215201256475281,
+   "hi": 0.5855150114579577,
+   "n_valid": 10000
+  },
+  "A2.auroc.qwen3.5-2b-bf16.rust": {
+   "point": 0.7715131893602148,
+   "lo": 0.7282875163549625,
+   "hi": 0.8126786875924783,
+   "n_valid": 10000
+  },
+  "A2.aurc.qwen3.5-2b-bf16.rust": {
+   "point": 0.5121857664273896,
+   "lo": 0.4533814065473818,
+   "hi": 0.5733374917110196,
+   "n_valid": 10000
+  },
+  "A2.meanconf.qwen3.5-4b-bf16.rust": {
+   "point": 0.930305022115511,
+   "lo": 0.927282933178088,
+   "hi": 0.9333620209671136,
+   "n_valid": 10000
+  },
+  "A2.ece.qwen3.5-4b-bf16.rust": {
+   "point": 0.40170541659282855,
+   "lo": 0.3587053492993278,
+   "hi": 0.44325371255565,
+   "n_valid": 10000
+  },
+  "A2.brier.qwen3.5-4b-bf16.rust": {
+   "point": 0.39529515565338574,
+   "lo": 0.35778764909451205,
+   "hi": 0.43100648398315533,
+   "n_valid": 10000
+  },
+  "A2.auroc.qwen3.5-4b-bf16.rust": {
+   "point": 0.7751670517704365,
+   "lo": 0.7331918431543516,
+   "hi": 0.8145309935944985,
+   "n_valid": 10000
+  },
+  "A2.aurc.qwen3.5-4b-bf16.rust": {
+   "point": 0.2787800499261866,
+   "lo": 0.23049094846952456,
+   "hi": 0.33074243627828076,
+   "n_valid": 10000
+  },
+  "A2.meanconf.qwen2.5-coder-1.5b-bf16.rust": {
+   "point": 0.9340256961535701,
+   "lo": 0.9307882469766882,
+   "hi": 0.9372321888091306,
+   "n_valid": 10000
+  },
+  "A2.ece.qwen2.5-coder-1.5b-bf16.rust": {
+   "point": 0.5119349663705327,
+   "lo": 0.4697061124033431,
+   "hi": 0.5535639265945029,
+   "n_valid": 10000
+  },
+  "A2.brier.qwen2.5-coder-1.5b-bf16.rust": {
+   "point": 0.49125491933369536,
+   "lo": 0.4541127514835693,
+   "hi": 0.5275639469880898,
+   "n_valid": 10000
+  },
+  "A2.auroc.qwen2.5-coder-1.5b-bf16.rust": {
+   "point": 0.7729578003891423,
+   "lo": 0.7308363622035873,
+   "hi": 0.8120763826903045,
+   "n_valid": 10000
+  },
+  "A2.aurc.qwen2.5-coder-1.5b-bf16.rust": {
+   "point": 0.3663620417583998,
+   "lo": 0.31320979619842065,
+   "hi": 0.4211959585469304,
+   "n_valid": 10000
+  },
+  "A3.cov.qwen3.5-2b-bf16.rust": {
+   "point": 0.3668639053254438,
+   "lo": 0.3254437869822485,
+   "hi": 0.40828402366863903,
+   "n_valid": 10000
+  },
+  "A3.prec.qwen3.5-2b-bf16.rust": {
+   "point": 0.8279569892473119,
+   "lo": 0.7738095238095238,
+   "hi": 0.8802444024993491,
+   "n_valid": 10000
+  },
+  "A3.cwr.qwen3.5-2b-bf16.rust": {
+   "point": 0.0631163708086785,
+   "lo": 0.04339250493096647,
+   "hi": 0.08481262327416174,
+   "n_valid": 10000
+  },
+  "A3.cov.qwen3.5-4b-bf16.rust": {
+   "point": 0.5956607495069034,
+   "lo": 0.5522682445759369,
+   "hi": 0.6390532544378699,
+   "n_valid": 10000
+  },
+  "A3.prec.qwen3.5-4b-bf16.rust": {
+   "point": 0.8874172185430463,
+   "lo": 0.8506493506493507,
+   "hi": 0.922077922077922,
+   "n_valid": 10000
+  },
+  "A3.cwr.qwen3.5-4b-bf16.rust": {
+   "point": 0.0670611439842209,
+   "lo": 0.045364891518737675,
+   "hi": 0.09072978303747535,
+   "n_valid": 10000
+  },
+  "A3.cwr_all.qwen3.5-4b-bf16.rust": {
+   "point": 0.4714003944773176,
+   "lo": 0.4260355029585799,
+   "hi": 0.514792899408284,
+   "n_valid": 10000
+  },
+  "A4.cwr_b3_matched.qwen3.5-4b-bf16.rust": {
+   "point": 0.1794871794871795,
+   "lo": 0.15581854043392504,
+   "hi": 0.20512820512820512,
+   "n_valid": 10000
+  },
+  "A4.delta_cwr_gate_minus_b3.qwen3.5-4b-bf16.rust": {
+   "point": -0.11242603550295859,
+   "lo": -0.1341222879684418,
+   "hi": -0.09270216962524654,
+   "n_valid": 10000
+  },
+  "A5.acc_small.rust": {
+   "point": 0.3037475345167653,
+   "lo": 0.26429980276134124,
+   "hi": 0.34516765285996054,
+   "n_valid": 10000
+  },
+  "A5.acc_large.rust": {
+   "point": 0.5285996055226825,
+   "lo": 0.48520710059171596,
+   "hi": 0.5739644970414202,
+   "n_valid": 10000
+  },
+  "A5.acc_cascade.rust": {
+   "point": 0.5483234714003945,
+   "lo": 0.504930966469428,
+   "hi": 0.5936883629191322,
+   "n_valid": 10000
+  },
+  "A5.d_acc_cascade_minus_large.rust": {
+   "point": 0.01972386587771202,
+   "lo": -0.0039447731755423154,
+   "hi": 0.04339250493096647,
+   "n_valid": 10000
+  },
+  "A5.d_acc_cascade_minus_small.rust": {
+   "point": 0.24457593688362922,
+   "lo": 0.2090729783037475,
+   "hi": 0.2840236686390532,
+   "n_valid": 10000
+  },
+  "A5.cost_small.rust": {
+   "point": 0.11742550887573965,
+   "lo": 0.10265569265285995,
+   "hi": 0.13380345641025643,
+   "n_valid": 10000
+  },
+  "A5.cost_large.rust": {
+   "point": 0.218251,
+   "lo": 0.20097999117357002,
+   "hi": 0.23707954738658776,
+   "n_valid": 10000
+  },
+  "A5.cost_cascade.rust": {
+   "point": 0.2664986903353057,
+   "lo": 0.23770740729783038,
+   "hi": 0.2968286687869822,
+   "n_valid": 10000
+  },
+  "A5.cost_ratio_cascade_over_large.rust": {
+   "point": 1.2210651512950947,
+   "lo": 1.1528744374547144,
+   "hi": 1.2912676372656946,
+   "n_valid": 10000
+  },
+  "A5.escalated.rust": {
+   "point": 0.6331360946745562,
+   "lo": 0.591715976331361,
+   "hi": 0.6745562130177515,
+   "n_valid": 10000
+  },
+  "A5.cost_per_correct_cascade.rust": {
+   "point": 0.4860245899280575,
+   "lo": 0.4193106429692465,
+   "hi": 0.5625816874363794,
+   "n_valid": 10000
+  },
+  "A5.cost_per_correct_large.rust": {
+   "point": 0.4128852873134328,
+   "lo": 0.3651850269554826,
+   "hi": 0.46750587917037767,
+   "n_valid": 10000
+  },
+  "A5.cascade_selective_cov.rust": {
+   "point": 0.6449704142011834,
+   "lo": 0.6015779092702169,
+   "hi": 0.6863905325443787,
+   "n_valid": 10000
+  },
+  "A5.cascade_selective_cwr.rust": {
+   "point": 0.09664694280078895,
+   "lo": 0.07297830374753451,
+   "hi": 0.1222879684418146,
+   "n_valid": 10000
+  },
+  "A6.acc_oracle_router.rust": {
+   "point": 0.5739644970414202,
+   "lo": 0.5305719921104537,
+   "hi": 0.6173570019723866,
+   "n_valid": 10000
+  },
+  "S1.acc_conservative.qwen3.5-2b-bf16.rust": {
+   "point": 0.3037475345167653,
+   "lo": 0.26429980276134124,
+   "hi": 0.34516765285996054,
+   "n_valid": 10000
+  },
+  "S1.n_unstable.qwen3.5-2b-bf16.rust": {
+   "point": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "n_valid": 10000
+  },
+  "S1.acc_conservative.qwen3.5-4b-bf16.rust": {
+   "point": 0.5285996055226825,
+   "lo": 0.48520710059171596,
+   "hi": 0.5739644970414202,
+   "n_valid": 10000
+  },
+  "S1.n_unstable.qwen3.5-4b-bf16.rust": {
+   "point": 1.0,
+   "lo": 0.0,
+   "hi": 3.0,
+   "n_valid": 10000
+  },
+  "S1.acc_conservative.qwen2.5-coder-1.5b-bf16.rust": {
+   "point": 0.42209072978303747,
+   "lo": 0.3806706114398422,
+   "hi": 0.46548323471400394,
+   "n_valid": 10000
+  },
+  "S1.n_unstable.qwen2.5-coder-1.5b-bf16.rust": {
+   "point": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "n_valid": 10000
+  },
+  "S1.cwr_gate_conservative.qwen3.5-4b-bf16.rust": {
+   "point": 0.0670611439842209,
+   "lo": 0.045364891518737675,
+   "hi": 0.09072978303747535,
+   "n_valid": 10000
+  },
+  "S1.acc_cascade_conservative.rust": {
+   "point": 0.5483234714003945,
+   "lo": 0.504930966469428,
+   "hi": 0.5936883629191322,
+   "n_valid": 10000
+  },
+  "A1.acc.qwen3.5-2b-bf16.math": {
+   "point": 0.514,
+   "lo": 0.47,
+   "hi": 0.558,
+   "n_valid": 10000
+  },
+  "A9.trunc.qwen3.5-2b-bf16.math": {
+   "point": 0.4,
+   "lo": 0.358,
+   "hi": 0.444,
+   "n_valid": 10000
+  },
+  "A1.acc.qwen3.5-4b-bf16.math": {
+   "point": 0.612,
+   "lo": 0.568,
+   "hi": 0.654,
+   "n_valid": 10000
+  },
+  "A9.trunc.qwen3.5-4b-bf16.math": {
+   "point": 0.32,
+   "lo": 0.28,
+   "hi": 0.362,
+   "n_valid": 10000
+  },
+  "A1.acc.qwen2.5-coder-1.5b-bf16.math": {
+   "point": 0.368,
+   "lo": 0.326,
+   "hi": 0.41,
+   "n_valid": 10000
+  },
+  "A9.trunc.qwen2.5-coder-1.5b-bf16.math": {
+   "point": 0.152,
+   "lo": 0.122,
+   "hi": 0.184,
+   "n_valid": 10000
+  },
+  "A2.meanconf.qwen3.5-2b-bf16.math": {
+   "point": 0.9016486822282205,
+   "lo": 0.8978715930396471,
+   "hi": 0.9053629369897616,
+   "n_valid": 10000
+  },
+  "A2.ece.qwen3.5-2b-bf16.math": {
+   "point": 0.38764868222822046,
+   "lo": 0.3452562806802398,
+   "hi": 0.4302747640631396,
+   "n_valid": 10000
+  },
+  "A2.brier.qwen3.5-2b-bf16.math": {
+   "point": 0.3851879078489476,
+   "lo": 0.3510281005215257,
+   "hi": 0.41928325024846075,
+   "n_valid": 10000
+  },
+  "A2.auroc.qwen3.5-2b-bf16.math": {
+   "point": 0.7409649164945317,
+   "lo": 0.6972389525016209,
+   "hi": 0.7839213512217071,
+   "n_valid": 10000
+  },
+  "A2.aurc.qwen3.5-2b-bf16.math": {
+   "point": 0.3318621324335794,
+   "lo": 0.2763979122889291,
+   "hi": 0.3891837917530006,
+   "n_valid": 10000
+  },
+  "A2.meanconf.qwen3.5-4b-bf16.math": {
+   "point": 0.9378492129816932,
+   "lo": 0.9351313477729977,
+   "hi": 0.9404468634340389,
+   "n_valid": 10000
+  },
+  "A2.ece.qwen3.5-4b-bf16.math": {
+   "point": 0.3258492129816931,
+   "lo": 0.28434183997588663,
+   "hi": 0.3687014669933669,
+   "n_valid": 10000
+  },
+  "A2.brier.qwen3.5-4b-bf16.math": {
+   "point": 0.33429885172635815,
+   "lo": 0.29757916870635137,
+   "hi": 0.37172425280893895,
+   "n_valid": 10000
+  },
+  "A2.auroc.qwen3.5-4b-bf16.math": {
+   "point": 0.6966680142847517,
+   "lo": 0.6464730915714522,
+   "hi": 0.745635758491993,
+   "n_valid": 10000
+  },
+  "A2.aurc.qwen3.5-4b-bf16.math": {
+   "point": 0.2854606792478183,
+   "lo": 0.22906725903564876,
+   "hi": 0.340553968751901,
+   "n_valid": 10000
+  },
+  "A2.meanconf.qwen2.5-coder-1.5b-bf16.math": {
+   "point": 0.9324350676370287,
+   "lo": 0.9297660200968835,
+   "hi": 0.9351228923063676,
+   "n_valid": 10000
+  },
+  "A2.ece.qwen2.5-coder-1.5b-bf16.math": {
+   "point": 0.5644350676370286,
+   "lo": 0.5228220750454671,
+   "hi": 0.6060400954515194,
+   "n_valid": 10000
+  },
+  "A2.brier.qwen2.5-coder-1.5b-bf16.math": {
+   "point": 0.5466464480652206,
+   "lo": 0.510295403842148,
+   "hi": 0.5828328008062514,
+   "n_valid": 10000
+  },
+  "A2.auroc.qwen2.5-coder-1.5b-bf16.math": {
+   "point": 0.6148527793065492,
+   "lo": 0.5648220682284394,
+   "hi": 0.6650888737500851,
+   "n_valid": 10000
+  },
+  "A2.aurc.qwen2.5-coder-1.5b-bf16.math": {
+   "point": 0.5705401038906979,
+   "lo": 0.5092205521580524,
+   "hi": 0.6300601759611373,
+   "n_valid": 10000
+  },
+  "A3.cov.qwen3.5-2b-bf16.math": {
+   "point": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "n_valid": 10000
+  },
+  "A3.prec.qwen3.5-2b-bf16.math": {
+   "point": null,
+   "lo": null,
+   "hi": null,
+   "n_valid": 0
+  },
+  "A3.cwr.qwen3.5-2b-bf16.math": {
+   "point": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "n_valid": 10000
+  },
+  "A3.cov.qwen3.5-4b-bf16.math": {
+   "point": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "n_valid": 10000
+  },
+  "A3.prec.qwen3.5-4b-bf16.math": {
+   "point": null,
+   "lo": null,
+   "hi": null,
+   "n_valid": 0
+  },
+  "A3.cwr.qwen3.5-4b-bf16.math": {
+   "point": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "n_valid": 10000
+  },
+  "A3.cwr_all.qwen3.5-4b-bf16.math": {
+   "point": 0.388,
+   "lo": 0.346,
+   "hi": 0.432,
+   "n_valid": 10000
+  },
+  "A4.cwr_b3_matched.qwen3.5-4b-bf16.math": {
+   "point": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "n_valid": 10000
+  },
+  "A4.delta_cwr_gate_minus_b3.qwen3.5-4b-bf16.math": {
+   "point": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "n_valid": 10000
+  },
+  "A5.acc_small.math": {
+   "point": 0.514,
+   "lo": 0.47,
+   "hi": 0.558,
+   "n_valid": 10000
+  },
+  "A5.acc_large.math": {
+   "point": 0.612,
+   "lo": 0.568,
+   "hi": 0.654,
+   "n_valid": 10000
+  },
+  "A5.acc_cascade.math": {
+   "point": 0.612,
+   "lo": 0.568,
+   "hi": 0.654,
+   "n_valid": 10000
+  },
+  "A5.d_acc_cascade_minus_large.math": {
+   "point": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "n_valid": 10000
+  },
+  "A5.d_acc_cascade_minus_small.math": {
+   "point": 0.09799999999999998,
+   "lo": 0.06399999999999995,
+   "hi": 0.132,
+   "n_valid": 10000
+  },
+  "A5.cost_small.math": {
+   "point": 0.35229446999999997,
+   "lo": 0.31552772795,
+   "hi": 0.39264017315,
+   "n_valid": 10000
+  },
+  "A5.cost_large.math": {
+   "point": 0.685680174,
+   "lo": 0.6398539463,
+   "hi": 0.73471698825,
+   "n_valid": 10000
+  },
+  "A5.cost_cascade.math": {
+   "point": 1.037974644,
+   "lo": 0.9557187107500001,
+   "hi": 1.1260111280999998,
+   "n_valid": 10000
+  },
+  "A5.cost_ratio_cascade_over_large.math": {
+   "point": 1.5137883277926012,
+   "lo": 1.489409570581501,
+   "hi": 1.5376749291391154,
+   "n_valid": 10000
+  },
+  "A5.escalated.math": {
+   "point": 1.0,
+   "lo": 1.0,
+   "hi": 1.0,
+   "n_valid": 10000
+  },
+  "A5.cost_per_correct_cascade.math": {
+   "point": 1.6960369999999998,
+   "lo": 1.5030909170629239,
+   "hi": 1.9187511340831254,
+   "n_valid": 10000
+  },
+  "A5.cost_per_correct_large.math": {
+   "point": 1.1203924411764707,
+   "lo": 1.0010251501780891,
+   "hi": 1.258071062000156,
+   "n_valid": 10000
+  },
+  "A5.cascade_selective_cov.math": {
+   "point": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "n_valid": 10000
+  },
+  "A5.cascade_selective_cwr.math": {
+   "point": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "n_valid": 10000
+  },
+  "A6.acc_oracle_router.math": {
+   "point": 0.648,
+   "lo": 0.606,
+   "hi": 0.688,
+   "n_valid": 10000
+  },
+  "S1.acc_conservative.qwen3.5-2b-bf16.math": {
+   "point": 0.514,
+   "lo": 0.47,
+   "hi": 0.558,
+   "n_valid": 10000
+  },
+  "S1.n_unstable.qwen3.5-2b-bf16.math": {
+   "point": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "n_valid": 10000
+  },
+  "S1.acc_conservative.qwen3.5-4b-bf16.math": {
+   "point": 0.612,
+   "lo": 0.568,
+   "hi": 0.654,
+   "n_valid": 10000
+  },
+  "S1.n_unstable.qwen3.5-4b-bf16.math": {
+   "point": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "n_valid": 10000
+  },
+  "S1.acc_conservative.qwen2.5-coder-1.5b-bf16.math": {
+   "point": 0.368,
+   "lo": 0.326,
+   "hi": 0.41,
+   "n_valid": 10000
+  },
+  "S1.n_unstable.qwen2.5-coder-1.5b-bf16.math": {
+   "point": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "n_valid": 10000
+  },
+  "S1.cwr_gate_conservative.qwen3.5-4b-bf16.math": {
+   "point": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "n_valid": 10000
+  },
+  "S1.acc_cascade_conservative.math": {
+   "point": 0.612,
+   "lo": 0.568,
+   "hi": 0.654,
+   "n_valid": 10000
+  },
+  "A1.acc.qwen3.5-2b-bf16.pooled": {
+   "point": 0.4231770833333333,
+   "lo": 0.3984375,
+   "hi": 0.447265625,
+   "n_valid": 10000
+  },
+  "A9.trunc.qwen3.5-2b-bf16.pooled": {
+   "point": 0.158203125,
+   "lo": 0.142578125,
+   "hi": 0.17447916666666666,
+   "n_valid": 10000
+  },
+  "A1.acc.qwen3.5-4b-bf16.pooled": {
+   "point": 0.6061197916666666,
+   "lo": 0.58203125,
+   "hi": 0.630859375,
+   "n_valid": 10000
+  },
+  "A9.trunc.qwen3.5-4b-bf16.pooled": {
+   "point": 0.10872395833333333,
+   "lo": 0.09505208333333333,
+   "hi": 0.123046875,
+   "n_valid": 10000
+  },
+  "A1.acc.qwen2.5-coder-1.5b-bf16.pooled": {
+   "point": 0.4817708333333333,
+   "lo": 0.45703125,
+   "hi": 0.5065104166666666,
+   "n_valid": 10000
+  },
+  "A9.trunc.qwen2.5-coder-1.5b-bf16.pooled": {
+   "point": 0.05078125,
+   "lo": 0.040364583333333336,
+   "hi": 0.061197916666666664,
+   "n_valid": 10000
+  },
+  "A2.meanconf.qwen3.5-2b-bf16.pooled": {
+   "point": 0.9005031637774631,
+   "lo": 0.8979698056710993,
+   "hi": 0.9030258816296082,
+   "n_valid": 10000
+  },
+  "A2.ece.qwen3.5-2b-bf16.pooled": {
+   "point": 0.4773260804441297,
+   "lo": 0.4537854188679923,
+   "hi": 0.5011253177009659,
+   "n_valid": 10000
+  },
+  "A2.brier.qwen3.5-2b-bf16.pooled": {
+   "point": 0.45745699466867973,
+   "lo": 0.4382044573996596,
+   "hi": 0.4769541100139816,
+   "n_valid": 10000
+  },
+  "A2.auroc.qwen3.5-2b-bf16.pooled": {
+   "point": 0.7049366209411356,
+   "lo": 0.6793592712062816,
+   "hi": 0.7304564905298302,
+   "n_valid": 10000
+  },
+  "A2.aurc.qwen3.5-2b-bf16.pooled": {
+   "point": 0.4420897592416188,
+   "lo": 0.40836498960307244,
+   "hi": 0.47715452704426303,
+   "n_valid": 10000
+  },
+  "A2.meanconf.qwen3.5-4b-bf16.pooled": {
+   "point": 0.9316879625503866,
+   "lo": 0.9297571071809708,
+   "hi": 0.9336394059230116,
+   "n_valid": 10000
+  },
+  "A2.ece.qwen3.5-4b-bf16.pooled": {
+   "point": 0.3255681708837197,
+   "lo": 0.30185723874555076,
+   "hi": 0.34925277120291126,
+   "n_valid": 10000
+  },
+  "A2.brier.qwen3.5-4b-bf16.pooled": {
+   "point": 0.3329360510556769,
+   "lo": 0.312349227224281,
+   "hi": 0.3533046382330263,
+   "n_valid": 10000
+  },
+  "A2.auroc.qwen3.5-4b-bf16.pooled": {
+   "point": 0.7096483830591828,
+   "lo": 0.6826451116515255,
+   "hi": 0.7360711198279309,
+   "n_valid": 10000
+  },
+  "A2.aurc.qwen3.5-4b-bf16.pooled": {
+   "point": 0.25331204022391224,
+   "lo": 0.22591037197487002,
+   "hi": 0.28169379064302247,
+   "n_valid": 10000
+  },
+  "A2.meanconf.qwen2.5-coder-1.5b-bf16.pooled": {
+   "point": 0.926944771472372,
+   "lo": 0.9249127947104049,
+   "hi": 0.9289415402559189,
+   "n_valid": 10000
+  },
+  "A2.ece.qwen2.5-coder-1.5b-bf16.pooled": {
+   "point": 0.44517393813903855,
+   "lo": 0.4214225508849235,
+   "hi": 0.4692374306391498,
+   "n_valid": 10000
+  },
+  "A2.brier.qwen2.5-coder-1.5b-bf16.pooled": {
+   "point": 0.4378919500397503,
+   "lo": 0.4175577031914846,
+   "hi": 0.4584031629663824,
+   "n_valid": 10000
+  },
+  "A2.auroc.qwen2.5-coder-1.5b-bf16.pooled": {
+   "point": 0.6668613336955046,
+   "lo": 0.6393613174165975,
+   "hi": 0.6938194473641427,
+   "n_valid": 10000
+  },
+  "A2.aurc.qwen2.5-coder-1.5b-bf16.pooled": {
+   "point": 0.38066194844010187,
+   "lo": 0.34893574308938735,
+   "hi": 0.412935533016425,
+   "n_valid": 10000
+  },
+  "A3.cov.qwen3.5-2b-bf16.pooled": {
+   "point": 0.3248697916666667,
+   "lo": 0.3046875,
+   "hi": 0.3450520833333333,
+   "n_valid": 10000
+  },
+  "A3.prec.qwen3.5-2b-bf16.pooled": {
+   "point": 0.7875751503006012,
+   "lo": 0.7510546316402733,
+   "hi": 0.8228111920073127,
+   "n_valid": 10000
+  },
+  "A3.cwr.qwen3.5-2b-bf16.pooled": {
+   "point": 0.06901041666666667,
+   "lo": 0.056640625,
+   "hi": 0.08138020833333333,
+   "n_valid": 10000
+  },
+  "A3.cov.qwen3.5-4b-bf16.pooled": {
+   "point": 0.4765625,
+   "lo": 0.4583333333333333,
+   "hi": 0.4947916666666667,
+   "n_valid": 10000
+  },
+  "A3.prec.qwen3.5-4b-bf16.pooled": {
+   "point": 0.8538251366120219,
+   "lo": 0.827729809698642,
+   "hi": 0.8780804594637812,
+   "n_valid": 10000
+  },
+  "A3.cwr.qwen3.5-4b-bf16.pooled": {
+   "point": 0.06966145833333333,
+   "lo": 0.057942708333333336,
+   "hi": 0.08204752604166643,
+   "n_valid": 10000
+  },
+  "A3.cwr_all.qwen3.5-4b-bf16.pooled": {
+   "point": 0.3938802083333333,
+   "lo": 0.369140625,
+   "hi": 0.41796875,
+   "n_valid": 10000
+  },
+  "A4.cwr_b3_matched.qwen3.5-4b-bf16.pooled": {
+   "point": 0.11197916666666667,
+   "lo": 0.09895833333333333,
+   "hi": 0.12630208333333334,
+   "n_valid": 10000
+  },
+  "A4.delta_cwr_gate_minus_b3.qwen3.5-4b-bf16.pooled": {
+   "point": -0.04231770833333334,
+   "lo": -0.05729166666666667,
+   "hi": -0.02734375,
+   "n_valid": 10000
+  },
+  "A5.acc_small.pooled": {
+   "point": 0.4231770833333333,
+   "lo": 0.3984375,
+   "hi": 0.447265625,
+   "n_valid": 10000
+  },
+  "A5.acc_large.pooled": {
+   "point": 0.6061197916666666,
+   "lo": 0.58203125,
+   "hi": 0.630859375,
+   "n_valid": 10000
+  },
+  "A5.acc_cascade.pooled": {
+   "point": 0.603515625,
+   "lo": 0.5787760416666666,
+   "hi": 0.6282552083333334,
+   "n_valid": 10000
+  },
+  "A5.d_acc_cascade_minus_large.pooled": {
+   "point": -0.0026041666666666297,
+   "lo": -0.01432291666666663,
+   "hi": 0.00911458333333337,
+   "n_valid": 10000
+  },
+  "A5.d_acc_cascade_minus_small.pooled": {
+   "point": 0.18033854166666669,
+   "lo": 0.16015624999999994,
+   "hi": 0.20117187500000006,
+   "n_valid": 10000
+  },
+  "A5.cost_small.pooled": {
+   "point": 0.19318685677083336,
+   "lo": 0.17929074747721355,
+   "hi": 0.20796996193033854,
+   "n_valid": 10000
+  },
+  "A5.cost_large.pooled": {
+   "point": 0.36525324609375004,
+   "lo": 0.3484263193033854,
+   "hi": 0.3829343160970052,
+   "n_valid": 10000
+  },
+  "A5.cost_cascade.pooled": {
+   "point": 0.49561569791666665,
+   "lo": 0.46621140537109373,
+   "hi": 0.5268754022460937,
+   "n_valid": 10000
+  },
+  "A5.cost_ratio_cascade_over_large.pooled": {
+   "point": 1.3569097693643943,
+   "lo": 1.3288344827212917,
+   "hi": 1.3851590457253664,
+   "n_valid": 10000
+  },
+  "A5.escalated.pooled": {
+   "point": 0.6751302083333334,
+   "lo": 0.6549479166666666,
+   "hi": 0.6953125,
+   "n_valid": 10000
+  },
+  "A5.cost_per_correct_cascade.pooled": {
+   "point": 0.8212143603020496,
+   "lo": 0.7585754282175302,
+   "hi": 0.8893756174343168,
+   "n_valid": 10000
+  },
+  "A5.cost_per_correct_large.pooled": {
+   "point": 0.602609007518797,
+   "lo": 0.5628703727715297,
+   "hi": 0.6455416278838798,
+   "n_valid": 10000
+  },
+  "A5.cascade_selective_cov.pooled": {
+   "point": 0.5071614583333334,
+   "lo": 0.4895833333333333,
+   "hi": 0.5247395833333334,
+   "n_valid": 10000
+  },
+  "A5.cascade_selective_cwr.pooled": {
+   "point": 0.10286458333333333,
+   "lo": 0.08854166666666667,
+   "hi": 0.1171875,
+   "n_valid": 10000
+  },
+  "A6.acc_oracle_router.pooled": {
+   "point": 0.6438802083333334,
+   "lo": 0.6197916666666666,
+   "hi": 0.66796875,
+   "n_valid": 10000
+  },
+  "S1.acc_conservative.qwen3.5-2b-bf16.pooled": {
+   "point": 0.4225260416666667,
+   "lo": 0.3984375,
+   "hi": 0.4466145833333333,
+   "n_valid": 10000
+  },
+  "S1.n_unstable.qwen3.5-2b-bf16.pooled": {
+   "point": 1.0,
+   "lo": 0.0,
+   "hi": 3.0,
+   "n_valid": 10000
+  },
+  "S1.acc_conservative.qwen3.5-4b-bf16.pooled": {
+   "point": 0.60546875,
+   "lo": 0.5813802083333334,
+   "hi": 0.6302083333333334,
+   "n_valid": 10000
+  },
+  "S1.n_unstable.qwen3.5-4b-bf16.pooled": {
+   "point": 2.0,
+   "lo": 0.0,
+   "hi": 5.0,
+   "n_valid": 10000
+  },
+  "S1.acc_conservative.qwen2.5-coder-1.5b-bf16.pooled": {
+   "point": 0.4817708333333333,
+   "lo": 0.45703125,
+   "hi": 0.5065104166666666,
+   "n_valid": 10000
+  },
+  "S1.n_unstable.qwen2.5-coder-1.5b-bf16.pooled": {
+   "point": 0.0,
+   "lo": 0.0,
+   "hi": 0.0,
+   "n_valid": 10000
+  },
+  "S1.cwr_gate_conservative.qwen3.5-4b-bf16.pooled": {
+   "point": 0.0703125,
+   "lo": 0.05859375,
+   "hi": 0.08333333333333333,
+   "n_valid": 10000
+  },
+  "S1.acc_cascade_conservative.pooled": {
+   "point": 0.6028645833333334,
+   "lo": 0.578125,
+   "hi": 0.6276041666666666,
+   "n_valid": 10000
+  }
+ },
+ "paired_tests": {
+  "cascade_vs_large": {
+   "cascade_only_correct": 40,
+   "other_only_correct": 44,
+   "p_two_sided": 0.7436441861052041,
+   "p_holm": 0.7436441861052041
+  },
+  "cascade_vs_small": {
+   "cascade_only_correct": 295,
+   "other_only_correct": 18,
+   "p_two_sided": 1.006647890779148e-65,
+   "p_holm": 2.013295781558296e-65
+  }
+ },
+ "A7_night_cpu_vs_tpu": {
+  "n_common": 54,
+  "domains": [
+   "python",
+   "rust"
+  ],
+  "by_domain": {
+   "python": {
+    "n": 28,
+    "cpu_pass": 11,
+    "tpu_pass": 10,
+    "agree": 27,
+    "cpu_only": 1,
+    "tpu_only": 0,
+    "p_mcnemar_two_sided": 1.0
+   },
+   "rust": {
+    "n": 26,
+    "cpu_pass": 6,
+    "tpu_pass": 8,
+    "agree": 22,
+    "cpu_only": 1,
+    "tpu_only": 3,
+    "p_mcnemar_two_sided": 0.625
+   },
+   "pooled": {
+    "n": 54,
+    "cpu_pass": 17,
+    "tpu_pass": 18,
+    "agree": 49,
+    "cpu_only": 2,
+    "tpu_only": 3,
+    "p_mcnemar_two_sided": 1.0
+   }
+  },
+  "excluded": {
+   "math": "CPU night math used the defective code prompt (D24/D28); not comparable"
+  }
+ }
+}

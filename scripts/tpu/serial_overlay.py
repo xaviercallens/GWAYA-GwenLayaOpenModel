@@ -45,14 +45,16 @@ def subset_files(tasks_path: Path, raw_dir: Path, models: list[str], keys: set[t
     return tfile
 
 
-def run_group(name: str, models: list[str], arms: list[str], keys, tasks_path: Path, raw_dir: Path, out: Path) -> dict:
+def run_group(name: str, models: list[str], arms: list[str], keys, tasks_path: Path, raw_dir: Path, out: Path,
+              orig_gens: Path) -> dict:
     if not keys:
         return {"group": name, "tasks": 0}
     gdir = out / name
     tfile = subset_files(tasks_path, raw_dir, models, keys, gdir)
     for m in models:
         subprocess.run([PY, str(ROOT / "scripts/import_remote_gens.py"), "--tasks", str(tfile), "--raw", str(gdir / f"raw_{m}.jsonl"),
-                        "--served", m, "--quant", "bf16", "--out", str(gdir), "--accelerator", "TPU v5e x1"], check=True, cwd=ROOT)
+                        "--served", m, "--quant", "bf16", "--out", str(gdir), "--accelerator", "TPU v5e x1",
+                        "--seconds-from", str(orig_gens)], check=True, cwd=ROOT)
     subprocess.run([PY, str(ROOT / "scripts/run_study.py"), "--plan", str(ROOT / "experiments/night/plan_night.json"),
                     "--stage", "night_L2", "--backend", "openai", "--backend-url", "http://127.0.0.1:1/v1", "--tasks", str(tfile),
                     "--models", *models, "--quants", "bf16", "--arms", *arms, "--mode", "score", "--no-vram",
@@ -68,12 +70,14 @@ def main(argv=None) -> int:
     ap.add_argument("--out", required=True, type=Path)
     ap.add_argument("--tiers", nargs=2, required=True)
     ap.add_argument("--coder", required=True)
+    ap.add_argument("--tiers-gens", required=True, type=Path, help="original tiers gens.jsonl (attributed seconds are kept)")
+    ap.add_argument("--coder-gens", required=True, type=Path)
     a = ap.parse_args(argv)
     flips = collect_flips(a.audits)
     tier_keys = flips.get(a.tiers[0], set()) | flips.get(a.tiers[1], set())
     meta = {"flips": {m: sorted(v) for m, v in flips.items()},
-            "tiers": run_group("tiers", list(a.tiers), ARMS, tier_keys, a.tasks, a.raw_dir, a.out),
-            "coder": run_group("coder", [a.coder], ["base"], flips.get(a.coder, set()), a.tasks, a.raw_dir, a.out)}
+            "tiers": run_group("tiers", list(a.tiers), ARMS, tier_keys, a.tasks, a.raw_dir, a.out, a.tiers_gens),
+            "coder": run_group("coder", [a.coder], ["base"], flips.get(a.coder, set()), a.tasks, a.raw_dir, a.out, a.coder_gens)}
     (a.out / "overlay_meta.json").write_text(json.dumps(meta, indent=1))
     print(json.dumps({k: (v if k != "flips" else {m: len(x) for m, x in v.items()}) for k, v in meta.items()}))
     return 0

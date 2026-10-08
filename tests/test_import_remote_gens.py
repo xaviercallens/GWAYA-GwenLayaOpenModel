@@ -115,3 +115,19 @@ def test_require_logprobs_fails_fast_when_engine_returns_none():
         gb.require_logprobs(rows)
     gb.require_logprobs(rows + [{"completion_tokens": 7, "mean_logprob": -0.3}])  # one row with logprobs is enough
     gb.require_logprobs([{"completion_tokens": 0, "mean_logprob": None}])  # prompt_too_long rows are ignored
+
+
+def test_subset_reimport_keeps_original_attributed_seconds(tmp_path):
+    rows = write_tasks(tmp_path / "tasks.jsonl")
+    write_raw(tmp_path / "raw.jsonl", rows, chunk_size=5)  # chunk wall 6.0 s over 5 tasks: 1.2 s each
+    irg.import_gens(tmp_path / "tasks.jsonl", tmp_path / "raw.jsonl", "small-bf16", "bf16", tmp_path / "full")
+    # subset of 2 tasks: naive attribution would give 3.0 s each; the original 1.2 s must be kept
+    sub = [r for r in (json.loads(l) for l in (tmp_path / "raw.jsonl").read_text().splitlines()) if r["task_id"] in ("p0", "p1")]
+    (tmp_path / "raw_sub.jsonl").write_text("".join(json.dumps(r) + "\n" for r in sub))
+    irg.import_gens(tmp_path / "tasks.jsonl", tmp_path / "raw_sub.jsonl", "small-bf16", "bf16", tmp_path / "naive")
+    irg.import_gens(tmp_path / "tasks.jsonl", tmp_path / "raw_sub.jsonl", "small-bf16", "bf16", tmp_path / "kept",
+                    seconds_from=tmp_path / "full" / "gens.jsonl")
+    naive = [r["gpu_s"] for r in rs.ChainedLog(tmp_path / "naive" / "gens.jsonl").records]
+    kept = [r["gpu_s"] for r in rs.ChainedLog(tmp_path / "kept" / "gens.jsonl").records]
+    assert naive == pytest.approx([3.0, 3.0], abs=1e-4)  # the bug this guards against
+    assert kept == pytest.approx([1.2, 1.2], abs=1e-4)

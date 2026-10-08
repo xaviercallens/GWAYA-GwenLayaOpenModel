@@ -1,0 +1,12 @@
+{
+ "model": "qwen2.5-coder-1.5b-bf16",
+ "mode": "verified",
+ "rechecked": 556,
+ "flips": [],
+ "n_flips": 0,
+ "timeouts_when_run_alone": [],
+ "reasons": {
+  "python:None": 342,
+  "rust:all_tests_passed": 214
+ }
+}
