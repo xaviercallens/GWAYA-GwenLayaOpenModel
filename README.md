@@ -75,6 +75,22 @@ All benchmarks evaluate **`qwen2.5-coder:1.5b`** on the **MBPP-sanitized** test 
 
 ---
 
+## 🧪 GwenLaya v4 (work in progress, exploratory results only)
+
+GwenLaya asks whether a small open model (Qwen3.5) can answer only when an executed check or a calibrated
+score supports the answer, and otherwise abstain or escalate. **No pre-registered hypothesis test has been
+completed**: both primary hypotheses need the Laya calibrator and a separate calibration split, which do not exist yet.
+What has been measured (full 1,536-task E set, one greedy sample, one TPU v5e chip; see
+[`papers/gwenlaya_v4.pdf`](papers/gwenlaya_v4.pdf) and [`results/gwenlaya_v4/e_tpu/`](results/gwenlaya_v4/e_tpu/)):
+
+- On the 4B, answering only when the executed gate verifies cut confident-wrong answers from 32.5% to 13.8% of tasks
+  (Python) and from 47.1% to 6.7% (Rust), and did better than a log-probability threshold at the same coverage,
+  even with that threshold tuned on the test set. The gate answers nothing on math (no visible check).
+- Negative results: raw log-probability confidence is badly calibrated (about 0.93 mean confidence against 53-68% accuracy),
+  and a gate-driven 2B-to-4B cascade is **not** cheaper than always using the 4B (cost ratio 1.36) for the same accuracy.
+- All of this is on public benchmarks the models have probably seen. Every number is traceable to a committed file;
+  an independent claim audit of the paper is in [`docs/CLAIM_AUDIT.md`](docs/CLAIM_AUDIT.md).
+
 ## 🛠️ Architecture: The GWAYA Fail-Closed Gate
 
 For any candidate $c$ in language $\ell \in \{\text{python}, \text{rust}, \text{lean4}\}$, the gate accepts if and only if:

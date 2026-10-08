@@ -81,3 +81,18 @@ Dated 2026-10-08. These were decided after seeing the first results and are labe
    applied to contention flips; **sensitivity S1** = additionally count every item that produced two different
    outcomes in any run as not correct (fail-closed). Both are reported; if they differ by more than the
    confidence intervals, S1 is described as the conservative reading.
+5. **Changes made after the independent re-audit of revision 3.4.0 (post-hoc, 2026-10-09).**
+   - A4 pooled: the earlier "pooled" matched-coverage figure applied ONE threshold across all domains, which is not
+     the per-domain matching the plan describes. It is removed and replaced by a per-domain-matched pooled value
+     (sum over domains of gate-wrong minus coverage-matched-baseline-wrong, divided by N).
+   - Wording: the coverage-matched baseline picks the k most confident tasks with k = the gate's answered count in
+     the same domain. No outcome labels are used to choose k, so "threshold tuned on E, which favours the baseline"
+     was unsupported and is withdrawn; ties are broken pessimistically (wrong first).
+   - S2 (new, post-hoc): cost ratios excluding the first generation chunk of each model, which includes XLA
+     compilation. The audit showed the Python cascade-vs-largest cost ratio depends on this; both are reported.
+   - Math gate: the frozen sentence above ("Math has no gate-visible check in the task files") is accurate about the
+     task files but misleading. The registered math gate (program-of-thought re-execution that reproduces the boxed
+     answer) needs no task payload; the zero coverage is an implementation gap in our checker.
+   - Concurrency: engine logs show the KV cache re-split for at most 54 concurrent requests (2B) and 11 (4B), not
+     the requested 96 and 32. Chip-second costs are therefore throughput at those effective concurrencies; the 4B
+     ran at lower concurrency than the 2B, which understates the cascade's cost penalty.

@@ -113,3 +113,62 @@ Written after v3.3.0 was released. No registered test has run. The night generat
 | D28 | Math: boxed answer scored by equivalence; unparseable = UNVERIFIED; a math prompt asking for `\boxed{}` | Night math generations went through the code path (python system prompt, ```` ```python ```` prefill, ```` ``` ```` stop), so they stay invalid (unchanged conclusion). Code fixed (2c1f6b1): prose math prompt ending in `\boxed{}`, Qwen3.x non-thinking via an empty think block; **boxed-only scoring is now the default** (the registered rule); the last-number fallback (D24) is opt-in only. Night re-score: math 0 PASS_HIDDEN, 0 FAIL_HIDDEN, 26 UNDECIDED. Also fixed: the self-consistency vote key for math used the extraction method instead of the answer; B4 did not run (D9), so no reported number changes | Prompt-path defect; restore the registered scoring rule as default |
 | D29 | Python hidden checks run in bwrap | With a uv-managed interpreter the venv `python` symlink chain went through a directory not bound into the sandbox, so Python could not start inside bwrap on the re-scoring machine. Fixed by recreating the interpreter symlinks (2c1f6b1). Night Python unchanged: 11/28 PASS_HIDDEN | Environment defect |
 | D30 | Not registered (TPU not in the plan; arms B1-B6/GL only) | **Unregistered descriptive TPU run #3** (one on-demand v5e chip, vllm-tpu 0.31.0, bf16, greedy, max_tokens 1024, non-thinking, fixed prompts): all 80 night tasks for Qwen/Qwen3.5-2B, Qwen/Qwen3.5-4B, Qwen/Qwen2.5-Coder-1.5B-Instruct (`results/gwenlaya_v4/tpu_run3/`). Python scoring on the TPU host was invalid (sandboxed checks launched from inside the vLLM process all failed), so all TPU generations were re-scored locally with the same checkers (`*.rescored.jsonl`, `summary.json`); Rust and math re-scores equal the TPU-host status on every item, Python does not. Math truncations at 1024 tokens count as UNVERIFIED. Reported as descriptive only: single sample, no logprobs, no gate, no calibration, not a registered arm. Qwen3.5 runs through the PyTorch fallback of tpu-inference with `SKIP_JAX_PRECOMPILE=1`; this supersedes the v3.3.0 statement that Qwen3.5-4B did not finish XLA compilation (that was run #1). No TPU LoRA path for dense Qwen3.5/Qwen3.8 (unchanged) | GPU slot unavailable (G); scoring defect on the TPU host (I) |
+
+D27 note (appended 2026-10-08, revision 3.4.0, not rewritten): the Rust harness counts `assert!`,
+`assert_eq!` and `assert_ne!` calls (`gwaya/oracles.py` `_RUST_ASSERT_MACRO`), not only
+`assert_eq!`/`assert_ne!` (claim audit B3).
+
+D30 note (appended 2026-10-08, revision 3.4.0, not rewritten): "re-scored ... with the same checkers"
+stands, but run #3 is **not** a comparison "across hardware and quantisation" only (claim audit B12):
+engine (vLLM `llm.chat` vs llama.cpp raw completions), code system prompt and code prefill/stop also
+differed, so it is a loose consistency check. The cause of the TPU-host Python failure is not recorded
+(the gate self-test on that host passed; audit B9). Run #2 scores are unused because its own gate
+self-test reported `python_ok False` (not because of D29, which concerns the re-scoring machine).
+The same-protocol comparison is D38/A7 below.
+
+## Full-E baselines on TPU v5e (2026-10-08, revision 3.4.0; exploratory, no registered test)
+
+Branch `bench/tpu-e-eval`. Analysis plan `docs/ANALYSIS_PLAN_E_TPU.md` (committed 8ee9da3, 22:22:55;
+original sha256 1f2fa2c1...0d46), with four dated post-hoc amendments. Results:
+`results/gwenlaya_v4/e_tpu/numbers_e_tpu.json` (sha256 c76bc506...226b). None of the rows below changes a
+hypothesis's metric or MEI; H1/H3 remain not run.
+
+Timing, stated plainly: D31, D32, D34-D37 were fixed in the plan or the generation scripts. The plan was
+committed (22:22:55) after all generation and as scoring started: the 2B/4B scoring run started at
+22:21:55, 60 s before the commit, and finished at 22:36:38; the Coder rows were complete at 22:22:45,
+10 s before it. The scoring logs print no outcomes and no scored E outcome is known to have been inspected
+before the commit, but the descriptive 80-task runs had already shown approximate pass rates.
+D33 and D40 arose during generation. D38 and D39 were decided after the first analysis run and are post hoc.
+D41 describes how scoring was run.
+
+| # | Prereg says | What was actually done | Reason / when |
+|---|---|---|---|
+| D31 | Generation with llama.cpp (D6), GGUF q4 on L4 (registered) | One on-demand TPU v5e chip (v5litepod-1, us-west4-a), vLLM-TPU 0.31.0, **bf16**, greedy, `max_new_tokens` 1024, thinking off, raw Qwen protocol prompts and stop sequences from `OllamaGenerator` (the code-domain prompt is unchanged since the L2 commit 64441eb; only the math path changed, D28). HF weights loaded at revision `main` (not pinned) | No GPU slot (G); before generation |
+| D32 | Tiers 2B/4B/9B/27B; B2 = largest tier | Tiers **2B and 4B** only ("largest" = 4B); Qwen2.5-Coder-1.5B-Instruct added as a continuity anchor (A1, A2, A9 only) | G, B; before generation |
+| D33 | One engine configuration per tier | Configured `max_num_seqs`: 96 for Coder and 2B, **32** for the 4B, because at 96 the 4B failed with `ValueError: Cannot fit both KV pools under gpu_memory_utilization=0.92: the mamba pool needs 193 blocks (2 per request x 96 requests) ...` (`gen_qwen3.5-4b-bf16_s96.log`). Effective concurrency was lower: the engine re-split the KV cache for at most **54** concurrent requests (2B) and **11** (4B at 32). The "Mamba and attention pools together exceed the HBM budget" line is an INFO message that also appears in the successful runs; vLLM calls the recurrent-state pool "mamba" although Qwen3.5 is hybrid full/linear attention. The 4B therefore ran at lower effective concurrency than the 2B, which makes it dearer per token and understates the cascade's cost penalty | HBM limit; during generation (corrected after re-audit E14) |
+| D34 | H3 cost in L4 GPU-seconds (D3: CPU-seconds locally) | **Accelerator chip-seconds**: chunk wall time split by token share (registered attribution rule), throughput not latency, not comparable to GPU-seconds. The first chunk of each model (62 s / 144 s / 192 s vs 9-10 / 21-23 / 50-55 s later, consistent with lazy compilation) is included. CPU time of the gate is not counted | Plan |
+| D35 | B3 threshold set on split C to match GL coverage | A4 baseline answers the **k most confident tasks** (exp(mean log-prob)), with k = the gate's answered count **in the same domain**; no outcome labels are used to choose k; ties broken pessimistically. k is matched on E rather than taken from a threshold frozen on a separate split. No direction of bias is claimed (the earlier "favours the baseline" was unsupported, re-audit AB11/E45). Pooled number: coverage matched within each domain (math k = 0), -0.063 (-0.074 to -0.054); the earlier global-threshold pooled -0.042 is withdrawn (re-audit E47). Not B3, not H1 | No split C; plan |
+| D36 | GL = gate + Laya router/calibrator; H3 = GL vs B5 | A5 "gate cascade" = 2B -> executed gate -> 4B (run_study arm `gwenlaya`, static ladder, no Laya), compared with B1/B2 (not B5), Holm over two exploratory contrasts. Not GL, not H3 | No Laya head; plan |
+| D37 | Math gate = sandboxed program-of-thought re-execution that reproduces the boxed answer (prereg section 1 table; needs no task payload) | **Not implemented.** Our gate executes only the task's `gate_payload`, which is empty for all 500 math rows, so every math gate verdict is UNVERIFIED: coverage 0, the cascade always escalates, matched-coverage math comparisons are empty. This is an implementation gap in the checker, not a property of math tasks | Implementation gap; stated in plan (A3); reworded after re-audit E42 |
+| D38 | (A7 in plan: CPU vs TPU on 80 night tasks) | A7 **restricted to Python/Rust** (54 tasks): CPU night math came from the defective code prompt (D24/D28). Decided after seeing a pooled p driven by math | Post hoc (plan amendment 1) |
+| D39 | (A8 in plan: timeout audit) | A8 became a correction: all 1,536 non-passing Python/Rust rows re-checked serially (3 flips); contention flips applied as an **overlay** (`scripts/tpu/serial_overlay.py`, originals untouched; py/MBPP/271 for 2B and 4B); `rs/mbpp_130_max_occurrences` (4B) is nondeterministic (Rust HashMap order) and stays FAILED; all 1,572 passing rows re-run once (0 changes); sensitivity S1 counts every item with two different outcomes as wrong. Overlay importer bug (re-attributed seconds inflated cost) fixed and tested before the final numbers | Post hoc (plan amendments 2 and 4) |
+| D40 | Log-probabilities captured (D21) | A first TPU pass (VM gwenlaya-tpu-e-gen-210955; ledger 963 s, 0.321 USD) returned **no log-probabilities** (`mean_logprob` null in all 1,536 Coder and 1,536 2B rows; 4B failed to start). Per the maintainer it used `logprobs=0`. It was set aside and not used; all three models were regenerated with `logprobs=1` (VM gwenlaya-tpu-e-gen2-214445); `gen_batch.py` now fails fast without log-probabilities | Implementation defect; during generation |
+| D41 | -- (scoring parallelism not specified) | 2B/4B scored with `--check-workers 5` (parallel prefetch of a memoised check cache); Coder with one check process. Contention timeouts are handled by D39. Both scoring runs ran from working trees with uncommitted changes. `results.json` records HEAD at the **end** of each run (66e2313 Coder, 5e10ad2 tiers, both dirty); the Coder run started 22:05:17 (before 66e2313, 22:08:27) and the 2B/4B run 22:21:55 (before 5e10ad2, 22:25:43), so the code that ran was 39a5a0a and 66e2313 respectively plus unidentified uncommitted changes | Wall clock; scoring |
+
+Also recorded: an orphan TPU VM (gwenlaya-tpu-e-gen2-213823, us-central1-a) was created at 21:38:23 by a
+driver the maintainer killed by mistake and deleted at 21:44:35; ledger 360 s, 0.12 USD (upper bound).
+
+D42 (appended 2026-10-09 after the re-audit `docs/CLAIM_AUDIT_340.md`): **E is spent for a registered H1/H3.**
+Prereg section 6 (freeze rule) requires the calibrator, all thresholds and the E manifest hash in a signed
+addendum before E is generated, and forbids E-based refitting. The full E set has been generated and its
+outcomes analysed and published (revision 3.4.0) before split C or the Laya head exist. A registered H1/H3
+therefore needs fresh generations on a new evaluation set E' after the freeze (for example problems released
+after the models' training cutoff), or a recorded deviation stating that the E generations predate the freeze
+and their outcomes were seen, in which case the test is a deviated test.
+
+Further notes from the re-audit (2026-10-09): the cascade arm (`gwenlaya`) abstains on 757 of 1,536 tasks
+(all 500 math, 77 Python, 180 Rust); "cascade accuracy" counts the final candidate whether or not it was
+answered (selective coverage 0.507, CWR 0.103 pooled, `A5.cascade_selective_*`). Within each domain every
+source-problem cluster has one item, so the cluster bootstrap is effectively item-level stratified by domain.
+A warm-up-excluded cost sensitivity S2 (post hoc) is reported next to the planned cost: pooled cascade/4B
+ratio 1.243 (1.224-1.260) without the first chunk vs 1.357 with it.

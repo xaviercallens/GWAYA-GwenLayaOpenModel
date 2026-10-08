@@ -49,6 +49,7 @@ class Data:
         self.is_dom = {d: self.dom == d for d in DOMAINS}
         # items whose check produced two different outcomes in any run (sensitivity analysis only)
         self.unstable = {m: np.zeros(self.n, dtype=bool) for m in models}
+        self.warm = np.zeros(self.n, dtype=bool)  # tasks of the first generation chunk of each model (compile warm-up)
 
     def mark_unstable(self, model: str, keys: set[tuple[str, str]]) -> int:
         pos = {k: i for i, k in enumerate(self.keys)}
@@ -61,7 +62,9 @@ class Data:
 
 
 def build(tasks: list[dict], tiers_rows: list[dict], tiers_gens: list[dict], small: str, large: str,
-          coder: tuple[list[dict], list[dict], str] | None = None) -> Data:
+          coder: tuple[list[dict], list[dict], str] | None = None, warmup_chunk: int = 192) -> Data:
+    # generation chunks follow the task-file order; the first chunk of every model includes XLA compilation
+    warm_ids = {(t["domain"], t["task_id"]) for t in tasks[:warmup_chunk]}
     tasks = sorted(tasks, key=lambda t: (t["domain"], t["task_id"]))
     keys = [(t["domain"], t["task_id"]) for t in tasks]
     models: dict[str, dict[str, np.ndarray]] = {}
@@ -107,7 +110,9 @@ def build(tasks: list[dict], tiers_rows: list[dict], tiers_gens: list[dict], sma
         rr = {(r["domain"], r["task_id"]): r["score"] for r in tiers_rows if r["arm"] == arm}
         if rr and any((rr[k] == "VERIFIED") != models[m]["cor"][i] for i, k in enumerate(keys)):
             raise SystemExit(f"{arm} rows disagree with base rows of {m}")
-    return Data(tasks, models, gate, cascade, small, large)
+    D = Data(tasks, models, gate, cascade, small, large)
+    D.warm = np.array([k in warm_ids for k in keys])
+    return D
 
 
 # ── metric registry (one bootstrap loop for everything) ───────────────────────────────────────
@@ -155,13 +160,16 @@ def registry(D: Data) -> list[tuple[str, Callable[[np.ndarray], float]]]:
             add(f"A3.prec.{tier}.{d}", lambda i, g=g, cor=cor, d=d: A.answered_acc(g[D.sel(i, d)], cor[D.sel(i, d)]))
             add(f"A3.cwr.{tier}.{d}", lambda i, g=g, cor=cor, d=d: A.cwr(g[D.sel(i, d)], cor[D.sel(i, d)]))
         add(f"A3.cwr_all.{l}.{d}", lambda i, d=d: _mean(~M[l]["cor"][D.sel(i, d)]))  # answer everything
-        # A4 matched coverage: top-k by log-prob confidence with k = gate's answered count in the resample
-        def a4(i, d=d):
-            j = D.sel(i, d)
-            return matched_cwr(M[l]["conf"][j], M[l]["cor"][j], int(G[l][j].sum()))
-        add(f"A4.cwr_b3_matched.{l}.{d}", a4)
-        add(f"A4.delta_cwr_gate_minus_b3.{l}.{d}",
-            lambda i, d=d, a4=a4: A.cwr(G[l][D.sel(i, d)], M[l]["cor"][D.sel(i, d)]) - a4(i, d))
+        # A4 coverage-matched baseline: answer the k tasks with the highest log-prob confidence, k = the gate's
+        # answered count in the same domain and resample. No labels are used to pick k; ties are broken pessimistically.
+        # Per domain only: one threshold across domains is a different (and misleading) comparison.
+        if d != SEL:
+            def a4(i, d=d):
+                j = D.sel(i, d)
+                return matched_cwr(M[l]["conf"][j], M[l]["cor"][j], int(G[l][j].sum()))
+            add(f"A4.cwr_b3_matched.{l}.{d}", a4)
+            add(f"A4.delta_cwr_gate_minus_b3.{l}.{d}",
+                lambda i, d=d, a4=a4: A.cwr(G[l][D.sel(i, d)], M[l]["cor"][D.sel(i, d)]) - a4(i, d))
         # A5 cascade vs B1/B2
         cs, cl, cc = M[s]["cor"], M[l]["cor"], C["cor"]
         add(f"A5.acc_small.{d}", lambda i, d=d: _mean(cs[D.sel(i, d)]))
@@ -190,6 +198,30 @@ def registry(D: Data) -> list[tuple[str, Callable[[np.ndarray], float]]]:
         add(f"S1.cwr_gate_conservative.{l}.{d}", lambda i, d=d: A.cwr(G[l][D.sel(i, d)], stable_l[D.sel(i, d)]))
         casc_final_unstable = np.where(C["escalated"], D.unstable[l], D.unstable[s])
         add(f"S1.acc_cascade_conservative.{d}", lambda i, d=d: _mean((cc & ~casc_final_unstable)[D.sel(i, d)]))
+
+    def domain_matched(i: np.ndarray) -> tuple[float, float]:
+        gate_wrong = b3_wrong = 0.0
+        for d in DOMAINS:
+            j = D.sel(i, d)
+            if len(j) == 0:
+                continue
+            gate_wrong += float((G[l][j] & ~M[l]["cor"][j]).sum())
+            b3_wrong += matched_cwr(M[l]["conf"][j], M[l]["cor"][j], int(G[l][j].sum())) * len(j)
+        return gate_wrong / max(len(i), 1), b3_wrong / max(len(i), 1)
+
+    add(f"A4.cwr_gate.{l}.domain_matched", lambda i: domain_matched(i)[0])
+    add(f"A4.cwr_b3_matched.{l}.domain_matched", lambda i: domain_matched(i)[1])
+    add(f"A4.delta_cwr_gate_minus_b3.{l}.domain_matched", lambda i: domain_matched(i)[0] - domain_matched(i)[1])
+    # S2: cost without the compile warm-up chunk (the cascade-vs-largest cost ratio is configuration dependent)
+    for d in (*DOMAINS, SEL):
+        def nw(i, d=d):
+            j = D.sel(i, d)
+            return j[~D.warm[j]]
+        add(f"S2.cost_small_nowarm.{d}", lambda i, nw=nw: _mean(M[s]["cost"][nw(i)]))
+        add(f"S2.cost_large_nowarm.{d}", lambda i, nw=nw: _mean(M[l]["cost"][nw(i)]))
+        add(f"S2.cost_cascade_nowarm.{d}", lambda i, nw=nw: _mean(C["cost"][nw(i)]))
+        add(f"S2.cost_ratio_cascade_over_large_nowarm.{d}",
+            lambda i, nw=nw: float(C["cost"][nw(i)].sum() / M[l]["cost"][nw(i)].sum()) if M[l]["cost"][nw(i)].sum() else float("nan"))
     return specs
 
 
@@ -285,16 +317,17 @@ def write_tables(path: Path, R: dict, D: Data, night: dict | None) -> None:
                      f"{f(r, f'A2.auroc.{m}.{d}')} & {f(r, f'A2.aurc.{m}.{d}')}\\\\")
     L += ["\\bottomrule\\end{tabular}\\end{table}", ""]
     L += ["\\begin{table}[t]\\centering\\small", f"\\caption{{Gate-only on {l} (answer iff the executed gate verifies) "
-          "versus answering everything, and versus a log-probability threshold matched to the gate's coverage "
-          "(threshold tuned on E, which favours the baseline).}\\label{tab:e-gate}", "\\begin{tabular}{lccccc}\\toprule",
+          "versus answering everything, and versus a log-probability baseline that answers the same number of tasks "
+          "(the $k$ most confident, $k$ = the gate's answered count in that domain; no labels are used to choose $k$).}\\label{tab:e-gate}", "\\begin{tabular}{lccccc}\\toprule",
           "Domain & coverage & precision & CWR gate & CWR answer-all & $\\Delta$ vs matched log-prob\\\\\\midrule"]
     for d in DOMAINS:
         L.append(f"{d} & {f(r, f'A3.cov.{l}.{d}')} & {f(r, f'A3.prec.{l}.{d}')} & {f(r, f'A3.cwr.{l}.{d}')} & "
                  f"{f(r, f'A3.cwr_all.{l}.{d}')} & {f(r, f'A4.delta_cwr_gate_minus_b3.{l}.{d}')}\\\\")
+    L.append(f"all (per-domain matched) & -- & -- & {f(r, f'A4.cwr_gate.{l}.domain_matched')} & -- & {f(r, f'A4.delta_cwr_gate_minus_b3.{l}.domain_matched')}\\\\")
     L += ["\\bottomrule\\end{tabular}\\end{table}", ""]
     L += ["\\begin{table}[t]\\centering\\small", f"\\caption{{Exploratory gate cascade ({s} $\\to$ gate $\\to$ {l}) versus always-"
-          "smallest and always-largest. Cost = accelerator chip-seconds per task at the generation batch size "
-          "(throughput, not latency).}\\label{tab:e-cascade}", "\\begin{tabular}{lccccc}\\toprule",
+          "smallest and always-largest. Cost = accelerator chip-seconds per task (throughput at each tier's effective "
+          "generation concurrency, which differed between tiers; not latency).}\\label{tab:e-cascade}", "\\begin{tabular}{lccccc}\\toprule",
           "Domain & acc. small & acc. large & acc. cascade & cost ratio casc./large & escalated\\\\\\midrule"]
     for d in (*DOMAINS, SEL):
         L.append(f"{d} & {f(r, f'A5.acc_small.{d}')} & {f(r, f'A5.acc_large.{d}')} & {f(r, f'A5.acc_cascade.{d}')} & "

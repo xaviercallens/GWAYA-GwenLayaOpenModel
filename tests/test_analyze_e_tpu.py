@@ -160,3 +160,34 @@ def test_conservative_sensitivity_counts_unstable_items_as_wrong():
     assert point(res, f"S1.cwr_gate_conservative.{L}.python") == pytest.approx(2 / 6)
     # cascade: p0 is answered by the small tier (its gate verifies), so the large tier's instability does not touch it
     assert point(res, "S1.acc_cascade_conservative.python") == pytest.approx(point(res, "A5.acc_cascade.python"))
+
+
+def test_a4_has_no_cross_domain_pooled_threshold_and_domain_matched_pool_is_exact():
+    D = make()
+    # make the large tier's confidence anti-informative so the baseline is clearly worse than the gate
+    for i, (d, t, *_rest) in enumerate(SPEC):
+        D.models[L]["conf"][D.keys.index((d, t))] = 0.5 + 0.01 * (1 if not D.models[L]["cor"][D.keys.index((d, t))] else 0) + 1e-4 * i
+    res = E.analyze(D, n_boot=50, seed=0)
+    assert f"A4.cwr_b3_matched.{L}.pooled" not in res["metrics"]  # the misleading single-threshold pooled value is gone
+    gate_wrong = b3_wrong = 0
+    for d in ("python", "rust", "math"):
+        idx = [i for i, k in enumerate(D.keys) if k[0] == d]
+        k = int(D.gate[L][idx].sum())
+        gate_wrong += int((D.gate[L][idx] & ~D.models[L]["cor"][idx]).sum())
+        order = sorted(idx, key=lambda i: (-D.models[L]["conf"][i], D.models[L]["cor"][i]))
+        b3_wrong += sum(1 for i in order[:k] if not D.models[L]["cor"][i])
+    assert point(res, f"A4.cwr_gate.{L}.domain_matched") == pytest.approx(gate_wrong / 12)
+    assert point(res, f"A4.cwr_b3_matched.{L}.domain_matched") == pytest.approx(b3_wrong / 12)
+    assert point(res, f"A4.delta_cwr_gate_minus_b3.{L}.domain_matched") == pytest.approx((gate_wrong - b3_wrong) / 12)
+    assert b3_wrong > gate_wrong
+
+
+def test_warmup_exclusion_uses_the_first_chunk_in_file_order():
+    tasks, rows, gens = make_inputs()
+    D = E.build(tasks, rows, gens, S, L, warmup_chunk=3)
+    flagged = {D.keys[i] for i in np.where(D.warm)[0]}
+    assert flagged == {(t["domain"], t["task_id"]) for t in tasks[:3]}
+    res = E.analyze(D, n_boot=20, seed=0)
+    # excluding warm tasks changes the cost means but keeps the ratio defined
+    assert point(res, "S2.cost_ratio_cascade_over_large_nowarm.pooled") > 0
+    assert point(res, "S2.cost_large_nowarm.pooled") == pytest.approx(3.0)
