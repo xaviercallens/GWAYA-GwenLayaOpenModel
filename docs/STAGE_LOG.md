@@ -59,3 +59,8 @@ Verdict: **not trustworthy for the math domain. Do not start L3 as planned.** Py
 - Consequence for D19: the math mean of 371.0 tokens was measured on code output, not on reasoning. Real \boxed reasoning will probably be longer, and 4 of the 5 `length` truncations are already math. The L2 confirmation of the 196.6 tok/item assumption does **not** carry over to math or to L3 sizing. Recheck the mean math tokens after the rerun. n_d stays frozen, and truncation is reported as is.
 - Python and Rust look plausible: 28 of 28 contain `def`, 26 of 26 contain `fn`, and only 1 python item hit length. Rust quality looks weak (the sampled item indexes a `String` by integer, which will not compile). That is a model result, not an infra problem, but the Rust harness still has never been validated on a passing program (D17).
 - Spend: ~$0.84 of $45. L2 spent $0, local CPU only.
+
+## Analysis script (night 2026-10-07/08)
+
+- `scripts/analyze_study.py` implements the pre-registered analysis (cluster-stratified paired bootstrap, exact McNemar, Holm over the kept family, ECE/Brier/AUROC/AURC, CWR, cost per correct answered item; H1, H3 primary, H4-H6 from a cross-fitted scores file, H2/H7 exploratory, H13 from the ledger). Outputs `papers/numbers_v4.json` (each number with its source), `papers/tables_v4.tex`, `papers/figures_v4/`. 14 synthetic known-answer tests in `tests/test_analyze_study.py` pass (D22).
+- Run on the current data it has only generation descriptives (no scored rows exist yet; the math prompt defect from the L2 review is still open), so H1/H2/H3/H7 are `not_run` and every arm cell is TBD. H13 reports only the 0.0 USD known in the ledger (2 lines carry no usd_estimate).

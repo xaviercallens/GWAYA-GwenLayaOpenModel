@@ -1,0 +1,196 @@
+{
+ "hypotheses": {
+  "H1": {
+   "reason": "no scored rows (rows.jsonl absent or empty: generation done, scoring not yet run)",
+   "status": "not_run"
+  },
+  "H10": {
+   "reason": "dropped for this run (docs/DEVIATIONS.md D8)",
+   "status": "dropped"
+  },
+  "H11": {
+   "reason": "dropped for this run (docs/DEVIATIONS.md D8)",
+   "status": "dropped"
+  },
+  "H12": {
+   "reason": "dropped for this run (docs/DEVIATIONS.md D8)",
+   "status": "dropped"
+  },
+  "H13": {
+   "lines": 3,
+   "lines_without_usd_estimate": 2,
+   "note": "lines without usd_estimate are unpriced here (the TPU smoke tests, about 0.84 USD per docs/DEVIATIONS.md, not read from this file); the verdict below uses the known total only and is a lower bound",
+   "seconds_without_estimate": 2706.0,
+   "status": "ran",
+   "usd_known_total": 0.0,
+   "verdict": "not refuted on the known lines (lower bound; unpriced lines exist)"
+  },
+  "H14": {
+   "reason": "needs E1 (D12)",
+   "status": "not_run"
+  },
+  "H15": {
+   "reason": "offline kill/resume test, see tests/test_run_study.py",
+   "status": "not_run"
+  },
+  "H2": {
+   "reason": "no scored rows (rows.jsonl absent or empty: generation done, scoring not yet run)",
+   "status": "not_run"
+  },
+  "H3": {
+   "reason": "no scored rows (rows.jsonl absent or empty: generation done, scoring not yet run)",
+   "status": "not_run"
+  },
+  "H4": {
+   "reason": "no cross-fitted scores file (no scores file)",
+   "status": "not_run"
+  },
+  "H5": {
+   "reason": "no cross-fitted scores file (no scores file)",
+   "status": "not_run"
+  },
+  "H6": {
+   "reason": "no cross-fitted scores file (no scores file)",
+   "status": "not_run"
+  },
+  "H7": {
+   "reason": "no scored rows (rows.jsonl absent or empty: generation done, scoring not yet run)",
+   "status": "not_run"
+  },
+  "H8": {
+   "reason": "needs G1 (no GPU slot)",
+   "status": "not_run"
+  },
+  "H9": {
+   "reason": "deferred (D8)",
+   "status": "deferred"
+  }
+ },
+ "meta": {
+  "bootstrap_rng": "numpy default_rng(seed); cluster-stratified by domain (D22)",
+  "cost_unit": "gpu_seconds",
+  "figures": [],
+  "gens_files": [
+   "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl"
+  ],
+  "hash_chain_ok": {
+   "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl": true
+  },
+  "hypothesis_roles": {
+   "H1": "primary",
+   "H10": "dropped",
+   "H11": "dropped",
+   "H12": "dropped",
+   "H13": "run",
+   "H14": "only_if_E1",
+   "H15": "offline_test",
+   "H2": "exploratory",
+   "H3": "primary",
+   "H4": "secondary",
+   "H5": "secondary",
+   "H6": "secondary",
+   "H7": "exploratory",
+   "H8": "exploratory_only_if_G1",
+   "H9": "deferred"
+  },
+  "largest_tier": null,
+  "n_boot": 10000,
+  "rows_files": [],
+  "seed": 0
+ },
+ "numbers": {
+  "H13.lines": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/spend_ledger.jsonl",
+   "value": 3
+  },
+  "H13.lines_without_usd_estimate": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/spend_ledger.jsonl",
+   "value": 2
+  },
+  "H13.seconds_without_estimate": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/spend_ledger.jsonl",
+   "value": 2706.0
+  },
+  "H13.usd_known_total": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/spend_ledger.jsonl",
+   "value": 0.0
+  },
+  "gen.qwen3.5-2b-q4_K_M|math.client_seconds_total": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "value": 2601.0669001895003
+  },
+  "gen.qwen3.5-2b-q4_K_M|math.cpu_seconds_total": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "value": 9910.64
+  },
+  "gen.qwen3.5-2b-q4_K_M|math.finish.length": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "value": 4
+  },
+  "gen.qwen3.5-2b-q4_K_M|math.finish.stop": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "value": 22
+  },
+  "gen.qwen3.5-2b-q4_K_M|math.mean_completion_tokens": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "value": 370.96153846153845
+  },
+  "gen.qwen3.5-2b-q4_K_M|math.n": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "value": 26
+  },
+  "gen.qwen3.5-2b-q4_K_M|python.client_seconds_total": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "value": 939.5115688992664
+  },
+  "gen.qwen3.5-2b-q4_K_M|python.cpu_seconds_total": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "value": 3624.84
+  },
+  "gen.qwen3.5-2b-q4_K_M|python.finish.length": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "value": 1
+  },
+  "gen.qwen3.5-2b-q4_K_M|python.finish.stop": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "value": 27
+  },
+  "gen.qwen3.5-2b-q4_K_M|python.mean_completion_tokens": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "value": 118.75
+  },
+  "gen.qwen3.5-2b-q4_K_M|python.n": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "value": 28
+  },
+  "gen.qwen3.5-2b-q4_K_M|rust.client_seconds_total": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "value": 772.0109696688596
+  },
+  "gen.qwen3.5-2b-q4_K_M|rust.cpu_seconds_total": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "value": 2962.6999999999994
+  },
+  "gen.qwen3.5-2b-q4_K_M|rust.finish.stop": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "value": 26
+  },
+  "gen.qwen3.5-2b-q4_K_M|rust.mean_completion_tokens": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "value": 98.46153846153847
+  },
+  "gen.qwen3.5-2b-q4_K_M|rust.n": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "value": 26
+  },
+  "gens.count": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2/gens.jsonl",
+   "value": 80
+  },
+  "rows.count": {
+   "source": "none",
+   "value": 0
+  }
+ },
+ "schema": "gwenlaya_v4.numbers/1"
+}
