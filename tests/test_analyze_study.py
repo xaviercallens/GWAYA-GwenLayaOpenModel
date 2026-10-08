@@ -141,13 +141,14 @@ def test_matching_failure_is_reported(tmp_path):
     assert _run(tmp_path).hyp["H1"]["verdict"].startswith("matching failed")
 
 
-def test_holm_over_kept_family_only(tmp_path):
+def test_holm_keeps_registered_m2_when_a_primary_does_not_run(tmp_path):
     _synthetic(tmp_path)
     rows = [json.loads(l) for l in (tmp_path / "rows.jsonl").read_text().splitlines() if '"raw_confidence"' not in l]
-    _write(tmp_path / "rows.jsonl", rows)  # no B3 -> H1 not run -> H3 alone, Holm m = 1
+    _write(tmp_path / "rows.jsonl", rows)  # no B3 -> H1 not run -> enters Holm with p = 1; m stays 2
     N = _run(tmp_path)
     assert N.hyp["H1"]["status"] == "not_run"
-    assert N.hyp["H3"]["holm_m"] == 1 and N.hyp["H3"]["p_holm"] == N.hyp["H3"]["p_raw"]
+    assert N.hyp["H3"]["holm_m"] == 2
+    assert N.hyp["H3"]["p_holm"] == pytest.approx(min(1.0, 2 * N.hyp["H3"]["p_raw"]))
 
 
 def test_no_rows_is_not_run_not_a_number(tmp_path):
@@ -205,3 +206,31 @@ def test_cli_smoke(tmp_path):
                   "--n-boot", "50", "--out-numbers", str(tmp_path / "o.json"), "--out-tables", str(tmp_path / "o.tex"),
                   "--out-figs", str(tmp_path / "f")])
     assert rc == 0 and (tmp_path / "o.json").exists()
+
+
+def test_single_arm_per_domain_and_boxed_only_math(tmp_path):
+    rows, gens = [], []
+    spec = [("py/A", "python", "VERIFIED", "x"), ("py/B", "python", "FAILED", "x"), ("py/C", "python", "VERIFIED", "x"),
+            ("py/D", "python", "FAILED", "x"), ("ma/1", "math", "VERIFIED", "```python\nprint(76)\n```"),
+            ("ma/2", "math", "VERIFIED", "so \\boxed{3}"), ("ma/3", "math", "UNVERIFIED", "")]
+    for i, (tid, dom, sc, txt) in enumerate(spec):
+        rows.append({"arm": "base", "model": "m", "seed": 0, "task_id": tid, "domain": dom, "score": sc,
+                     "answered": True, "gate": None, "gpu_s": 1.0})
+        gens.append({"model": "m", "seed": 0, "task_id": tid, "domain": dom, "text": txt, "call_index": 0,
+                     "temperature": 0.0, "cpu_seconds": 2.0, "mean_logprob": -0.1 * (i + 1), "completion_tokens": 5})
+    _write(tmp_path / "rows.jsonl", rows)
+    _write(tmp_path / "gens.jsonl", gens)
+    _write(tmp_path / "tasks.jsonl", [])
+    _write(tmp_path / "ledger.jsonl", [])
+    an.analyze([tmp_path / "rows.jsonl"], [tmp_path / "gens.jsonl"], tmp_path / "tasks.jsonl", None, tmp_path / "ledger.jsonl",
+               NB, 0, tmp_path / "n.json", tmp_path / "t.tex", tmp_path / "figs")
+    n = {k: v["value"] for k, v in json.loads((tmp_path / "n.json").read_text())["numbers"].items()}
+    assert n["single_arm.by_domain.python.base.accuracy.point"] == 0.5
+    assert n["single_arm.by_domain.python.count.PASS_HIDDEN"] == 2
+    assert n["single_arm.by_domain.math.count.UNDECIDED"] == 1
+    assert n["single_arm.by_domain.math.gate_recorded"] == 0
+    assert n["single_arm.math_extraction.last_number.n_pass_hidden"] == 1
+    assert n["single_arm.math_extraction.boxed.n_pass_hidden"] == 1
+    assert n["single_arm.boxed_only.math.base.accuracy.point"] == pytest.approx(1 / 3)
+    assert n["arm.base.accuracy.point"] == pytest.approx(4 / 7)  # pooled sensitivity unchanged
+    assert "pooled & sensitivity" in (tmp_path / "t.tex").read_text()

@@ -43,14 +43,111 @@ def item_sha(statement: str, tests: str) -> str:
 
 # ---- Python gate-visible split -------------------------------------------------------------
 
+class _Src:
+    """Fast ast node -> source text (ast.get_source_segment re-splits the whole file on every call)."""
+
+    def __init__(self, text: str) -> None:
+        self.text = text
+        self.lines = text.splitlines(keepends=True)
+        self.starts = [0]
+        for ln in self.lines:
+            self.starts.append(self.starts[-1] + len(ln))
+
+    def off(self, lineno: int, col: int) -> int:  # ast col offsets are UTF-8 byte offsets
+        line = self.lines[lineno - 1]
+        if line.isascii():
+            return self.starts[lineno - 1] + col
+        return self.starts[lineno - 1] + len(line.encode("utf-8")[:col].decode("utf-8"))
+
+    def span(self, node) -> tuple[int, int]:
+        return self.off(node.lineno, node.col_offset), self.off(node.end_lineno, node.end_col_offset)
+
+    def seg(self, node) -> str:
+        a, b = self.span(node)
+        return self.text[a:b]
+
+
 def python_gate_tests_plus(test: str) -> str | None:
-    """HumanEval+/MBPP+ `test` text restricted to its FIRST input/expected pair (the combined
-    input list starts with the public example). None when no known loop pattern is present."""
-    if test.count("zip(inputs, results)") == 1:
-        return test.replace("zip(inputs, results)", "zip(inputs[:1], results[:1])")
-    if test.count("enumerate(inputs)") == 1:
-        return test.replace("enumerate(inputs)", "enumerate(inputs[:1])")
-    return None
+    """HumanEval+ `test` text whose `check()` CONTAINS ONLY the first input/expected pair.
+
+    D25: the v1 builder only rewrote the loop header (`zip(inputs[:1], results[:1])`) and left the
+    complete `inputs = [...]` / `results = [...]` literals in the gate text, so every hidden input and
+    expected output was handed to the gate (and readable by a candidate via frame inspection). This
+    version parses the test with `ast` and rewrites the two literals themselves to their first
+    element, keeping the source text of that element verbatim. It fails closed (returns None, so the
+    item is excluded as `tests_not_splittable`) when:
+      * the text does not parse, or there is not exactly one top-level `def check`;
+      * `check` does not assign `inputs` AND `results` exactly once each, as list literals with >= 1
+        element and equal length;
+      * the module defines `ref_func` or any other top-level function besides `is_floats`, `assertion`
+        and `check` (a reference implementation would itself leak the hidden answers).
+    """
+    import ast
+    try:
+        mod = ast.parse(test)
+    except SyntaxError:
+        return None
+    allowed_defs = {"is_floats", "assertion", "check"}
+    defs = [n for n in mod.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))]
+    if any(n.name not in allowed_defs for n in defs):
+        return None
+    checks = [n for n in defs if n.name == "check"]
+    if len(checks) != 1:
+        return None
+    assigns: dict[str, list[ast.Assign]] = {"inputs": [], "results": []}
+    for node in ast.walk(checks[0]):
+        if isinstance(node, (ast.Assign, ast.AugAssign, ast.AnnAssign)):
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            for t in targets:
+                if isinstance(t, ast.Name) and t.id in assigns:
+                    if not isinstance(node, ast.Assign):
+                        return None
+                    assigns[t.id].append(node)
+    if any(len(v) != 1 for v in assigns.values()):
+        return None
+    lits = {k: v[0].value for k, v in assigns.items()}
+    if not all(isinstance(v, ast.List) and v.elts for v in lits.values()):
+        return None
+    if len(lits["inputs"].elts) != len(lits["results"].elts):
+        return None
+    src = _Src(test)
+    edits = []
+    for lst in lits.values():
+        a, b = src.span(lst)
+        edits.append((a, b, f"[{src.seg(lst.elts[0])}]"))
+    out = test
+    for a, b, rep in sorted(edits, reverse=True):
+        out = out[:a] + rep + out[b:]
+    # self-check: the rewritten text parses and both literals now hold exactly one element
+    try:
+        chk = [n for n in ast.parse(out).body if isinstance(n, ast.FunctionDef) and n.name == "check"][0]
+    except (SyntaxError, IndexError):
+        return None
+    for node in ast.walk(chk):
+        if isinstance(node, ast.Assign) and isinstance(node.targets[0], ast.Name) and node.targets[0].id in assigns:
+            if not isinstance(node.value, ast.List) or len(node.value.elts) != 1:
+                return None
+    return out
+
+
+def python_gate_leaks(gate_text: str, full_test: str, min_len: int = 8) -> list[str]:
+    """Hidden elements of `inputs[1:]` / `results[1:]` (from the full test) whose repr appears in
+    the gate text. Elements whose source is shorter than `min_len` characters or equal to the first
+    element are skipped (e.g. `True`, `0`, which appear anyway). Empty list = no leak found."""
+    import ast
+    mod = ast.parse(full_test)
+    src = _Src(full_test)
+    chk = [n for n in mod.body if isinstance(n, ast.FunctionDef) and n.name == "check"][0]
+    leaks: list[str] = []
+    for node in ast.walk(chk):
+        if isinstance(node, ast.Assign) and isinstance(node.targets[0], ast.Name) \
+                and node.targets[0].id in ("inputs", "results") and isinstance(node.value, ast.List) and node.value.elts:
+            first = src.seg(node.value.elts[0])
+            for e in node.value.elts[1:]:
+                s = src.seg(e)
+                if len(s) >= min_len and s != first and s in gate_text:
+                    leaks.append(s)
+    return leaks
 
 
 # ---- Rust gate-visible split -----------------------------------------------------------------

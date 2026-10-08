@@ -13,13 +13,20 @@ papers/figures_v4/*.png. A hypothesis whose inputs are absent is reported as ``n
 reason; no number is ever invented (unknown = null / TBD).
 
 Conventions
-  correct   = row.score == "VERIFIED" (hidden checks); FAILED and UNVERIFIED both count as not correct.
+  correct   = row.score == "VERIFIED". In rows.jsonl `score` is the HIDDEN-check outcome, so this is
+              PASS_HIDDEN, not the registered VERIFIED (gate) verdict, which lives in row.gate.
+              FAILED (= FAIL_HIDDEN) and UNVERIFIED (= UNDECIDED) both count as not correct.
   answered  = row.answered (None = arm unavailable, e.g. B3 without logprobs or without tau).
   CWR       = P(answered and not correct) over ALL items; differences are GL minus comparator.
   cost      = CPU-seconds per call if every call has it (D3), else the row's gpu_s; the unit is recorded.
   bootstrap = percentile, 10,000 resamples, numpy default_rng(0) (not random.Random(0): see D22),
               resampling source-problem clusters within domain, all arms jointly.
-  Holm      = over the kept family only (the hypotheses that actually ran).
+  Holm      = registered m = 2 over the primary family {H1, H3}; a primary that did not run enters
+              with p = 1 (so the other is tested at 0.025). D22 originally used the kept family
+              (m could be 1); that post-data change was reverted (docs/DEVIATIONS.md D22, D26).
+  math      = run_study scored math with gwaya.domains.math_check.extract_final_answer, which tries
+              last \\boxed, then '####', then the last number; only \\boxed is registered. The
+              single-arm summary therefore also reports a registered boxed-only rescoring (D24).
 """
 from __future__ import annotations
 
@@ -356,13 +363,15 @@ def run_h1_h3(D: dict[str, Any], nb: int, seed: int, N: Numbers, src: str, unit:
             N.add(f"H3.{k}", res["H3"][k], src_)
     else:
         res["H3"] = {"status": "not_run", "reason": "need scored rows with cost for arms gwenlaya and gate_only (largest tier)"}
-    # Holm over the kept family
+    # Holm, registered m = 2 (prereg: "Holm, m = 2, FWER 0.05"); a primary that did not run enters with p = 1
     ran = [h for h in ("H1", "H3") if res[h]["status"] == "ran"]
     if ran:
-        adj = holm([res[h]["p_raw"] for h in ran])
-        for h, a in zip(ran, adj):
-            res[h]["p_holm"], res[h]["holm_m"] = a, len(ran)
-            N.add(f"{h}.p_holm", a, f"holm over {ran}")
+        fam = ("H1", "H3")
+        adj = holm([res[h]["p_raw"] if h in ran else 1.0 for h in fam])
+        for h, a in zip(fam, adj):
+            if h in ran:
+                res[h]["p_holm"], res[h]["holm_m"] = a, 2
+                N.add(f"{h}.p_holm", a, "holm m=2 over {H1, H3}; not-run primary enters with p=1")
         if "H1" in ran:
             h = res["H1"]
             if not h["coverage_matched"]:
@@ -519,7 +528,8 @@ def run_exploratory(D: dict[str, Any], nb: int, seed: int, N: Numbers, src: str)
     return res
 
 
-def arm_summary(D: dict[str, Any], nb: int, seed: int, N: Numbers, src: str, unit: str) -> dict[str, dict]:
+def arm_summary(D: dict[str, Any], nb: int, seed: int, N: Numbers, src: str, unit: str,
+                prefix: str = "arm") -> dict[str, dict]:
     out: dict[str, dict] = {}
     A = D.get("arr", {})
     for lab in D.get("labels", []):
@@ -545,11 +555,66 @@ def arm_summary(D: dict[str, Any], nb: int, seed: int, N: Numbers, src: str, uni
             row["brier"], _ = ci_dict(lambda i: brier(p[i], y[i]), D, nb, seed)
             row["auroc"], _ = ci_dict(lambda i: auroc(p[i], cor[i]), D, nb, seed)
             row["aurc"], _ = ci_dict(lambda i: aurc(p[i], cor[i]), D, nb, seed)
+            row["mean_confidence"], _ = ci_dict(lambda i: float(p[i].mean()), D, nb, seed)
         out[lab] = row
         for k, v in row.items():
             if isinstance(v, dict):
-                N.add_ci(f"arm.{lab}.{k}", v, f"{src} (arm {ARM_NAMES.get(lab, lab)})")
-        N.add(f"arm.{lab}.n", D["n"], src)
+                N.add_ci(f"{prefix}.{lab}.{k}", v, f"{src} (arm {ARM_NAMES.get(lab, lab)})")
+        N.add(f"{prefix}.{lab}.n", D["n"], src)
+    return out
+
+
+OUTCOME = {"VERIFIED": "PASS_HIDDEN", "FAILED": "FAIL_HIDDEN", "UNVERIFIED": "UNDECIDED"}
+
+
+def single_arm_by_domain(rows: list[dict[str, Any]], gens: list[dict[str, Any]], arms_: list[str],
+                         task_clusters: dict[str, str], cost_fn: Callable, nb: int, seed: int, N: Numbers,
+                         src: str, unit: str) -> dict[str, Any]:
+    """Per-domain single-arm descriptives (headline = python), hidden-check outcome counts, the math
+    answer-extraction method of every math row, and a registered boxed-only math rescoring (D24)."""
+    from gwaya.domains.math_check import _last_boxed, extract_final_answer
+    text = {(g["task_id"], g["model"], g.get("seed")): g.get("text") or "" for g in gens}
+    out: dict[str, Any] = {"tables": {}}
+    doms = sorted({r["domain"] for r in rows})
+    for d in doms:
+        rd = [r for r in rows if r["domain"] == d]
+        cnt = Counter(OUTCOME.get(r.get("score"), str(r.get("score"))) for r in rd)
+        for k in ("PASS_HIDDEN", "FAIL_HIDDEN", "UNDECIDED"):
+            N.add(f"single_arm.by_domain.{d}.count.{k}", cnt.get(k, 0), src + " (rows.score mapped VERIFIED/FAILED/UNVERIFIED)")
+        N.add(f"single_arm.by_domain.{d}.gate_recorded", sum(r.get("gate") is not None for r in rd), src + " (rows.gate not null)")
+        Dd = build_arrays(rd, {a: a for a in arms_}, task_clusters, cost_fn)
+        if Dd["n"]:
+            out["tables"][d] = arm_summary(Dd, nb, seed, N, src + f" (domain {d})", unit, prefix=f"single_arm.by_domain.{d}")
+            if d == "python":
+                out["D_python"] = Dd
+    # math extraction method (run_study scoring order: boxed > #### > last number)
+    meth: Counter = Counter()
+    meth_pass: Counter = Counter()
+    rescored = []
+    for r in rows:
+        r2 = dict(r)
+        if r["domain"] == "math":
+            t = text.get((r["task_id"], r["model"], r.get("seed")), "")
+            fa = extract_final_answer(t)
+            m = fa[1] if fa else "none"
+            meth[m] += 1
+            if r.get("score") == "VERIFIED":
+                meth_pass[m] += 1
+            if _last_boxed(t) is None:  # registered rule: no boxed answer -> unparseable -> UNVERIFIED (fail-closed)
+                r2["score"] = "UNVERIFIED"
+        rescored.append(r2)
+    if meth:
+        msrc = src + " (math_check.extract_final_answer on gens text)"
+        for m in ("boxed", "hashes", "last_number", "none"):
+            N.add(f"single_arm.math_extraction.{m}.n", meth.get(m, 0), msrc)
+            N.add(f"single_arm.math_extraction.{m}.n_pass_hidden", meth_pass.get(m, 0), msrc)
+        Db = build_arrays([r for r in rescored if r["domain"] == "math"], {a: a for a in arms_}, task_clusters, cost_fn)
+        bsrc = src + " (math rescored boxed-only as registered, D24)"
+        if Db["n"]:
+            out["tables"]["math (boxed-only)"] = arm_summary(Db, nb, seed, N, bsrc, unit, prefix="single_arm.boxed_only.math")
+        Dp = build_arrays(rescored, {a: a for a in arms_}, task_clusters, cost_fn)
+        if Dp["n"]:
+            out["tables"]["pooled (boxed-only math)"] = arm_summary(Dp, nb, seed, N, bsrc, unit, prefix="single_arm.boxed_only.pooled")
     return out
 
 
@@ -587,8 +652,9 @@ def ledger_h13(path: Path, N: Numbers) -> dict[str, Any]:
     total = float(sum(r["usd_estimate"] for r in known))
     res = {"status": "ran", "lines": len(rows), "usd_known_total": total, "lines_without_usd_estimate": len(missing),
            "seconds_without_estimate": float(sum(r.get("seconds", 0) or 0 for r in missing)),
-           "note": "lines without usd_estimate are unpriced here (the TPU smoke tests, about 0.84 USD per docs/DEVIATIONS.md, "
-                   "not read from this file); the verdict below uses the known total only and is a lower bound"}
+           "note": "lines without usd_estimate are unpriced (TBD): no price is read from any other source; the verdict "
+                   "uses the known total only and is a lower bound. The ledger refuses over-cap stages, so H13 holds "
+                   "largely by construction and is not evidence about the system"}
     res["verdict"] = ("refuted (known total > 50)" if total > 50 else
                       "not refuted on the known lines (lower bound; unpriced lines exist)" if missing else
                       "not refuted" if total <= 40 else "planned cap exceeded")
@@ -616,7 +682,7 @@ def fmt_ci(ci: dict | None, d: int = 3, pct: bool = False) -> str:
     return f"{fmt(ci['point'], d, pct)} [{fmt(ci['lo'], d, pct)}, {fmt(ci['hi'], d, pct)}]"
 
 
-def write_tables(path: Path, gen: dict, arms: dict, hyp: dict, unit: str) -> None:
+def write_tables(path: Path, gen: dict, arms: dict, hyp: dict, unit: str, single: dict | None = None) -> None:
     L = ["% generated by scripts/analyze_study.py; values come from papers/numbers_v4.json. TBD = unknown or not run."]
     L += ["\\begin{table}[t]\\centering\\small",
           "\\caption{Cached generations on the E-night set (greedy, one seed). Tokens are mean completion tokens.}",
@@ -628,6 +694,23 @@ def write_tables(path: Path, gen: dict, arms: dict, hyp: dict, unit: str) -> Non
     if not gen:
         L.append("\\multicolumn{6}{c}{no generations found} \\\\")
     L += ["\\bottomrule\\end{tabular}\\end{table}", ""]
+    if single:
+        status = {"python": "headline", "rust": "unvalidated harness", "math": "INVALID prompt path; last-number fallback",
+                  "math (boxed-only)": "INVALID prompt path; registered boxed-only", "pooled (boxed-only math)": "sensitivity"}
+        L += ["\\begin{table}[t]\\centering\\small",
+              "\\caption{Single unregistered arm \\texttt{base}, per domain (descriptive, not a test). Pass = passed the hidden checks "
+              f"(PASS\\_HIDDEN), not the registered gate VERIFIED. Confidence = raw exp(mean log-prob). 95\\% cluster bootstrap CI. "
+              f"Cost unit: {tex(unit)}. TBD = undefined (e.g. no passing item).}}",
+              "\\begin{tabular}{p{2.6cm}p{3.0cm}rccccc}\\toprule",
+              "domain & status & n & pass rate & mean conf. & ECE & AUROC & cost / pass \\\\\\midrule"]
+        for d, tab in single.items():
+            for lab, r in tab.items():
+                L.append(f"{tex(d)} & {tex(status.get(d, ''))} & {r['n']} & {fmt_ci(r.get('accuracy'))} & {fmt_ci(r.get('mean_confidence'))} & "
+                         f"{fmt_ci(r.get('ece'))} & {fmt_ci(r.get('auroc'))} & {fmt_ci(r.get('cost_per_correct'), 0)} \\\\")
+        for lab, r in arms.items():
+            L.append(f"pooled & sensitivity (mixed) & {r['n']} & {fmt_ci(r.get('accuracy'))} & {fmt_ci(r.get('mean_confidence'))} & "
+                     f"{fmt_ci(r.get('ece'))} & {fmt_ci(r.get('auroc'))} & {fmt_ci(r.get('cost_per_correct'), 0)} \\\\")
+        L += ["\\bottomrule\\end{tabular}\\end{table}", ""]
     L += ["\\begin{table}[t]\\centering\\small",
           f"\\caption{{Arms on the paired E-night items (percent; 95\\% cluster bootstrap CI). Cost unit: {tex(unit)}. TBD = not run or not available.}}",
           "\\begin{tabular}{lccccc}\\toprule", "arm & acc. & coverage & CWR & ans. acc. & cost / correct \\\\\\midrule"]
@@ -637,7 +720,7 @@ def write_tables(path: Path, gen: dict, arms: dict, hyp: dict, unit: str) -> Non
     if not arms:
         L.append("\\multicolumn{6}{c}{no scored rows yet: TBD} \\\\")
     L += ["\\bottomrule\\end{tabular}\\end{table}", ""]
-    L += ["\\begin{table}[t]\\centering\\small", "\\caption{Hypothesis status for the night run. Verdicts follow the pre-registered rules; Holm over the kept family.}",
+    L += ["\\begin{table}[t]\\centering\\small", "\\caption{Hypothesis status for the night run. Verdicts follow the pre-registered rules; primary Holm with m = 2.}",
           "\\begin{tabular}{lll p{6.2cm}}\\toprule", "H & role & result & detail \\\\\\midrule"]
     for h in sorted(STATUS, key=lambda x: int(x[1:])):
         r = hyp.get(h, {"status": STATUS[h]})
@@ -653,7 +736,7 @@ def write_tables(path: Path, gen: dict, arms: dict, hyp: dict, unit: str) -> Non
     Path(path).write_text("\n".join(L))
 
 
-def make_figures(outdir: Path, D: dict, arms: dict, scores_ctx: dict | None) -> list[str]:
+def make_figures(outdir: Path, D: dict, arms: dict, scores_ctx: dict | None, D_head: dict | None = None) -> list[str]:
     try:
         import matplotlib
         matplotlib.use("Agg")
@@ -664,30 +747,41 @@ def make_figures(outdir: Path, D: dict, arms: dict, scores_ctx: dict | None) -> 
     made: list[str] = []
     A = D.get("arr", {})
     conf = [lab for lab in D.get("labels", []) if lab in A and A[lab]["scored"].all() and np.isfinite(A[lab]["p"]).all()]
-    if conf:
-        fig, ax = plt.subplots(figsize=(4.2, 3.4))
+    # single-arm case: the headline curve is the python subset; the pooled curve is drawn dashed as a sensitivity
+    curves: list[tuple[str, np.ndarray, np.ndarray, str]] = []
+    if D_head and D_head.get("n"):
+        H = D_head["arr"]
+        for lab in D_head["labels"]:
+            if np.isfinite(H[lab]["p"]).all():
+                curves.append((f"python, n={D_head['n']} (headline)", H[lab]["p"], H[lab]["correct"], "-"))
         for lab in conf:
-            cov, risk = risk_coverage(A[lab]["p"], A[lab]["correct"])
-            ax.plot(cov, risk, label=lab)
+            curves.append((f"pooled, n={D['n']} (sensitivity: invalid math, unvalidated Rust)", A[lab]["p"], A[lab]["correct"], "--"))
+    else:
+        curves = [(lab, A[lab]["p"], A[lab]["correct"], "-") for lab in conf]
+    if curves:
+        fig, ax = plt.subplots(figsize=(4.2, 3.4))
+        for lab, p, y, ls in curves:
+            cov, risk = risk_coverage(p, y)
+            ax.plot(cov, risk, ls, label=lab)
         ax.set_xlabel("coverage")
-        ax.set_ylabel("selective risk")
-        ax.legend()
+        ax.set_ylabel("selective risk (fail on hidden checks)")
+        ax.legend(fontsize=6)
         fig.tight_layout()
         fig.savefig(outdir / "risk_coverage.png", dpi=160)
         plt.close(fig)
         made.append("risk_coverage.png")
         fig, ax = plt.subplots(figsize=(4.2, 3.4))
         ax.plot([0, 1], [0, 1], "k:", lw=1)
-        for lab in conf:
-            p, y = A[lab]["p"], A[lab]["correct"].astype(float)
+        for lab, p, y, ls in curves:
+            y = y.astype(float)
             order = np.argsort(p, kind="stable")
             k = min(15, len(p))
             xs = [p[order[(j * len(p)) // k:((j + 1) * len(p)) // k]].mean() for j in range(k)]
             ys = [y[order[(j * len(p)) // k:((j + 1) * len(p)) // k]].mean() for j in range(k)]
-            ax.plot(xs, ys, "o-", ms=3, label=lab)
-        ax.set_xlabel("predicted P(correct)")
-        ax.set_ylabel("observed accuracy")
-        ax.legend()
+            ax.plot(xs, ys, "o" + ls, ms=3, label=lab)
+        ax.set_xlabel("raw confidence exp(mean log-prob)")
+        ax.set_ylabel("observed pass rate (hidden checks)")
+        ax.legend(fontsize=6)
         fig.tight_layout()
         fig.savefig(outdir / "reliability.png", dpi=160)
         plt.close(fig)
@@ -752,6 +846,7 @@ def analyze(rows_files: list[Path], gens_files: list[Path], tasks_file: Path | N
     N.meta["largest_tier"], N.meta["cost_unit"] = largest, unit
     hyp: dict[str, dict] = {}
     arms: dict[str, dict] = {}
+    single: dict[str, Any] = {}
     if D["n"]:
         N.add("paired.n", D["n"], rsrc)
         for lab, k in D["dropped_unpaired"].items():
@@ -781,9 +876,13 @@ def analyze(rows_files: list[Path], gens_files: list[Path], tasks_file: Path | N
             D = build_arrays(rows, {a: a for a in extra}, task_clusters, cost_fn)
             if D["n"]:
                 N.add("single_arm.n", D["n"], rsrc)
-                arms = arm_summary(D, n_boot, seed, N, rsrc + " + gens mean_logprob (raw confidence)", unit)
+                csrc = rsrc + " + gens mean_logprob (raw confidence)"
+                arms = arm_summary(D, n_boot, seed, N, csrc, unit)  # pooled: sensitivity only (mixes domains)
                 N.meta["single_arm_note"] = ("descriptive only, not a pre-registered test; confidence = exp(mean_logprob) "
-                                             "from gens.jsonl, uncalibrated and not cross-fitted")
+                                             "from gens.jsonl, uncalibrated and not cross-fitted. The pooled arm.* "
+                                             "numbers mix an invalid math prompt path and an unvalidated Rust harness; "
+                                             "the headline is single_arm.by_domain.python")
+                single = single_arm_by_domain(rows, gens, extra, task_clusters, cost_fn, n_boot, seed, N, csrc, unit)
     hyp.update(run_secondary(scores, task_info, n_boot, seed, N, str(scores_file) if scores_file else "no scores file"))
     hyp["H13"] = ledger_h13(ledger, N)
     for h, st in STATUS.items():
@@ -793,12 +892,12 @@ def analyze(rows_files: list[Path], gens_files: list[Path], tasks_file: Path | N
                                  "exploratory_only_if_G1": "needs G1 (no GPU slot)", "only_if_E1": "needs E1 (D12)",
                                  "offline_test": "offline kill/resume test, see tests/test_run_study.py"}.get(st, "not run")}
     N.hyp = hyp
-    figs = make_figures(out_figs, D, arms, None)
+    figs = make_figures(out_figs, D, arms, None, single.get("D_python") if single else None)
     N.meta["figures"] = figs
     for p in (out_numbers, out_tables):
         Path(p).parent.mkdir(parents=True, exist_ok=True)
     Path(out_numbers).write_text(json.dumps(N.to_json(), indent=1, sort_keys=True, default=str) + "\n")
-    write_tables(out_tables, gen, arms, hyp, unit)
+    write_tables(out_tables, gen, arms, hyp, unit, single.get("tables"))
     return N
 
 

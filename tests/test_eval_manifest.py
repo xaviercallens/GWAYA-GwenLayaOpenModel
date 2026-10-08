@@ -35,11 +35,46 @@ def test_rust_unparsable_is_none():
     assert B.rust_split_tests("fn main() { let x = 1; }") is None
 
 
-def test_python_gate_slices_first_pair():
-    t = "inputs=[1,2]\nresults=[1,2]\nfor i,(inp,exp) in enumerate(zip(inputs, results)):\n    pass"
-    assert "zip(inputs[:1], results[:1])" in B.python_gate_tests_plus(t)
-    assert "enumerate(inputs[:1])" in B.python_gate_tests_plus("for i, inp in enumerate(inputs):\n pass")
+HE_TEST = '''
+import numpy as np
+
+def assertion(out, exp, atol):
+    assert out == exp
+
+
+def check(candidate):
+    inputs = [[[1, 2, 3]], [['hidden_input_two', 'x']], [[987654321, 123456789]]]
+    results = [6, 'hidden_result_two', [1111111110, 'tail']]
+    for i, (inp, exp) in enumerate(zip(inputs, results)):
+        assertion(candidate(*inp), exp, 0)
+
+assert check(f) is None
+'''
+
+
+def test_python_gate_keeps_only_first_pair_literals():
+    g = B.python_gate_tests_plus(HE_TEST)
+    assert "inputs = [[[1, 2, 3]]]" in g and "results = [6]" in g
+    # D25: no hidden element (inputs[1:], results[1:]) may appear anywhere in the gate text
+    for hidden in ("hidden_input_two", "987654321", "hidden_result_two", "1111111110", "'tail'"):
+        assert hidden not in g
+    assert B.python_gate_leaks(g, HE_TEST) == []
+    assert B.python_gate_leaks(HE_TEST, HE_TEST) != []  # the v1 behaviour (full literals) is detected
+    # still executable: the first pair passes with a correct candidate
+    ns: dict = {"f": sum}
+    exec(g.replace("assert check(f) is None", ""), ns)
+    assert ns["check"](sum) is None
+
+
+def test_python_gate_fails_closed():
     assert B.python_gate_tests_plus("assert True") is None
+    assert B.python_gate_tests_plus("def check(c):\n    inputs = [1]\n") is None          # no results
+    assert B.python_gate_tests_plus("def ref_func(x):\n    return x\n"
+                                    "def check(c):\n    inputs = [[1], [2]]\n"
+                                    "    for i, inp in enumerate(inputs):\n        c(*inp) == ref_func(*inp)\n") is None
+    assert B.python_gate_tests_plus("def check(c):\n    inputs = make()\n    results = [1]\n") is None
+    assert B.python_gate_tests_plus("def check(c):\n    inputs = [1, 2]\n    results = [1]\n") is None
+    assert B.python_gate_tests_plus("def check(c:\n") is None
 
 
 def test_clusters_pair_python_and_rust():

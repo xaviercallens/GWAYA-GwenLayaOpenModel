@@ -19,7 +19,7 @@
   "H13": {
    "lines": 3,
    "lines_without_usd_estimate": 2,
-   "note": "lines without usd_estimate are unpriced here (the TPU smoke tests, about 0.84 USD per docs/DEVIATIONS.md, not read from this file); the verdict below uses the known total only and is a lower bound",
+   "note": "lines without usd_estimate are unpriced (TBD): no price is read from any other source; the verdict uses the known total only and is a lower bound. The ledger refuses over-cap stages, so H13 holds largely by construction and is not evidence about the system",
    "seconds_without_estimate": 2706.0,
    "status": "ran",
    "usd_known_total": 0.0,
@@ -105,7 +105,7 @@
    "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl"
   ],
   "seed": 0,
-  "single_arm_note": "descriptive only, not a pre-registered test; confidence = exp(mean_logprob) from gens.jsonl, uncalibrated and not cross-fitted"
+  "single_arm_note": "descriptive only, not a pre-registered test; confidence = exp(mean_logprob) from gens.jsonl, uncalibrated and not cross-fitted. The pooled arm.* numbers mix an invalid math prompt path and an unvalidated Rust harness; the headline is single_arm.by_domain.python"
  },
  "numbers": {
   "H13.lines": {
@@ -232,6 +232,18 @@
    "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
    "value": 0.6997023420074228
   },
+  "arm.base.mean_confidence.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.8860243321216323
+  },
+  "arm.base.mean_confidence.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.8630528206353256
+  },
+  "arm.base.mean_confidence.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (arm base)",
+   "value": 0.8747023420074225
+  },
   "arm.base.n": {
    "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence)",
    "value": 80
@@ -323,6 +335,706 @@
   "rows.count": {
    "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl",
    "value": 80
+  },
+  "single_arm.boxed_only.math.base.accuracy.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.0
+  },
+  "single_arm.boxed_only.math.base.accuracy.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.0
+  },
+  "single_arm.boxed_only.math.base.accuracy.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.0
+  },
+  "single_arm.boxed_only.math.base.answered_accuracy.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.0
+  },
+  "single_arm.boxed_only.math.base.answered_accuracy.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.0
+  },
+  "single_arm.boxed_only.math.base.answered_accuracy.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.0
+  },
+  "single_arm.boxed_only.math.base.aurc.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.boxed_only.math.base.aurc.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.boxed_only.math.base.aurc.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.boxed_only.math.base.auroc.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": null
+  },
+  "single_arm.boxed_only.math.base.auroc.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": null
+  },
+  "single_arm.boxed_only.math.base.auroc.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": null
+  },
+  "single_arm.boxed_only.math.base.brier.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.7377121365756162
+  },
+  "single_arm.boxed_only.math.base.brier.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.6559297855144453
+  },
+  "single_arm.boxed_only.math.base.brier.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.696448216474702
+  },
+  "single_arm.boxed_only.math.base.cost_per_correct.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": null
+  },
+  "single_arm.boxed_only.math.base.cost_per_correct.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": null
+  },
+  "single_arm.boxed_only.math.base.cost_per_correct.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": null
+  },
+  "single_arm.boxed_only.math.base.coverage.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.boxed_only.math.base.coverage.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.boxed_only.math.base.coverage.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.boxed_only.math.base.cwr.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.boxed_only.math.base.cwr.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.boxed_only.math.base.cwr.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.boxed_only.math.base.ece.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.8565041787717428
+  },
+  "single_arm.boxed_only.math.base.ece.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.8074115677753121
+  },
+  "single_arm.boxed_only.math.base.ece.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.8320012860320334
+  },
+  "single_arm.boxed_only.math.base.mean_confidence.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.8565041787717429
+  },
+  "single_arm.boxed_only.math.base.mean_confidence.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.807411567775312
+  },
+  "single_arm.boxed_only.math.base.mean_confidence.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.8320012860320332
+  },
+  "single_arm.boxed_only.math.base.n": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24)",
+   "value": 26
+  },
+  "single_arm.boxed_only.pooled.base.accuracy.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.2
+  },
+  "single_arm.boxed_only.pooled.base.accuracy.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.075
+  },
+  "single_arm.boxed_only.pooled.base.accuracy.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.1375
+  },
+  "single_arm.boxed_only.pooled.base.answered_accuracy.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.2
+  },
+  "single_arm.boxed_only.pooled.base.answered_accuracy.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.075
+  },
+  "single_arm.boxed_only.pooled.base.answered_accuracy.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.1375
+  },
+  "single_arm.boxed_only.pooled.base.aurc.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.8651891798649987
+  },
+  "single_arm.boxed_only.pooled.base.aurc.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.5922570984177529
+  },
+  "single_arm.boxed_only.pooled.base.aurc.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.7220304795356733
+  },
+  "single_arm.boxed_only.pooled.base.auroc.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.922077922077922
+  },
+  "single_arm.boxed_only.pooled.base.auroc.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.5677006740196079
+  },
+  "single_arm.boxed_only.pooled.base.auroc.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.7575757575757576
+  },
+  "single_arm.boxed_only.pooled.base.brier.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.7041296015202188
+  },
+  "single_arm.boxed_only.pooled.base.brier.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.6008324339539586
+  },
+  "single_arm.boxed_only.pooled.base.brier.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.6528432731990546
+  },
+  "single_arm.boxed_only.pooled.base.cost_per_correct.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 2840.461899999999
+  },
+  "single_arm.boxed_only.pooled.base.cost_per_correct.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 930.520105952381
+  },
+  "single_arm.boxed_only.pooled.base.cost_per_correct.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 1499.8345454545454
+  },
+  "single_arm.boxed_only.pooled.base.coverage.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.boxed_only.pooled.base.coverage.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.boxed_only.pooled.base.coverage.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.boxed_only.pooled.base.cwr.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.925
+  },
+  "single_arm.boxed_only.pooled.base.cwr.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.8
+  },
+  "single_arm.boxed_only.pooled.base.cwr.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.8625
+  },
+  "single_arm.boxed_only.pooled.base.ece.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.7977715988833379
+  },
+  "single_arm.boxed_only.pooled.base.ece.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.6764239498900151
+  },
+  "single_arm.boxed_only.pooled.base.ece.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.7372023420074227
+  },
+  "single_arm.boxed_only.pooled.base.mean_confidence.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.8860243321216323
+  },
+  "single_arm.boxed_only.pooled.base.mean_confidence.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.8630528206353256
+  },
+  "single_arm.boxed_only.pooled.base.mean_confidence.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24) (arm base)",
+   "value": 0.8747023420074225
+  },
+  "single_arm.boxed_only.pooled.base.n": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math rescored boxed-only as registered, D24)",
+   "value": 80
+  },
+  "single_arm.by_domain.math.base.accuracy.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 0.23076923076923078
+  },
+  "single_arm.by_domain.math.base.accuracy.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 0.0
+  },
+  "single_arm.by_domain.math.base.accuracy.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 0.11538461538461539
+  },
+  "single_arm.by_domain.math.base.answered_accuracy.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 0.23076923076923078
+  },
+  "single_arm.by_domain.math.base.answered_accuracy.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 0.0
+  },
+  "single_arm.by_domain.math.base.answered_accuracy.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 0.11538461538461539
+  },
+  "single_arm.by_domain.math.base.aurc.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.by_domain.math.base.aurc.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 0.8450217660333248
+  },
+  "single_arm.by_domain.math.base.aurc.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 0.9430161607668543
+  },
+  "single_arm.by_domain.math.base.auroc.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 0.5833333333333334
+  },
+  "single_arm.by_domain.math.base.auroc.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 0.13333333333333333
+  },
+  "single_arm.by_domain.math.base.auroc.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 0.34782608695652173
+  },
+  "single_arm.by_domain.math.base.brier.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 0.708847611024655
+  },
+  "single_arm.by_domain.math.base.brier.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 0.5287863991546483
+  },
+  "single_arm.by_domain.math.base.brier.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 0.6266262816609938
+  },
+  "single_arm.by_domain.math.base.cost_per_correct.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 11974.8145
+  },
+  "single_arm.by_domain.math.base.cost_per_correct.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 1297.9126666666664
+  },
+  "single_arm.by_domain.math.base.cost_per_correct.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 3303.5466666666666
+  },
+  "single_arm.by_domain.math.base.coverage.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.by_domain.math.base.coverage.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.by_domain.math.base.coverage.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.by_domain.math.base.cwr.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.by_domain.math.base.cwr.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 0.7692307692307693
+  },
+  "single_arm.by_domain.math.base.cwr.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 0.8846153846153846
+  },
+  "single_arm.by_domain.math.base.ece.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 0.8332167651249428
+  },
+  "single_arm.by_domain.math.base.ece.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 0.632769844261192
+  },
+  "single_arm.by_domain.math.base.ece.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 0.7339783466785992
+  },
+  "single_arm.by_domain.math.base.mean_confidence.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 0.8565041787717429
+  },
+  "single_arm.by_domain.math.base.mean_confidence.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 0.807411567775312
+  },
+  "single_arm.by_domain.math.base.mean_confidence.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math) (arm base)",
+   "value": 0.8320012860320332
+  },
+  "single_arm.by_domain.math.base.n": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain math)",
+   "value": 26
+  },
+  "single_arm.by_domain.math.count.FAIL_HIDDEN": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (rows.score mapped VERIFIED/FAILED/UNVERIFIED)",
+   "value": 18
+  },
+  "single_arm.by_domain.math.count.PASS_HIDDEN": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (rows.score mapped VERIFIED/FAILED/UNVERIFIED)",
+   "value": 3
+  },
+  "single_arm.by_domain.math.count.UNDECIDED": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (rows.score mapped VERIFIED/FAILED/UNVERIFIED)",
+   "value": 5
+  },
+  "single_arm.by_domain.math.gate_recorded": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (rows.gate not null)",
+   "value": 0
+  },
+  "single_arm.by_domain.python.base.accuracy.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.5714285714285714
+  },
+  "single_arm.by_domain.python.base.accuracy.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.21428571428571427
+  },
+  "single_arm.by_domain.python.base.accuracy.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.39285714285714285
+  },
+  "single_arm.by_domain.python.base.answered_accuracy.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.5714285714285714
+  },
+  "single_arm.by_domain.python.base.answered_accuracy.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.21428571428571427
+  },
+  "single_arm.by_domain.python.base.answered_accuracy.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.39285714285714285
+  },
+  "single_arm.by_domain.python.base.aurc.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.7121241047125595
+  },
+  "single_arm.by_domain.python.base.aurc.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.2210581104949955
+  },
+  "single_arm.by_domain.python.base.aurc.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.437761871363827
+  },
+  "single_arm.by_domain.python.base.auroc.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.9166666666666666
+  },
+  "single_arm.by_domain.python.base.auroc.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.4833248299319728
+  },
+  "single_arm.by_domain.python.base.auroc.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.7165775401069518
+  },
+  "single_arm.by_domain.python.base.brier.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.6166203941752791
+  },
+  "single_arm.by_domain.python.base.brier.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.333592961070768
+  },
+  "single_arm.by_domain.python.base.brier.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.4756096635421924
+  },
+  "single_arm.by_domain.python.base.cost_per_correct.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 725.5250333333323
+  },
+  "single_arm.by_domain.python.base.cost_per_correct.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 173.84142261904765
+  },
+  "single_arm.by_domain.python.base.cost_per_correct.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 329.5309090909091
+  },
+  "single_arm.by_domain.python.base.coverage.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.by_domain.python.base.coverage.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.by_domain.python.base.coverage.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.by_domain.python.base.cwr.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.7857142857142857
+  },
+  "single_arm.by_domain.python.base.cwr.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.42857142857142855
+  },
+  "single_arm.by_domain.python.base.cwr.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.6071428571428571
+  },
+  "single_arm.by_domain.python.base.ece.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.6886813629567389
+  },
+  "single_arm.by_domain.python.base.ece.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.39200378351056997
+  },
+  "single_arm.by_domain.python.base.ece.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.5189990553792778
+  },
+  "single_arm.by_domain.python.base.mean_confidence.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.9174792531643788
+  },
+  "single_arm.by_domain.python.base.mean_confidence.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.8750438940205943
+  },
+  "single_arm.by_domain.python.base.mean_confidence.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python) (arm base)",
+   "value": 0.896487343177007
+  },
+  "single_arm.by_domain.python.base.n": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain python)",
+   "value": 28
+  },
+  "single_arm.by_domain.python.count.FAIL_HIDDEN": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (rows.score mapped VERIFIED/FAILED/UNVERIFIED)",
+   "value": 17
+  },
+  "single_arm.by_domain.python.count.PASS_HIDDEN": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (rows.score mapped VERIFIED/FAILED/UNVERIFIED)",
+   "value": 11
+  },
+  "single_arm.by_domain.python.count.UNDECIDED": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (rows.score mapped VERIFIED/FAILED/UNVERIFIED)",
+   "value": 0
+  },
+  "single_arm.by_domain.python.gate_recorded": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (rows.gate not null)",
+   "value": 0
+  },
+  "single_arm.by_domain.rust.base.accuracy.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 0.0
+  },
+  "single_arm.by_domain.rust.base.accuracy.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 0.0
+  },
+  "single_arm.by_domain.rust.base.accuracy.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 0.0
+  },
+  "single_arm.by_domain.rust.base.answered_accuracy.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 0.0
+  },
+  "single_arm.by_domain.rust.base.answered_accuracy.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 0.0
+  },
+  "single_arm.by_domain.rust.base.answered_accuracy.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 0.0
+  },
+  "single_arm.by_domain.rust.base.aurc.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.by_domain.rust.base.aurc.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.by_domain.rust.base.aurc.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.by_domain.rust.base.auroc.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": null
+  },
+  "single_arm.by_domain.rust.base.auroc.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": null
+  },
+  "single_arm.by_domain.rust.base.auroc.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": null
+  },
+  "single_arm.by_domain.rust.base.brier.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 0.8218829634517751
+  },
+  "single_arm.by_domain.rust.base.brier.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 0.7791712870512238
+  },
+  "single_arm.by_domain.rust.base.brier.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 0.8001052941692589
+  },
+  "single_arm.by_domain.rust.base.cost_per_correct.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": null
+  },
+  "single_arm.by_domain.rust.base.cost_per_correct.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": null
+  },
+  "single_arm.by_domain.rust.base.cost_per_correct.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": null
+  },
+  "single_arm.by_domain.rust.base.coverage.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.by_domain.rust.base.coverage.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.by_domain.rust.base.coverage.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.by_domain.rust.base.cwr.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.by_domain.rust.base.cwr.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.by_domain.rust.base.cwr.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 1.0
+  },
+  "single_arm.by_domain.rust.base.ece.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 0.9060861301706495
+  },
+  "single_arm.by_domain.rust.base.ece.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 0.8822237831132026
+  },
+  "single_arm.by_domain.rust.base.ece.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 0.8939426274924905
+  },
+  "single_arm.by_domain.rust.base.mean_confidence.hi": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 0.9060861301706494
+  },
+  "single_arm.by_domain.rust.base.mean_confidence.lo": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 0.8822237831132026
+  },
+  "single_arm.by_domain.rust.base.mean_confidence.point": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust) (arm base)",
+   "value": 0.8939426274924904
+  },
+  "single_arm.by_domain.rust.base.n": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (domain rust)",
+   "value": 26
+  },
+  "single_arm.by_domain.rust.count.FAIL_HIDDEN": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (rows.score mapped VERIFIED/FAILED/UNVERIFIED)",
+   "value": 13
+  },
+  "single_arm.by_domain.rust.count.PASS_HIDDEN": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (rows.score mapped VERIFIED/FAILED/UNVERIFIED)",
+   "value": 0
+  },
+  "single_arm.by_domain.rust.count.UNDECIDED": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (rows.score mapped VERIFIED/FAILED/UNVERIFIED)",
+   "value": 13
+  },
+  "single_arm.by_domain.rust.gate_recorded": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (rows.gate not null)",
+   "value": 0
+  },
+  "single_arm.math_extraction.boxed.n": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math_check.extract_final_answer on gens text)",
+   "value": 0
+  },
+  "single_arm.math_extraction.boxed.n_pass_hidden": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math_check.extract_final_answer on gens text)",
+   "value": 0
+  },
+  "single_arm.math_extraction.hashes.n": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math_check.extract_final_answer on gens text)",
+   "value": 0
+  },
+  "single_arm.math_extraction.hashes.n_pass_hidden": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math_check.extract_final_answer on gens text)",
+   "value": 0
+  },
+  "single_arm.math_extraction.last_number.n": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math_check.extract_final_answer on gens text)",
+   "value": 26
+  },
+  "single_arm.math_extraction.last_number.n_pass_hidden": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math_check.extract_final_answer on gens text)",
+   "value": 3
+  },
+  "single_arm.math_extraction.none.n": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math_check.extract_final_answer on gens text)",
+   "value": 0
+  },
+  "single_arm.math_extraction.none.n_pass_hidden": {
+   "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl + gens mean_logprob (raw confidence) (math_check.extract_final_answer on gens text)",
+   "value": 0
   },
   "single_arm.n": {
    "source": "/mnt/data/home/xavkal/gwaya-data/night/cache/L2score/rows.jsonl",
