@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 import urllib.error
 import urllib.request
@@ -36,6 +37,16 @@ _SYSTEM_PROMPT = (
     "You are a careful {lang} programmer. Reply with one complete, runnable code block only. "
     "No placeholders, no 'pass', no '...', no 'sorry', no 'todo!()'. Do not explain."
 )
+
+# Domains answered in prose, not in a code block: no code-fence prefill, no ``` stop, no re-wrap.
+# Math answers must end with \boxed{...}, the registered extraction rule (D24).
+_PROSE_DOMAINS = frozenset({"math"})
+_MATH_SYSTEM_PROMPT = (
+    "You are a careful mathematician. Reason briefly step by step, then give the final answer "
+    "exactly once as \\boxed{...}. Do not write code."
+)
+_CODE_STOP = ["```", "<|im_end|>", "<|endoftext|>"]
+_PROSE_STOP = ["<|im_end|>", "<|endoftext|>"]
 
 
 class GeneratorUnavailableError(RuntimeError):
@@ -89,14 +100,34 @@ class OllamaGenerator:
     def fence_tag(self, domain: str | None = None) -> str:
         return _FENCE_TAG.get(domain or self.domain, "python")
 
+    def is_prose(self, domain: str | None = None) -> bool:
+        return (domain or self.domain) in _PROSE_DOMAINS
+
+    def stop_sequences(self, domain: str | None = None) -> list[str]:
+        return list(_PROSE_STOP if self.is_prose(domain) else _CODE_STOP)
+
     def build_raw_prompt(self, prompt: str, domain: str | None = None) -> str:
-        tag = self.fence_tag(domain)
-        system = self.system_prompt or _SYSTEM_PROMPT.format(lang=tag)
+        if self.is_prose(domain):
+            system = self.system_prompt or _MATH_SYSTEM_PROMPT
+            # Qwen3.x are hybrid thinking models; an empty think block selects non-thinking mode
+            # (the code path is unaffected: its ``` prefill already skips thinking).
+            prefill = "<think>\n\n</think>\n\n" if re.match(r"qwen3", self.model, re.I) else ""
+        else:
+            tag = self.fence_tag(domain)
+            system = self.system_prompt or _SYSTEM_PROMPT.format(lang=tag)
+            prefill = f"```{tag}\n"
         return (
             f"<|im_start|>system\n{system}<|im_end|>\n"
             f"<|im_start|>user\n{prompt.strip()}<|im_end|>\n"
-            f"<|im_start|>assistant\n```{tag}\n"
+            f"<|im_start|>assistant\n{prefill}"
         )
+
+    def wrap_output(self, text: str, domain: str | None = None) -> str:
+        """Code domains: re-wrap in a fence so extract_code_block() works; prose: unchanged."""
+        text = str(text).rstrip()
+        if self.is_prose(domain):
+            return text
+        return f"```{self.fence_tag(domain)}\n{text}\n```"
 
     # ── transport (patched in unit tests) ──────────────────────────────────
 
@@ -146,7 +177,6 @@ class OllamaGenerator:
     ) -> str:
         call_seed = self.base_seed + self.calls if seed is None else seed
         self.calls += 1
-        tag = self.fence_tag(domain)
         data = None
         for retry in range(3):
             actual_seed = int(call_seed) + retry * 37
@@ -160,7 +190,7 @@ class OllamaGenerator:
                     "temperature": actual_temp,
                     "num_predict": int(max_tokens),
                     "seed": actual_seed,
-                    "stop": ["```", "<|im_end|>", "<|endoftext|>"],
+                    "stop": self.stop_sequences(domain),
                 },
             }
             try:
@@ -190,9 +220,8 @@ class OllamaGenerator:
         self.last_stats = stats
         self.history.append(stats)
 
-        code = str(data["response"]).rstrip()
-        # Re-wrap so callers can use the same extract_code_block() path as for chat models.
-        return f"```{tag}\n{code}\n```"
+        # Code is re-wrapped so callers can use the same extract_code_block() path as chat models.
+        return self.wrap_output(data["response"], domain)
 
     def as_tot_generator(self, temperature: float = 0.2, max_tokens: int = 512) -> Callable[[str, dict], str]:
         """Adapter for GwayaTreeOfThoughts, whose generator signature is ``(prompt, ctx)``."""

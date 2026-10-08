@@ -241,13 +241,13 @@ class OpenAICompatBackend(Backend):
 
     def generate(self, model, prompt, domain, temperature, max_tokens, seed):
         from gwaya.generators import OllamaGenerator
-        raw = OllamaGenerator(model=model).build_raw_prompt(prompt, domain)
-        tag = OllamaGenerator(model=model).fence_tag(domain)
+        gen = OllamaGenerator(model=model)
+        raw = gen.build_raw_prompt(prompt, domain)
         cpu0 = proc_cpu_seconds(self.cpu_pid)
         t0 = time.perf_counter()
         data = self._post("/completions", {"model": model, "prompt": raw, "temperature": temperature,
                                            "max_tokens": int(max_tokens), "seed": int(seed),
-                                           "stop": STOP, "logprobs": 1})
+                                           "stop": gen.stop_sequences(domain), "logprobs": 1})
         wall = time.perf_counter() - t0  # client wall time: no server timing in the OpenAI schema
         cpu1 = proc_cpu_seconds(self.cpu_pid)
         ch = (data.get("choices") or [{}])[0]
@@ -259,7 +259,7 @@ class OpenAICompatBackend(Backend):
             lps = [c["logprob"] for c in (lpo.get("content") or [])
                    if isinstance(c, dict) and isinstance(c.get("logprob"), (int, float))]
         usage = data.get("usage") or {}
-        return {"text": f"```{tag}\n{str(ch['text']).rstrip()}\n```",
+        return {"text": gen.wrap_output(ch["text"], domain),
                 "prompt_tokens": int(usage.get("prompt_tokens", 0) or 0),
                 "completion_tokens": int(usage.get("completion_tokens", 0) or 0),
                 "eval_s": wall, "gpu_s": wall,
@@ -446,7 +446,7 @@ def consensus_key(domain: str, text: str) -> str:
         from gwaya.domains.math_check import extract_final_answer, normalize_answer
         fa = extract_final_answer(text)
         if fa:
-            return "ans:" + normalize_answer(fa[1])
+            return "ans:" + normalize_answer(fa[0])  # fa = (answer, method)
     return "txt:" + hashlib.sha256(norm_code(text).encode()).hexdigest()[:16]
 
 

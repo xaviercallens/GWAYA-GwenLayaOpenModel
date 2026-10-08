@@ -75,3 +75,26 @@ def test_sandbox_available():
     # but we should know what the status is.
     available = is_sandbox_available()
     assert isinstance(available, bool)
+
+
+def test_interpreter_symlinks_outside_bound_roots_are_recreated(tmp_path):
+    # uv layout: venv/bin/python -> uv/cpython-3.12-x/bin/python3.12, cpython-3.12-x -> cpython-3.12.13-x
+    from gwaya.sandbox import interpreter_symlink_args
+    real = tmp_path / "uv" / "cpython-3.12.13-x"
+    (real / "bin").mkdir(parents=True)
+    (real / "bin" / "python3.12").write_text("")
+    alias = tmp_path / "uv" / "cpython-3.12-x"
+    alias.symlink_to(real)
+    venv = tmp_path / "venv"
+    (venv / "bin").mkdir(parents=True)
+    (venv / "bin" / "python").symlink_to(alias / "bin" / "python3.12")
+    args = interpreter_symlink_args([venv, real], executable=str(venv / "bin" / "python"))
+    assert args == ["--symlink", str(real), str(alias)]  # venv link is inside a bound root: left alone
+
+
+def test_no_symlink_args_for_plain_interpreter(tmp_path):
+    from gwaya.sandbox import interpreter_symlink_args
+    exe = tmp_path / "py" / "bin" / "python3"
+    exe.parent.mkdir(parents=True)
+    exe.write_text("")
+    assert interpreter_symlink_args([tmp_path / "py"], executable=str(exe)) == []

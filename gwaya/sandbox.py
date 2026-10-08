@@ -36,6 +36,39 @@ def _bwrap_path() -> str | None:
     return shutil.which("bwrap")
 
 
+def interpreter_symlink_args(bound_roots: list[Path], executable: str | None = None) -> list[str]:
+    """`--symlink` args recreating every symlink on the path to the interpreter that lies outside
+    the bound roots. uv-managed Pythons need this: venv/bin/python points into
+    ~/.local/share/uv/python/cpython-3.12-<arch> (itself a symlink to cpython-3.12.<patch>-<arch>),
+    and only the fully resolved directory is bound, so the interpreter was missing in the sandbox."""
+    roots = [Path(r).resolve() for r in bound_roots]
+
+    def under_bound(p: Path) -> bool:
+        return any(p == r or r in p.parents for r in roots)
+
+    args: list[str] = []
+    seen: set[str] = set()
+    path = Path(os.path.abspath(executable or sys.executable))
+    for _ in range(40):  # bounded walk; symlink loops end here
+        cur, nxt = Path(path.anchor), None
+        parts = path.parts[1:]
+        for i, part in enumerate(parts):
+            cand = cur / part
+            if cand.is_symlink():
+                target = os.readlink(cand)
+                if not under_bound(cand) and str(cand) not in seen:
+                    seen.add(str(cand))
+                    args += ["--symlink", target, str(cand)]
+                tpath = Path(target) if os.path.isabs(target) else cand.parent / target
+                nxt = tpath.joinpath(*parts[i + 1:])
+                break
+            cur = cand
+        if nxt is None:
+            break
+        path = Path(os.path.normpath(nxt))
+    return args
+
+
 def _interpreter_root() -> Path:
     """Directory that must stay visible for the interpreter."""
     return Path(sys.prefix).resolve()
@@ -127,6 +160,7 @@ def _bwrap_argv(
     base = Path(sys.base_prefix).resolve()
     if base != root:
         argv += ["--ro-bind", str(base), str(base)]
+    argv += interpreter_symlink_args([root, base])
 
     # Bind all known toolchain roots read-only
     # Keep track of already-bound paths to avoid duplicates
