@@ -215,14 +215,26 @@ class OllamaBackend(Backend):
         return {"kind": self.kind, "url": self.url, "version": probes["/api/version"], "hardware": probes["/api/ps"]}
 
 
+def proc_cpu_seconds(pid: int | None) -> float | None:
+    """utime+stime of a process in seconds from /proc (None if unavailable)."""
+    if not pid:
+        return None
+    try:
+        f = Path(f"/proc/{int(pid)}/stat").read_text().rsplit(")", 1)[1].split()
+        return (int(f[11]) + int(f[12])) / os.sysconf("SC_CLK_TCK")
+    except (OSError, ValueError, IndexError):
+        return None
+
+
 class OpenAICompatBackend(Backend):
     """/v1/completions with the same raw Qwen prompt as the Ollama path (vLLM, llama.cpp server)."""
     kind = "openai"
 
-    def __init__(self, url: str, api_key: str | None = None) -> None:
+    def __init__(self, url: str, api_key: str | None = None, cpu_pid: int | None = None) -> None:
         self.url = url.rstrip("/")
         self.root = re.sub(r"/v1$", "", self.url)
         self.api_key = api_key
+        self.cpu_pid = cpu_pid  # local server pid: per-call CPU-seconds = delta of its utime+stime
 
     def _post(self, path: str, payload: dict[str, Any]) -> dict[str, Any]:
         return _http_json(self.url + path, payload)
@@ -231,21 +243,29 @@ class OpenAICompatBackend(Backend):
         from gwaya.generators import OllamaGenerator
         raw = OllamaGenerator(model=model).build_raw_prompt(prompt, domain)
         tag = OllamaGenerator(model=model).fence_tag(domain)
+        cpu0 = proc_cpu_seconds(self.cpu_pid)
         t0 = time.perf_counter()
         data = self._post("/completions", {"model": model, "prompt": raw, "temperature": temperature,
                                            "max_tokens": int(max_tokens), "seed": int(seed),
                                            "stop": STOP, "logprobs": 1})
         wall = time.perf_counter() - t0  # client wall time: no server timing in the OpenAI schema
+        cpu1 = proc_cpu_seconds(self.cpu_pid)
         ch = (data.get("choices") or [{}])[0]
         if "text" not in ch:
             raise RuntimeError(f"OpenAI-compatible server returned no text: {str(data)[:200]}")
-        lps = [x for x in ((ch.get("logprobs") or {}).get("token_logprobs") or []) if isinstance(x, (int, float))]
+        lpo = ch.get("logprobs") or {}
+        lps = [x for x in (lpo.get("token_logprobs") or []) if isinstance(x, (int, float))]
+        if not lps:  # llama.cpp server: logprobs.content[].logprob
+            lps = [c["logprob"] for c in (lpo.get("content") or [])
+                   if isinstance(c, dict) and isinstance(c.get("logprob"), (int, float))]
         usage = data.get("usage") or {}
         return {"text": f"```{tag}\n{str(ch['text']).rstrip()}\n```",
                 "prompt_tokens": int(usage.get("prompt_tokens", 0) or 0),
                 "completion_tokens": int(usage.get("completion_tokens", 0) or 0),
                 "eval_s": wall, "gpu_s": wall,
                 "mean_logprob": (sum(lps) / len(lps)) if lps else None,
+                "token_logprobs": lps,
+                "cpu_seconds": (round(cpu1 - cpu0, 4) if cpu0 is not None and cpu1 is not None else None),
                 "done_reason": str(ch.get("finish_reason") or "")}
 
     def info(self):
@@ -485,7 +505,8 @@ class Study:
                                 "task_id": task.task_id, "seed": seed, "call_index": call_index,
                                 "temperature": temperature, "max_tokens": mt, "wall_s": round(wall, 6),
                                 **{k: out.get(k) for k in ("text", "prompt_tokens", "completion_tokens", "eval_s",
-                                                           "gpu_s", "mean_logprob", "done_reason")}})
+                                                           "gpu_s", "mean_logprob", "done_reason",
+                                                           "token_logprobs", "cpu_seconds")}})
         self.gen_index[key] = rec
         self.new_gens += 1
         return rec
@@ -748,6 +769,7 @@ def main(argv: list[str] | None = None, *, backend: Backend | None = None, check
     ap.add_argument("--backend", choices=("ollama", "openai"), default="ollama")
     ap.add_argument("--backend-url", help="Ollama host or OpenAI-compatible base URL (e.g. http://h:8000/v1)")
     ap.add_argument("--api-key-env", default="OPENAI_API_KEY")
+    ap.add_argument("--cpu-pid", type=int, help="local server pid; records per-call cpu_seconds (sequential calls only)")
     ap.add_argument("--lora-map", action="append", default=[], metavar="BASE=TUNED")
     ap.add_argument("--quant-map", action="append", default=[], metavar="MODEL@QUANT=SERVED")
     ap.add_argument("--calibrations", help="JSON from gwaya.gwenlaya.save_calibrations (GL arm)")
@@ -834,7 +856,7 @@ def main(argv: list[str] | None = None, *, backend: Backend | None = None, check
             return 2
         if not url.startswith("http"):
             url = "http://" + url
-        backend = OllamaBackend(url) if a.backend == "ollama" else OpenAICompatBackend(url, os.environ.get(a.api_key_env))
+        backend = OllamaBackend(url) if a.backend == "ollama" else OpenAICompatBackend(url, os.environ.get(a.api_key_env), cpu_pid=a.cpu_pid)
     if backend is None:  # score mode never touches a backend
         backend = Backend()
 
@@ -877,6 +899,8 @@ def main(argv: list[str] | None = None, *, backend: Backend | None = None, check
         study.run()
     except CacheMiss as exc:
         status, rc = f"PARTIAL (cache miss: {exc})", 3
+    except KeyboardInterrupt:  # time limit (SIGINT from `timeout`): keep partial progress
+        status, rc = "PARTIAL (interrupted: wall-clock limit)", 130
     except Exception as exc:  # noqa: BLE001 - keep partial progress, report honestly
         status, rc = f"PARTIAL ({type(exc).__name__}: {exc})"[:300], 3
     args_echo = {k: v for k, v in vars(a).items() if k not in ("api_key_env",)}

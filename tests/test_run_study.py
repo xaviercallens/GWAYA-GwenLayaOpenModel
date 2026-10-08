@@ -302,3 +302,25 @@ def test_openai_backend_parsing(monkeypatch):
     out = be.generate("m", "write x", "python", 0.0, 32, 1000)
     assert seen["path"] == "/completions" and seen["payload"]["seed"] == 1000 and seen["payload"]["stop"] == rs.STOP
     assert out["text"] == "```python\nx = 1\n```" and out["mean_logprob"] == -2.0 and out["completion_tokens"] == 2
+
+
+def test_openai_backend_records_logprobs_and_cpu_seconds(monkeypatch):
+    import os
+    be = rs.OpenAICompatBackend("http://localhost:8000/v1", cpu_pid=os.getpid())
+    monkeypatch.setattr(be, "_post", lambda path, payload: {
+        "choices": [{"text": "x", "finish_reason": "stop", "logprobs": {"token_logprobs": [-1.0, -3.0]}}],
+        "usage": {}})
+    out = be.generate("m", "p", "python", 0.0, 8, 1)
+    assert out["token_logprobs"] == [-1.0, -3.0]
+    assert isinstance(out["cpu_seconds"], float) and out["cpu_seconds"] >= 0.0
+    assert rs.proc_cpu_seconds(None) is None and rs.proc_cpu_seconds(2 ** 30) is None
+
+
+def test_openai_backend_parses_llamacpp_logprobs_content(monkeypatch):
+    be = rs.OpenAICompatBackend("http://localhost:8000/v1")
+    monkeypatch.setattr(be, "_post", lambda path, payload: {
+        "choices": [{"text": "x", "finish_reason": "stop",
+                     "logprobs": {"content": [{"token": "a", "logprob": -1.0}, {"token": "b", "logprob": -3.0}]}}],
+        "usage": {}})
+    out = be.generate("m", "p", "python", 0.0, 8, 1)
+    assert out["token_logprobs"] == [-1.0, -3.0] and out["mean_logprob"] == -2.0

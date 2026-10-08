@@ -1,0 +1,532 @@
+% GwenLaya v4 paper. Every number in this file is read from one of:
+%   papers/numbers_v4.json, papers/tables_v4.tex (both written by scripts/analyze_study.py),
+%   docs/RESULTS_VERDICT.md, docs/DEVIATIONS.md, docs/FREEZE_ADDENDUM_NIGHT_2026-10-07.md,
+%   docs/FREEZE_ADDENDUM_2026-10-08_D25.md, night/results/gate_regen_d25_report.json,
+%   docs/STAGE_LOG.md, results/results_n257_l4_gpu.json, results/results_n60_cpu.json,
+%   /mnt/data/home/xavkal/gwaya-data/spend_ledger.jsonl,
+%   /mnt/data/home/xavkal/gwaya-data/night/results/L0_env.json,
+%   gs://socrateai-datalake-gen-lang-client-0625573011/gwenlaya_v4/tpu_smoke/gwenlaya-tpu-smoke-215529/.
+% Unknown values are written TBD.
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.4cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs,array,longtable}
+\usepackage{graphicx}
+\usepackage{pdflscape}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\PassOptionsToPackage{hyphens}{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+\usepackage{seqsplit}
+\Urlmuskip=0mu plus 1mu
+\makeatletter\g@addto@macro{\UrlBreaks}{\do\-\do\_}\makeatother
+\setlength{\emergencystretch}{3em}\sloppy
+\renewcommand{\topfraction}{0.9}\renewcommand{\textfraction}{0.07}\renewcommand{\floatpagefraction}{0.7}
+\setlist{itemsep=2pt,topsep=4pt}
+\graphicspath{{figures_v4/}}
+\newcommand{\TBD}{\textsf{TBD}}
+\newcommand{\code}[1]{\texttt{\detokenize{#1}}}
+
+\title{GwenLaya v4: a pre-registered study of answering only when a check can back the answer\\[4pt]
+\large Interim report after the first night run: registered design, deviations,\\
+one descriptive single-arm result, and no completed pre-registered test}
+\author{Xavier Callens\\AutoevolveAI / ANSE open-source project}
+\date{8 October 2026 \quad (draft v4.0, branch \texttt{night/2026-10-07})}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+GwenLaya is a system design in which a small open model (Qwen3.5 family) answers a programming or
+mathematics question only when an executed check or a calibrated confidence score supports the
+answer, and otherwise abstains or escalates to a larger tier. We pre-registered fifteen hypotheses
+(two primary: fewer confident-wrong answers than log-probability selective prediction at matched
+coverage, H1; lower cost per correct answered item than always using the largest tier with the
+gate, H3) before any GwenLaya run. This report covers the first, budget-limited night run.
+\textbf{No pre-registered hypothesis test was completed.} The only scored data are 80 items from
+one arm that is not a registered arm (Qwen3.5-2B, q4\_K\_M, CPU, no gate, no calibrator). Only the
+28 Python items are usable as a descriptive result: 11/28 passed the hidden checks (pass rate
+0.393, 95\% cluster bootstrap CI 0.214--0.571) while the raw $\exp(\text{mean log-prob})$
+confidence averaged 0.896, so it was badly calibrated (ECE 0.519, CI 0.392--0.689); its AUROC was
+0.717 with a CI (0.483--0.917) that includes 0.5. These are descriptive numbers on public
+benchmarks that Qwen3.5 has probably seen in pretraining, not tests. The 26 math items are invalid
+(a prompt-path defect, and an unregistered last-number answer extraction), and the 26 Rust items
+come from a harness that has not been validated; numbers pooled over all 80 items are shown only as
+a labelled sensitivity analysis. The budget hypothesis (H13) is not refuted on an interim basis
+(recorded spend \$0.85, estimated from catalog list prices), but the spend ledger enforces it by construction,
+so this is not evidence about the system. Review also found that the HumanEval+ gate payloads of the
+night task files contained the hidden tests; no gate ran, so no number is affected, and the files
+have been rebuilt (D25). We also report a TPU feasibility finding (Qwen2.5 generation works on a v5e chip
+via vLLM's TPU build; Qwen3.5-4B loaded but its XLA compilation did not finish within the 25-minute limit, so it produced no tokens; no TPU LoRA path was found for Qwen3.5 dense
+or Qwen3.8), the GCP spend actually recorded, and every deviation from the registration. We
+begin by restating the retraction of a v3 claim and the failed v3 gate.
+\end{abstract}
+
+%-----------------------------------------------------------------------------
+\section{Retraction and the v3 gate failure, stated first}\label{sec:retraction}
+
+\paragraph{Retraction.} Revision 3.1.0 of the predecessor report~\cite{gwayav3} claimed that the
+low-tier optimizer improved pass rates by at least $+8.0$ percentage points. That claim rested on a
+hand-written results file with invented numbers (A0 33\,\%, A3 100\,\%). The file was fabricated, it
+has been deleted, and it is not evidence (\code{results/PREREGISTRATION.md}). The claim is
+retracted. Nothing in this paper depends on it.
+
+\paragraph{The measured v3 gate failed.} The pre-registered v3 gate was
+$\text{A3}-\text{A0}\ge +8.0$ points pass@1 on MBPP-sanitized with \code{qwen2.5-coder:1.5b}. Both
+measured runs \textbf{FAIL} that gate:
+\begin{itemize}
+\item $n=60$, CPU: A3$-$A0 $=+6.67$ points, 95\% CI $[1.67, 13.33]$, 4 gained / 0 lost, exact
+  McNemar $p=0.125$; verdict FAIL (\code{results/results_n60_cpu.json}).
+\item $n=257$, L4 GPU: A0 64.2\,\%, A3 71.98\,\%, A3$-$A0 $=+7.78$ points, 95\% CI $[4.67, 11.28]$,
+  20 gained / 0 lost; verdict FAIL against $+8.0$. This file's \code{git_commit} field is empty
+  (\code{results/results_n257_l4_gpu.json}).
+\end{itemize}
+At $n=60$ the difference is not significant by the exact McNemar test ($p=0.125$, 4/0
+discordant pairs); the percentile-bootstrap interval there is not informative, because when every
+discordant pair favours A3 a resample can reach $\Delta\le 0$ only by drawing no discordant item at
+all, so its lower bound is positive almost by construction. Only the $n=257$ run (20/0 discordant;
+the file rounds the exact McNemar $p$ to 0.0, i.e.\ $p<0.001$) supports a nonzero effect. In both
+runs the registered $+8.0$ threshold was missed, and we report both as FAIL. The same file shows the v3 gate's weakness that motivates
+v4: of answers the gate called VERIFIED (coverage 80.93\,\%), only 88.94\,\% passed the hidden
+tests. By arithmetic on those two file values (not a measurement), about 8.95\,\% of all problems
+were confident-wrong under v3.
+
+%-----------------------------------------------------------------------------
+\section{What GwenLaya is and what was registered}\label{sec:design}
+
+The full registration is \code{docs/GWENLAYA_PREREGISTRATION.md} (revision 2, design freeze; sha256
+of each revision in \code{docs/PREREG_FREEZE.txt}). In brief:
+
+\begin{itemize}
+\item \textbf{System (GL).} Generate with a small Qwen3.5 tier; run a \emph{gate-visible} executed
+  check that, by design, never sees the scoring tests (in the night task files this was violated
+  for HumanEval+, whose gate payloads contained the whole hidden suite; no gate ran, and the files
+  were rebuilt, D25, Section~\ref{sec:defects}); score the candidate with a calibrated confidence head
+  (a LoRA head on the \code{convaiinnovations/laya} encoder); answer VERIFIED, LIKELY\_CORRECT($p$),
+  abstain, or escalate to a larger tier. The label for calibration is the outcome on the
+  \emph{hidden} checks, so VERIFIED is never treated as ground truth.
+\item \textbf{Eval pool E.} HumanEval+ and MBPP+~\cite{evalplus} (Python, 542 items), MultiPL-E
+  Rust~\cite{multiple} (510), MATH-500~\cite{math,letsverify} (500), and miniF2F Lean 4 (244,
+  outside the pooled analysis).
+\item \textbf{Arms.} B1 smallest tier alone; B2 largest tier alone; B3 log-probability selective
+  prediction~\cite{selective}; B4 self-consistency; B5 largest tier with the v3-style gate only;
+  B6 Laya zero-shot; LR and a shuffled-label negative control SH.
+\item \textbf{Primary family} (Holm~\cite{holm}, $m=2$; a primary that does not run enters with
+  $p=1$, so the other is tested at 0.025): H1, CWR(GL)$-$CWR(B3) at matched coverage,
+  exact one-sided McNemar~\cite{mcnemar} plus a cluster-stratified paired bootstrap, MEI 3.0 points;
+  H3, cost per correct answered item, GL vs B5, MEI 25\,\% reduction, with answered accuracy
+  non-inferior by 2.0 points.
+\item \textbf{Secondary:} calibration (H4 ECE~\cite{guo}, H5 Laya vs LR AUROC, H6 split-conformal
+  selective error~\cite{conformal}); quantization (H8); training (H9); systems (H13 budget, H14
+  endpoint latency, H15 preemption). \textbf{Exploratory:} H2, H7, H10--H12.
+\end{itemize}
+Hypothesis wording and MEIs are unchanged. The H3 cost unit (D3), the H5 comparator (D5, if the
+frozen-embedding probe replaces the LoRA head) and the size of the primary Holm family (D22, made
+after the L2 generations existed and reverted to the registered $m=2$ in D26) are deviations.
+Throughout, VERIFIED keeps its registered meaning (all gate-visible checks passed); the outcome on
+the hidden checks is written PASS\_HIDDEN / FAIL\_HIDDEN / UNDECIDED.
+
+%-----------------------------------------------------------------------------
+\section{The night run and its deviations}\label{sec:deviations}
+
+The night of 2026-10-07/08 was meant to run the primaries cheaply. Two constraints shaped it:
+the total GCP budget (\$50 hard, \$45 working ceiling for this programme, \$40 planned), and the
+fact that the project's only GPU quota unit (\code{GPUS_ALL_REGIONS} limit 1) was held all night by
+a VM that is not part of this project and that we did not touch. All generation therefore ran on a
+shared 8-core CPU, and the scope was cut. Every deviation is in \code{docs/DEVIATIONS.md} and is
+summarised in Table~\ref{tab:dev}. D1--D20 were written before generation; D21 during L2; D22--D23
+after the L2 generations existed and before any registered test; D24--D26 after the external review
+of the first draft of this report. No registered test has run, so none of these was written with a
+test result in view.
+
+\begin{table}[!htbp]\centering\footnotesize\setlength{\tabcolsep}{4pt}
+\caption{Deviations from the registration for the night run (from \code{docs/DEVIATIONS.md}). Reason codes: B = budget, G = no GPU slot, T = CPU wall clock, I = implementation or defect.}
+\label{tab:dev}
+\begin{tabular}{l p{4.6cm} p{6.0cm} p{2.2cm}}\toprule
+\# & Registered & Night run & Why\\\midrule
+D1 & E = 1,552 items on L4 & E-night: seeded prefix, 80 items (python 28, rust 26, math 26) & G, T\\
+D2 & tiers 2B/4B/9B/27B & 2B and 4B only (B2/B3/B5 on 4B) & G, T\\
+D3 & H3 cost in L4 GPU-seconds & CPU-seconds on this machine & G\\
+D4 & separate calibration set C & 5-fold cross-fitting on E-night by source cluster & T; C was not label-matched\\
+D5 & Laya LoRA r=16 heads & LoRA only if CPU timing fits, else frozen-embedding probe & T\\
+D6 & llama.cpp server & llama.cpp b11476 CPU; Ollama not used (no logprobs) & I\\
+D7 & Lean 4 (E, C, H11) & dropped tonight & T, B\\
+D8 & SFT, DPO, S4b--S5 & deferred; H9 deferred, H10--H12 dropped & G, B\\
+D9 & B4 self-consistency, second seed & dropped & B, T\\
+D10 & GSM8K, AIME25, LiveCodeBench, MBPP anchor, 0.8B & dropped & B, T\\
+D11 & H8 on full E & 300-item 9B subsample only if GPU; no TOST & G\\
+D12 & endpoint, 4--6 cold samples & 4 samples, only after G1 & G, B\\
+D14--D15 & \code{-t 8}; 256-token tok/s probe & \code{-t 4}; 64 tokens & T (foreign CPU load)\\
+D16 & -- & fix: multi-letter words in math checker return undecided & I\\
+D17 & reference passes its own checks & Rust: typecheck only (no reference solution) & I\\
+D18 & decontaminate T, C & all 170 MBPP-sanitized calib items removed; no T/C & I\\
+D19 & n from measured throughput & n from measured tok/s and an \emph{assumed} 196.6 tokens/item & T\\
+D20 & prompt text not fixed & gate-visible tests and prompts frozen in the task file & I\\
+D21 & -- & logprobs and per-call CPU-seconds captured & I\\
+D22 & \code{random.Random(0)} bootstrap; primary Holm $m=2$ & numpy \code{default_rng(0)}, 10,000 resamples; Holm over the primaries that ran ($m$ = 1 or 2), a post-data decision-rule change, reverted in D26 & I\\
+D23 & -- & scored the 80 L2 generations; single-arm descriptives added & I\\
+D24 & math: boxed answer only; unparseable = UNVERIFIED & scorer fell back to \texttt{\#\#\#\#}, then to the last number in the text; all 26 math items were scored that way; registered boxed-only rescoring now reported too & I (found in review)\\
+D25 & gate never sees the scoring checks & HumanEval+ gate payloads held the full hidden suite; rebuilt with an AST rewrite, 5 primary items excluded; no gate ran & I (found in review)\\
+D26 & Holm $m=2$ & restored ($p=1$ for a primary that did not run); per-domain descriptives, Python headline & I (post-L2)\\
+\bottomrule\end{tabular}\end{table}
+
+\paragraph{Benchmarks reduced.} To stay within budget and wall clock we ran no benchmark beyond the
+three primary domains, on 80 of their 1,541 included items, with two tiers instead of four. Lean 4,
+GSM8K, AIME25, LiveCodeBench, the MBPP continuity anchor, the 0.8B tier, self-consistency and the
+second seed were dropped (D7--D10). The registered design for all of them stays in the
+registration and is not reported here as if it had run.
+
+\paragraph{Power was known to be insufficient before generation.} The freeze addendum computed the
+power of H1's exact McNemar test at $n=80$ before any item was generated: 0.052 at the 3-point MEI
+and 0.261 at a 6-point effect ($\alpha=0.025$). A non-significant H1 at this $n$ would therefore
+have been inconclusive, not evidence of no effect.
+
+\paragraph{What actually ran.} L0 (environment, throughput), L1 (manifest, freeze addendum,
+decontamination), L2 (2B generation on all 80 E-night items, 72 minutes wall), and scoring of those
+80 generations. L3 (4B generation) was held because the L2 review found a blocking defect
+(Section~\ref{sec:defects}). G1 (GPU) and E1 (endpoint) never ran: the GPU slot never freed. No
+Laya head, calibrator, threshold or second arm exists.
+
+%-----------------------------------------------------------------------------
+\section{Results}\label{sec:results}
+
+\subsection{Per-hypothesis verdicts}
+
+Table~\ref{tab:verdict} reproduces \code{docs/RESULTS_VERDICT.md}. For every hypothesis that did
+not run, the probability column is the \textbf{red-team prior} written in the review before the run
+(\code{docs/PROPOSAL_REVIEW.md}, copied into \code{docs/DEVIATIONS.md}). It is \emph{not} an
+estimate from data. This includes H13, the only hypothesis whose decision rule could be evaluated:
+its row shows the prior, because the check holds largely by construction and we give no estimated
+probability for it.
+
+\begin{table}[!htbp]\centering\small
+\caption{Verdicts after the night run. ``Prior'' = red-team prior that the hypothesis would be supported, written before any data; not updated by evidence.}
+\label{tab:verdict}
+\begin{tabular}{l l l l p{6.3cm}}\toprule
+H & Role & Verdict & $P(\text{true})$ & Basis\\\midrule
+H1 & primary & not run & 0.45 (prior) & no GL or B3 arm; power at MEI with $n=80$ was 0.05\\
+H3 & primary & not run & 0.50 (prior) & no GL or B5 arm; cost unit would be CPU-s (D3)\\
+H4 & secondary & not run & 0.15 (prior) & no cross-fitted scores; no Laya head\\
+H5 & secondary & not run & 0.25 (prior) & same\\
+H6 & secondary & not run & 0.40 (prior) & same\\
+H8 & secondary & not run & 0.30 (prior) & needs GPU (D11)\\
+H9 & secondary & deferred & 0.25 (prior) & D8\\
+H13 & systems & not refuted (interim) & 0.75 (prior) & ledger \$0.85 (catalog estimate); holds by construction, Sec.~\ref{sec:spend}\\
+H14 & systems & not run & 0.50 (prior) & needs E1, which needs the GPU (D12)\\
+H15 & systems & not run & 0.70 (prior) & offline test is not the registered SIGKILL check\\
+H2 & exploratory & not run & 0.08 (prior) & no GL or B5 arm\\
+H7 & exploratory & not run & 0.10 (prior) & gate field is null in every scored row\\
+H10 & exploratory & dropped & 0.05 (prior) & D8\\
+H11 & exploratory & dropped & 0.12 (prior) & D7, D8\\
+H12 & exploratory & dropped & 0.12 (prior) & D8\\
+\bottomrule\end{tabular}\end{table}
+
+\paragraph{H13 (budget).} Decision rule: ledger total $\le\$40$ planned and $\le\$50$ hard, and no
+stage over $1.25\times$ its cap twice. The machine verdict (\code{numbers_v4.json}) is ``not refuted
+'': the ledger has 3 lines with a USD total of 0.8549. The two TPU lines were first recorded
+without \code{usd_estimate} and \code{resource}; they were priced on 2026-10-08 from the Cloud
+Billing Catalog list prices (on-demand v5e \$1.20 per chip-hour, us-central1; spot v5e \$0.4942 per
+chip-hour, us-west4), and the analysis was re-run (only the three H13 numbers changed). These are
+list-price estimates; the billed amount is \TBD{} until the billing export is read. No stage has
+spent anything against its cap. Two
+caveats limit what this means. First, the ledger refuses any stage that would exceed its cap, so H13
+holds largely by construction; the red-team review called its support ``close to tautological''
+(prior 0.75), and it is not evidence about the GwenLaya system. Second, H13 is a whole-study claim,
+the planned GCS ledger \code{runs/LEDGER.jsonl} does not exist, and later nights will add spend, so
+the verdict is interim. An earlier draft of this report gave $P(\text{true})=0.97$; that was author
+judgement with no statistical basis, and it has been removed.
+
+\paragraph{H15 (preemption).} \code{tests/test_run_study.py::test_resume_after_kill_mid_run}
+passes, but it simulates a death by appending a torn line; it sends no SIGKILL and measures no lost
+wall time. It is weak support that resume is item-granular, not the registered verification, so the
+probability stays at the prior.
+
+\subsection{Descriptive single-arm result (not a pre-registered test)}
+
+The scored arm \code{base} is Qwen3.5-2B q4\_K\_M on llama.cpp~\cite{llamacpp}, greedy, thinking off,
+\code{max_new_tokens} 1024, with no gate, no calibrator and no escalation. It is not one of the
+registered arms. Confidence is the raw $\exp(\text{mean token log-prob})$, uncalibrated and not
+cross-fitted. Intervals are 95\% cluster-stratified bootstrap percentile intervals (10,000
+resamples, seed 0). Every number below is read from \code{papers/numbers_v4.json}
+(\code{single_arm.by_domain.*}, \code{single_arm.boxed_only.*}, \code{arm.base.*}), written by
+\code{scripts/analyze_study.py}; its tables are reproduced unedited in Appendix~\ref{app:tables}.
+
+\paragraph{Outcome labels.} The per-row outcome reported here is the result of the \emph{hidden}
+checks: PASS\_HIDDEN, FAIL\_HIDDEN or UNDECIDED (\code{rows.jsonl} field \code{score} =
+VERIFIED, FAILED or UNVERIFIED). It is \emph{not} the registered VERIFIED, which is the gate's
+verdict on the gate-visible checks. The gate verdict was not recorded in any of the 80 rows
+(\code{gate} is null in all of them), so this run contains no VERIFIED in the registered sense.
+
+\paragraph{Why Python is the headline.} Pooling the three domains would mix one usable domain with
+two that are not (Section~\ref{sec:defects}): the 26 math generations are invalid, and the 26 Rust
+items come from an unvalidated harness on which no item passed, so their AUROC is undefined. A pooled
+AUROC or ECE would then describe domain composition and defects, not the confidence signal. We
+therefore report Python ($n=28$) as the headline and show every other number only as a labelled
+row of Table~\ref{tab:calib}.
+
+\begin{table}[!htbp]\centering\small\setlength{\tabcolsep}{3.5pt}
+\caption{Raw confidence of arm \code{base}, descriptive (from \code{papers/numbers_v4.json}). Pass =
+PASS\_HIDDEN. 95\% cluster bootstrap CI in brackets. Only the Python row is a headline; the other
+rows are sensitivity analyses and are not valid estimates. Cost = server CPU-seconds per passing
+item (D3, D21). \TBD{} = undefined (no passing item).}
+\label{tab:calib}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{l r c c c c c}\toprule
+Subset & $n$ & Pass rate & Mean conf. & ECE & AUROC & Cost / pass\\\midrule
+\textbf{Python (headline)} & 28 & 0.393 [0.214, 0.571] & 0.896 [0.875, 0.917] & 0.519 [0.392, 0.689] & 0.717 [0.483, 0.917] & 330 [174, 726]\\\midrule
+\multicolumn{7}{l}{\emph{Sensitivity only, not valid estimates}}\\
+Rust (unvalidated) & 26 & 0.000 & 0.894 [0.882, 0.906] & 0.894 [0.882, 0.906] & \TBD & \TBD\\
+Math (invalid), as scored$^a$ & 26 & 0.115 [0.000, 0.231] & 0.832 [0.807, 0.857] & 0.734 [0.633, 0.833] & 0.348 [0.133, 0.583] & 3304 [1298, 11975]\\
+Math (invalid), boxed-only$^b$ & 26 & 0.000 & 0.832 [0.807, 0.857] & 0.832 [0.807, 0.857] & \TBD & \TBD\\
+Pooled, as scored & 80 & 0.175 [0.100, 0.250] & 0.875 [0.863, 0.886] & 0.700 [0.626, 0.771] & 0.618 [0.422, 0.811] & 1178 [732, 2114]\\
+Pooled, boxed-only math & 80 & 0.138 [0.075, 0.200] & 0.875 [0.863, 0.886] & 0.737 [0.676, 0.798] & 0.758 [0.568, 0.922] & 1500 [931, 2840]\\
+\bottomrule\end{tabular}}
+
+\smallskip\raggedright\footnotesize $^a$ Unregistered extraction: last \verb|\boxed|, else \texttt{\#\#\#\#},
+else the last number in the text (D24). $^b$ Registered rule: no \verb|\boxed| = UNVERIFIED.
+\end{table}
+
+\begin{figure}[!htbp]\centering
+\includegraphics[width=0.46\linewidth]{reliability.png}\hfill
+\includegraphics[width=0.46\linewidth]{risk_coverage.png}
+\caption{Arm \code{base}, raw confidence. Solid: Python, $n=28$ (headline). Dashed: all 80 items,
+a sensitivity curve only, because it contains the invalid math items and the unvalidated Rust items
+(Section~\ref{sec:defects}). Left: reliability diagram (equal-mass bins). Right: risk--coverage
+curve; risk = share failing the hidden checks. Descriptive only; not cross-fitted.}
+\label{fig:calib}
+\end{figure}
+
+\paragraph{Python.} 11 of 28 items passed the hidden checks and 17 failed (0 undecided), a pass
+rate of 0.393 (CI 0.214--0.571). The mean raw confidence was 0.896 (CI 0.875--0.917), so the score
+is badly calibrated (ECE 0.519, CI 0.392--0.689; Brier 0.476, CI 0.334--0.617). The AUROC point
+estimate was 0.717 (AURC 0.438, CI 0.221--0.712), but its interval (0.483--0.917) includes 0.5, so with $n=28$ we cannot say that it ranks correct answers above wrong
+ones. The confident-wrong rate, counting every answered item that did not pass, was 0.607 (CI
+0.429--0.786). Cost per passing item was 330 server CPU-seconds (CI 174--726).
+
+\paragraph{Rust and math (not interpretable).} Rust: 0 PASS\_HIDDEN, 13 FAIL\_HIDDEN, 13 UNDECIDED.
+Math: 3 PASS\_HIDDEN, 18 FAIL\_HIDDEN, 5 UNDECIDED as scored; all 26 math answers were extracted by
+the unregistered last-number fallback (0 contained \verb|\boxed|), including all 3 passes, and under
+the registered boxed-only rule math passes 0/26. Pooled over 80 items the pass rate is 0.175 as
+scored and 0.138 with boxed-only math. The pooled AUROC changes from 0.618 to 0.758 when only the
+scoring rule of the invalid math subset changes, which is why we do not interpret it.
+
+\paragraph{Contamination.} HumanEval+, MBPP+, MultiPL-E and MATH-500 are public and were very
+probably seen in Qwen3.5 pretraining (registration Section~10, ``Residual risk, stated''). The
+absolute pass rates above are therefore not clean capability estimates; the registration claims
+only paired, within-model deltas, and none was measured. Memorised items would also tend to have
+high log-probability and pass, which can inflate AUROC differently by score type (review finding
+F12).
+
+What we read from this, and no more: on 28 Python items the raw log-probability of a 2B model at q4
+sits near 0.9 while about 0.4 of the answers pass, so it is not usable as a probability without
+calibration. This is consistent with the motivation for a calibrated head, but it does not test H1,
+H4 or H5.
+
+\subsection{Defects found, and why some numbers are invalid}\label{sec:defects}
+
+\begin{enumerate}
+\item \textbf{Math prompt path (blocking).} All 26 math completions were produced with the Python
+  code system prompt and a \verb|```python| prefill, because the prompt builder falls back to the
+  \code{python} tag for any domain it does not list. 0 of 26 contain \verb|\boxed|. The frozen user
+  prompt asked for a boxed answer, but the system prompt and prefill overrode it. The math pass
+  rate says nothing about the model's math ability. The fix (math system prompt, no code prefill)
+  and a regeneration of the 26 items must be logged as a new deviation before any rerun; neither has
+  happened yet.
+\item \textbf{Unregistered math answer extraction (D24).} The registration scores the boxed answer
+  and treats unparseable math output as UNVERIFIED (fail-closed). The scorer
+  (\code{math_check.extract_final_answer}) instead tries the last \verb|\boxed|, then a
+  \texttt{\#\#\#\#} line, then the last number anywhere in the text. With no boxed output, all 26 math
+  items were scored by the last number; the 3 passes came from text ending in Python comments, a
+  \code{print} call or a \code{return} statement. We now report both versions (Table~\ref{tab:calib})
+  and froze the registered boxed-only rule before the math regeneration
+  (\code{docs/FREEZE_ADDENDUM_2026-10-08_D25.md}).
+\item \textbf{Rust harness unvalidated.} MultiPL-E has no reference solutions, so the Rust harness
+  was checked only by typechecking test bodies (D17). 0/26 PASS\_HIDDEN with 13/26 UNDECIDED is as
+  consistent with a harness or toolchain problem as with model weakness. Until one known-good Rust
+  program passes end to end, the Rust rate is unverified.
+\item \textbf{Gate not recorded.} The \code{gate} field is null in every scored row, so no
+  registered VERIFIED exists in this run and VERIFIED precision against hidden checks (H7) cannot
+  be computed.
+\item \textbf{Hidden tests in the HumanEval+ gate payload (D25).} The task builder restricted the
+  HumanEval+ gate by rewriting only the loop header (\code{zip(inputs[:1], results[:1])}), so the
+  complete hidden \code{inputs} and \code{results} lists stayed in every HumanEval+ gate payload
+  (11/11 E-night rows, 161/161 primary rows; four primary items also carried a reference
+  implementation). A candidate executed in the same process as \code{check()} could have read them,
+  and any component that reads the gate payload would have seen the hidden answers. MBPP+, Rust and
+  math gate payloads were correctly restricted. The statement that the gate ``never sees the scoring
+  checks'' was therefore false for HumanEval+ in the night files. \textbf{No reported number changes}:
+  the L2 run executed no gate. The builder now rewrites the literals themselves with an AST
+  transform, fails closed, and is covered by a test asserting that no hidden element appears in a
+  gate payload. The task files were rebuilt with prompts and hidden checks unchanged (E-night 80
+  items; primary E 1,536 items after 5 fail-closed exclusions; hashes in
+  Section~\ref{sec:repro}).
+\end{enumerate}
+
+\paragraph{What ``passed'' means in this paper.} An item is PASS\_HIDDEN only if it passed the named
+hidden checks: for Python, the full EvalPlus test suite run in a bubblewrap sandbox; for Rust,
+compilation and all \code{assert_eq!} lines of the MultiPL-E test with \code{rustc}; for math, a
+sympy/numeric equivalence check between the gold answer and the answer extracted as described in
+item 2 above (boxed, else \texttt{\#\#\#\#}, else last number). It means nothing more. It does not mean
+the solution is correct on other inputs, and for Rust the harness itself is not yet validated.
+
+%-----------------------------------------------------------------------------
+\section{TPU feasibility finding}\label{sec:tpu}
+
+Because the GPU slot was unavailable, we tested whether a Cloud TPU v5e could replace it. Two
+smoke runs were made on a single-chip v5litepod-1 (logs under
+\url{gs://socrateai-datalake-gen-lang-client-0625573011/gwenlaya_v4/tpu_smoke/gwenlaya-tpu-smoke-215529/}).
+The first, on a spot VM, was preempted after about 4 minutes with no results. The second, on demand:
+
+\begin{itemize}
+\item \textbf{Qwen2.5 works.} \code{Qwen/Qwen2.5-Coder-1.5B-Instruct} loaded and generated with
+  vLLM~\cite{vllm} 0.31.0's TPU backend (load 208.9 s; 442 completion tokens in 0.61 s,
+  724.6 tok/s batched throughput; \code{res_qwen25.json}). The GWAYA gate on that VM returned UNVERIFIED for
+  every item because bubblewrap was not available there, i.e.\ it failed closed as designed; no
+  correctness number came out of this run.
+\item \textbf{Qwen3.5 is unproven on TPU.} \code{Qwen/Qwen3.5-4B} resolved to
+  \code{Qwen3_5ForConditionalGeneration} but did not finish loading/compiling within the 1,500 s
+  step limit (exit 124). We did not show that it works or that it cannot work.
+\item \textbf{No TPU LoRA path was found for Qwen3.5 dense or Qwen3.8.} Serving Qwen2.5 with
+  \code{enable_lora} failed at engine initialisation. The JAX training stacks we inspected list
+  Qwen2/Qwen3 (Tunix 0.1.7) and Qwen2.5/Qwen3 plus Qwen3.5 mixture-of-experts scripts (MaxText), but
+  no dense Qwen3.5 or Qwen3.8 path. GwenLaya's training steps (Laya head, SFT) therefore stay on the
+  GPU/CPU plan.
+\end{itemize}
+
+%-----------------------------------------------------------------------------
+\section{Actual GCP spend}\label{sec:spend}
+
+Read from \url{/mnt/data/home/xavkal/gwaya-data/spend_ledger.jsonl} (3 lines):
+
+\begin{center}\small
+\begin{tabular}{l p{7.2cm} r l}\toprule
+Time & Item & Seconds & USD in ledger\\\midrule
+2026-10-07 21:54 & TPU smoke, attempt 1 (v5litepod-1 spot, us-west4-a; preempted) & 240 & 0.0330 (catalog)\\
+2026-10-07 22:38 & TPU smoke (v5litepod-1 on demand, us-central1-a) & 2,466 & 0.8220 (catalog)\\
+2026-10-08 00:35 & L1 upload to data lake (6 objects) & 13 & 0.0\\
+\bottomrule\end{tabular}\end{center}
+
+The recorded USD total is \$0.85 (0.8549), all from the two TPU smoke tests, priced from the
+Cloud Billing Catalog list prices shown above; these lines originally lacked \code{usd_estimate}
+and \code{resource} and were completed on 2026-10-08. The night's GPU (\$2.00) and endpoint
+(\$2.00) caps were not used. Local CPU work cost nothing on GCP. The billed amount is \TBD{} until
+the billing export is read.
+
+%-----------------------------------------------------------------------------
+\section{Reproducibility}\label{sec:repro}
+
+\paragraph{Code.} Repository branch \code{night/2026-10-07} (from \code{main}, released as v3.2.0
+at \code{825d1ba}); the first draft of this paper is commit \code{9b78e18}; \code{numbers_v4.json}
+was regenerated for this revision (all numbers of the first draft unchanged, per-domain and
+boxed-only numbers added) and is committed with it. llama.cpp release b11476 (CPU, asset sha256 \code{2cda5ff9...4b5e});
+Qwen3.5-2B-Q4\_K\_M.gguf from \code{unsloth/Qwen3.5-2B-GGUF} revision \code{f6d5376b...}, sha256
+\code{aaf42c8b...9223}; 4B: revision \code{e87f1764...}, sha256 \code{00fe7986...11a4} (all in
+\code{L0_env.json}).
+
+\paragraph{Frozen inputs (sha256).}
+\begin{center}\footnotesize
+\begin{tabular}{p{5.6cm} p{9.2cm}}\toprule
+File & sha256\\\midrule
+\url{experiments/night/manifest_eval.json} & \texttt{\seqsplit{bd1684dadcf38328fb6fab7619e5ea2f4fbc5ccc0e31022e059360b2d8c615e0}}\\
+\url{tasks_E_night.jsonl} (80 items) & \texttt{\seqsplit{e842edd13951b4082c4495f7bcc845b032989f4a457e0c5d6e9c44f2b72cd679}}\\
+\url{tasks_E_primary.jsonl} (1,541 items) & \texttt{\seqsplit{971f44c61bad5044f8487383f8a3ea27bc2c292c565a6ff8ef1254fce1cc7097}}\\
+\url{docs/FREEZE_ADDENDUM_NIGHT_2026-10-07.md} & \texttt{\seqsplit{ac2970983ef45eb027de65194d42cadd41483dfd35cd2a866efc64247b02376c}}\\
+\url{decontam_report.json} & \texttt{\seqsplit{d128e06c5949c86c29537f71a1d547ef953be6aa22f7bc814a280ec4d48f1907}}\\
+\url{night/cache/L2score/rows.jsonl} & \texttt{\seqsplit{1e35fac792d29d8f82ce05f5cbad0d615bb4db2a6a707d157edff75da0fa69c6}}\\
+\url{night/cache/L2score/gens.jsonl} & \texttt{\seqsplit{03f6e2b6af9cebd65d8488b9a35a1f7d3bc70b566397379edc3d95f5291963db}}\\
+\url{papers/numbers_v4.json} (this revision) & \texttt{\seqsplit{e5488f6c66419aa99971eef25c10f1f076b0595d1b9c02db84e007591d32b07c}}\\
+\url{tasks_E_night.d25.jsonl} (80, D25) & \texttt{\seqsplit{504909fc74dc2af8fb3f2491a475df07de8e95e6fdf0f4f69bc22352e95e0952}}\\
+\url{tasks_E_primary.d25.jsonl} (1,536, D25) & \texttt{\seqsplit{2143110c78a3a9f57599dce77021cf4571fc57cf2584017f16ebdd08d5acba66}}\\
+\bottomrule\end{tabular}\end{center}
+HF dataset revisions are in the freeze addendum (MATH-500 \code{6e4ed1a2}, humanevalplus
+\code{d32357cf}, mbppplus \code{b2d74c91}, MultiPL-E \code{28441b60}). The \code{rows.jsonl} and
+\code{gens.jsonl} hash chains verify (\code{numbers_v4.json} meta). The L2 run used the original
+task files; the \code{.d25} files (gate payloads rebuilt, prompts and hidden checks unchanged) are
+for all later runs and are described in \code{docs/FREEZE_ADDENDUM_2026-10-08_D25.md}.
+
+\paragraph{Data lake.} \url{gs://socrateai-datalake-gen-lang-client-0625573011/gwenlaya_v4/night/2026-10-07/}
+holds the manifest, both task files, the sizing file, the addendum and the decontamination report.
+The TPU logs are under \code{.../gwenlaya_v4/tpu_smoke/}. The scored L2 rows and generations are
+\emph{not yet} in the lake (they are on the local data disk under \code{night/cache/L2score/}); the
+registration requires results tables to come from \code{gwenlaya_v4/results/}, so uploading them is
+an open item and this is recorded as a limitation.
+
+\paragraph{Commands.} With the environment of \code{night/run_L2.sh}
+(\code{GWAYA_DATA_ROOT}, \code{HF_HOME}, \code{PYTHONPATH}):
+{\footnotesize
+\begin{verbatim}
+python scripts/run_study.py --plan experiments/night/plan_night.json --stage night_L2 \
+  --backend openai --backend-url http://127.0.0.1:8091/v1 \
+  --tasks $NIGHT/results/tasks_E_night.jsonl --models qwen3.5-2b-q4_K_M \
+  --quants q4_K_M --arms base --mode generate --no-vram --cpu-pid <llama-server pid> \
+  --out $NIGHT/cache/L2
+python scripts/run_study.py ... --mode score --out $NIGHT/cache/L2score
+python scripts/analyze_study.py --results $NIGHT/cache/L2score --n-boot 10000 --seed 0
+#   writes numbers_v4.json, tables_v4.tex, figures_v4/; --results must name L2score only,
+#   because night/cache/L2/gens.jsonl is a byte-identical copy and would be counted twice
+python scripts/data/regen_gate_payloads_d25.py --results $NIGHT/results   # D25 task files
+\end{verbatim}}
+\noindent The llama-server ran on 127.0.0.1:8091 with \code{-t 4 --parallel 2} (D14).
+
+%-----------------------------------------------------------------------------
+\section{Limitations}\label{sec:limits}
+
+\begin{itemize}
+\item No pre-registered test ran. Nothing here supports or refutes H1--H12, H14 or H15.
+\item The only scored arm is unregistered, single-seed, $n=80$, on CPU, with no gate recorded.
+\item The math generations are invalid (prompt-path defect) and were scored with an unregistered
+  last-number extraction (D24); the Rust harness is unvalidated. Only the 28 Python items are a
+  usable descriptive result, and with $n=28$ their AUROC interval includes 0.5.
+\item \textbf{Contamination.} All absolute scores are on public sets (HumanEval+, MBPP+,
+  MultiPL-E, MATH-500) that Qwen3.5 has probably seen in pretraining; they are not clean capability
+  estimates, and only paired within-model deltas are claimed by the registration. Decontamination
+  (D18) covered only training/calibration data against E and cannot detect pretraining exposure. The
+  contamination-stratified analysis asked for by review finding F12 (for example MBPP+ versus
+  HumanEval+ items, or a post-cutoff anchor such as LiveCodeBench, which D10 dropped) was not done:
+  \TBD.
+\item The HumanEval+ gate payloads of the night task files contained the hidden tests (D25). No gate
+  ran in L2, so no result is affected, but any earlier claim that the gate never saw the scoring
+  checks was false for those files.
+\item Several deviations (D22--D26) were written after the L2 generations existed; none was written
+  after a registered test, because none ran.
+\item Even with all arms present, $n=80$ gives H1 power of about 0.05 at its MEI; the night design
+  could at best produce an inconclusive H1.
+\item Cost is server CPU-seconds on a machine shared with foreign jobs and includes idle threads; it
+  is not comparable to the registered L4 GPU-seconds.
+\item The USD spend is a list-price estimate, not the billed amount, and H13 holds largely by
+  construction of the ledger.
+\item Scored rows are not yet mirrored to the data lake as the registration requires.
+\item Lean 4, the training arms, quantization and the endpoint were not run. The TPU finding is from
+  one chip, one vLLM version and a fixed time limit.
+\end{itemize}
+
+\section{Next steps}
+Log the math prompt fix as a deviation, regenerate the 26 math items and score them boxed-only
+(D24), price the two TPU ledger lines from the billing export, validate the Rust harness on one
+passing program, generate the 4B arm and the GL/B3/B5 arms on the same 80 items with the \code{.d25} task files, build the
+cross-fitted scores file, upload results to the data lake, and rerun \code{analyze_study.py}. Only
+then can H1, H3, H2, H7 and H4--H6 move off ``not run''. A null or negative result will be reported
+in the same form as this one.
+
+\bibliographystyle{plain}
+\bibliography{gwenlaya_v4}
+
+\appendix
+\section{Machine-generated tables}\label{app:tables}
+The tables on the next page are \code{papers/tables_v4.tex} as written by
+\code{scripts/analyze_study.py} from \code{papers/numbers_v4.json} (content unedited, font reduced). ``CPU-s total'' is server
+CPU-seconds, which include idle-spinning worker threads on a machine shared with three foreign
+CPU-bound jobs (D14, D21). In these tables ``acc.'' and ``pass rate'' are the PASS\_HIDDEN rate
+(rows.jsonl \code{score} = VERIFIED, i.e.\ passed the hidden checks), not the registered gate
+VERIFIED. CWR counts every UNDECIDED answer as wrong, so it is an upper bound. The arm table holds
+the pooled 80 items and is a sensitivity analysis only (Section~\ref{sec:results}).
+The hypothesis-status table is the script's machine status; Table~\ref{tab:verdict} is the
+reviewed verdict.
+\begin{landscape}
+{\let\small\footnotesize\input{tables_v4.tex}}
+\end{landscape}
+\end{document}

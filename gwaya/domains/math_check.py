@@ -72,6 +72,10 @@ def _to_sympy_src(s: str) -> str | None:
     s = s.replace("{", "(").replace("}", ")").replace("^", "**")
     if "\\" in s or not _SAFE_EXPR.match(s) or not s.strip():
         return None
+    # multi-letter words (e.g. "banana") are prose, not algebra: sympy would read them as free
+    # symbols and return a spurious False instead of undecided
+    if any(w not in ("sqrt", "pi") for w in re.findall(r"[A-Za-z]{2,}", s)):
+        return None
     return s
 
 

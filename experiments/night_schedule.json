@@ -1,0 +1,155 @@
+{
+ "name": "GwenLaya v4 night run 2026-10-07",
+ "branch": "night/2026-10-07",
+ "prereg": "docs/GWENLAYA_PREREGISTRATION.md",
+ "deviations": "docs/DEVIATIONS.md#night-run-2026-10-07",
+ "written": "2026-10-07",
+ "env": "cd /home/xavkal/xdev/GWAYA-GwenLayaOpenModel && export GWAYA_DATA_ROOT=/mnt/data/home/xavkal/gwaya-data HF_HOME=/mnt/data/home/xavkal/gwaya-data/hf-home HF_DATASETS_CACHE=/mnt/data/home/xavkal/gwaya-data/hf-datasets PYTHONPATH=/home/xavkal/xdev/GWAYA-GwenLayaOpenModel PIP_CACHE_DIR=/mnt/data/home/xavkal/gwaya-data/pip-cache NIGHT=/mnt/data/home/xavkal/gwaya-data/night",
+ "python": "/mnt/data/xdev-cache/tmp/claude-1000/-home-xavkal-xdev-GWAYA-GwenLayaOpenModel/0cf9e15b-1839-4167-85fc-4fa02442ca1e/scratchpad/venv/bin/python",
+ "budget": {
+  "spent_before_night_usd": 0.84,
+  "spent_source": "task text (~0.84 USD of TPU smoke tests); the two lines in spend_ledger.jsonl carry seconds (240, 2466) but no usd_estimate field; GCS runs/LEDGER.jsonl does not exist (read 2026-10-07)",
+  "night_gcp_caps_usd": {"G1": 2.0, "E1": 2.0},
+  "night_caps_total_usd": 4.0,
+  "planned_total_usd": 4.84,
+  "hard_rule": "before any spend: sum(spend_ledger.jsonl usd_estimate) + 0.84 (unrecorded prior) + step cap <= 45; plan.json planned cap 40 and hard cap 50 also hold",
+  "gpu_wait_budget_hours_total": 8,
+  "gpu_planning_rate_usd_per_h": {"l4_spot_vm": 0.55, "cloudrun_l4": 1.0465}
+ },
+ "facts_read_this_session": {
+  "GPUS_ALL_REGIONS": "limit 1, usage 1 (socreateai-agora-hermes-node1 RUNNING, us-east4-b) at planning time",
+  "ollama_version": "0.1.44 (local); does not return logprobs; Qwen3.5 support unverified and Ollama may not be restarted/upgraded",
+  "venv": "scratchpad venv is a bare symlink to /usr/bin/python3 3.12.3 with no numpy/torch/transformers/peft/datasets",
+  "lean": "Mathlib oleans fetched under gwaya-data/lean-mathlib/project (cache_get.log: 4357 files unpacked)",
+  "pdflatex": "/usr/bin/pdflatex present",
+  "local_hf_eval_data": "mbppplus, humanevalplus, mbpp sanitized cached; MultiPL-E and MATH-500 not yet cached"
+ },
+ "night_eval_set": {
+  "name": "E-night",
+  "rule": "seeded order eval_order=20261007 over each primary E domain; first n_d items per domain after harness-sanity exclusion; n_d fixed in the freeze addendum (L1) from L0-measured CPU throughput so that L2 fits 3 h and L3 fits 4 h; split Python:Rust:Math proportional to 542:510:500; if G1 runs, G1 generates the full primary E (1552) and E-night is the overlap used for CPU-vs-L4 replication",
+  "domains": ["python", "rust", "math"],
+  "dropped_domains": ["lean4 (E and C)", "gsm8k", "aime25", "livecodebench", "mbpp continuity anchor"],
+  "underpowered_flag": "if the realised paired n (items with every local tier generated) < 500, the addendum states H1 power < 0.79 for the 3-pt MEI (prereg section 9 table, unclustered upper bound); the MEI is not changed"
+ },
+ "analysis_cache_rule": "If G1 completes, the L4 cache (all tiers, L4 GPU-seconds) is the primary analysis cache, as pre-registered; the local CPU cache is a replication. If G1 is skipped, the local CPU cache (tiers 2B/4B, CPU-seconds) is primary and every GPU-dependent claim is reported as not run.",
+ "steps": [
+  {
+   "id": "L0",
+   "kind": "local",
+   "max_hours": 0.75,
+   "cap_usd": 0,
+   "depends_on": [],
+   "what": "git checkout night/2026-10-07 (create from main if missing). mkdir -p $NIGHT/{logs,models,cache,results,bin}. Install into the scratchpad venv (ensurepip if pip missing; pip cache on /mnt/data): numpy scipy datasets safetensors pytest + CPU torch (--index-url https://download.pytorch.org/whl/cpu) + transformers peft scikit-learn. Download the latest llama.cpp CPU release binaries (GitHub ggml-org/llama.cpp, ubuntu-x64) into $NIGHT/bin; record the build tag. Download GGUFs Qwen3.5-2B q4_K_M and Qwen3.5-4B q4_K_M (HF repo id + revision + sha256 recorded; repo name TBD at run time, prefer Qwen official, else unsloth) into $NIGHT/models. Start llama-server on 127.0.0.1:8091 (never Ollama's port; Ollama untouched), -t 8 --parallel 2, and measure prompt+gen tok/s on 10 seeded MBPP+ prompts per tier with thinking disabled; check /v1/chat/completions returns logprobs. Run offline unit tests: pytest -q tests/test_metrics_selective.py tests/test_run_study.py tests/test_oracles_fail_closed.py tests/test_rust_oracle.py tests/test_domains.py (NO playwright, NO gpu_manager). Read-only GCP preflight (project-info GPUS_ALL_REGIONS, instances list). Start the background GPU-slot poller W (read-only, every 10 min, log $NIGHT/logs/gpu_slot.log).",
+   "hypotheses": ["H15 (offline kill/resume test in tests/test_run_study.py)"],
+   "success_check": "$NIGHT/results/L0_env.json exists with llama.cpp build tag, GGUF sha256 for 2B and 4B, measured tok/s per tier (numbers read from the timing run), logprobs_supported true/false, pytest pass/fail counts; llama-server /health returns ok"
+  },
+  {
+   "id": "L1",
+   "kind": "local",
+   "max_hours": 1.0,
+   "cap_usd": 0,
+   "depends_on": ["L0"],
+   "what": "C0-lite. Download nuprl/MultiPL-E (humaneval-rs, mbpp-rs) and HuggingFaceH4/MATH-500 to HF_DATASETS_CACHE. Build gwenlaya_v4 eval manifest for primary E (python 542, rust 510, math 500): ids, sha256 of normalized statement+tests, HF revision, license. Harness-sanity exclusion (reference solutions vs own checks in bwrap; Rust: rustc + asserts), split gate-visible (first test / first assert_eq!) vs hidden. Assign source-problem clusters (HumanEval/MBPP Python task <-> MultiPL-E Rust translation). Decontaminate vs decontam_index.jsonl. Compute n_d for E-night from L0 tok/s (rule in night_eval_set). Write the FREEZE ADDENDUM (manifest sha256, E-night n_d, cross-fitting calibration procedure, arm list, analysis plan, power statement) and append its sha256 to docs/GWENLAYA_PREREGISTRATION.md Addenda BEFORE any E generation; commit on the night branch. Upload manifest + E-night task JSONL to gs://socrateai-datalake-gen-lang-client-0625573011/gwenlaya_v4/night/2026-10-07/ (storage only, negligible; ledger line with usd_estimate 0.0 and a note).",
+   "hypotheses": ["H1", "H3"],
+   "success_check": "$NIGHT/results/manifest_eval.json row counts per domain and exclusion counts read from the file; tasks_E_night.jsonl line count == sum(n_d); addendum hash line present in prereg Addenda; git log shows the addendum commit on night/2026-10-07 (not main)"
+  },
+  {
+   "id": "G1",
+   "kind": "gpu",
+   "max_hours": 3.5,
+   "cap_usd": 2.0,
+   "depends_on": ["L1"],
+   "wait": "starts as soon as poller W sees GPUS_ALL_REGIONS usage == 0 and no RUNNING accelerator VM; waits at most 8 h from L1 end (the whole night's GPU wait budget); if never free -> SKIPPED, logged, paper uses the local-only path",
+   "what": "Preflight (read-only): quota usage 0, no RUNNING accelerator VM, ledger sum + 0.84 + 2.0 <= 45. Create ONE spot g2-standard-8 (1x L4) in us-central1 (fallback us-east4), label purpose=gwenlaya, --provisioning-model=SPOT --max-run-duration=3h30m --instance-termination-action=DELETE, 100 GB pd-balanced boot, public Deep Learning VM CUDA image; no Cloud Build (public llama.cpp server-cuda container or release binary). Append a ledger line at create and at delete. On the VM, in priority order with GCS sync of the candidate cache every <= 15 min to gwenlaya_v4/night/2026-10-07/l4_cache/: (a) S1-lite throughput: tok/s at batch 1 and --parallel 8 for 2B/4B/9B q4_K_M (+27B q4 load test), peak VRAM; (b) Qwen3.5-9B q4_K_M greedy on full primary E (1552) in seeded order, logprobs on, thinking off, max_new_tokens 1024; (c) 2B and 4B q4_K_M on full primary E (same settings, L4 timings for H3); (d) 27B q4_K_M on the first 300 E items in seeded order (exploratory tier, S6 reduction rule 2); (e) 9B q8_0 and bf16 GGUF on the first 300 E items (H8 exploratory). Each sub-task stops when the watchdog projects the 2.0 USD cap; NO verification on the VM. Delete VM and disk; release check: no purpose=gwenlaya VM/disk remains.",
+   "hypotheses": ["H1", "H3", "H8 (exploratory)", "H13", "H15"],
+   "success_check": "gsutil ls of l4_cache shows candidates_<tier>.jsonl for 9B, 4B, 2B with line counts read and recorded; throughput.json exists; ledger has create+delete lines whose usd_estimate sum <= 2.0; gcloud compute instances list shows no purpose=gwenlaya instance"
+  },
+  {
+   "id": "L2",
+   "kind": "local",
+   "max_hours": 3.0,
+   "cap_usd": 0,
+   "depends_on": ["L1"],
+   "what": "Tier-1 local generation: nohup run_study.py --stage night_L2 --backend openai --backend-url http://127.0.0.1:8091/v1 --tasks tasks_E_night.jsonl --models qwen3.5-2b-q4_K_M --mode generate (greedy, thinking off, max_new_tokens 1024, logprobs on, per-call CPU-seconds), log $NIGHT/logs/L2.log; poll every ~10 min. On the 3 h limit stop cleanly; truncated n is analysed as is (seeded order).",
+   "hypotheses": ["H1", "H3", "H2 (exploratory)", "H7 (exploratory)"],
+   "success_check": "$NIGHT/cache/candidates_2b.jsonl line count read and recorded; every line has logprob fields and cpu_seconds; log ends with DONE or LIMIT"
+  },
+  {
+   "id": "L3",
+   "kind": "local",
+   "max_hours": 4.0,
+   "cap_usd": 0,
+   "depends_on": ["L2"],
+   "skip_if": "G1 has already produced a complete 4B L4 cache for the E-night items (then the CPU is freed for L4/L5)",
+   "what": "Tier-2 local generation, same as L2 with qwen3.5-4b-q4_K_M on exactly the items L2 completed, same seeded order; llama-server -t 6 so L4a verification can use 2 cores. 4 h limit, truncated n analysed as is.",
+   "hypotheses": ["H1", "H3", "H2 (exploratory)", "H7 (exploratory)"],
+   "success_check": "$NIGHT/cache/candidates_4b.jsonl line count read and recorded; paired n = |items in both 2B and 4B caches| written to $NIGHT/results/paired_n.json"
+  },
+  {
+   "id": "L4",
+   "kind": "local",
+   "max_hours": 2.0,
+   "cap_usd": 0,
+   "depends_on": ["L2"],
+   "what": "C3/C7-lite verification on CPU in bwrap for every cached candidate (local caches as they finish; L4 cache after G1): gate-visible check and hidden scoring checks per domain (Python first test vs full plus suite; Rust rustc+first assert vs all asserts; Math PoT re-exec vs sympy gold). Workers <= 2 while L3 is generating, <= 6 after. Writes labels and gate features (gate level, tests-passed fraction, error class, mean/min logprob).",
+   "hypotheses": ["H1", "H2 (exploratory)", "H3", "H7 (exploratory)"],
+   "success_check": "$NIGHT/results/verified_<cache>_<tier>.jsonl exists for each available cache; counts of VERIFIED / gate-fail / hidden-fail read from the files; 0 candidates left unverified (or the number left is reported)"
+  },
+  {
+   "id": "L5",
+   "kind": "local",
+   "max_hours": 3.0,
+   "cap_usd": 0,
+   "depends_on": ["L4"],
+   "what": "C4/C6-lite calibrators with 5-fold cross-fitting grouped by source-problem cluster (declared deviation: no separate C/router-train generation). Arms: LR (gate features), SH (shuffled labels, negative control), B3 (temperature-scaled mean logprob), B6 (Laya zero-shot features). Laya: run a 50-step CPU LoRA r=16 timing (scripts/train_laya.py); if the projected 5-fold run <= 2 h, train the LoRA pre/post heads per fold; else fall back to a frozen-Laya-embedding logistic head (declared deviation, H5 then reads 'Laya-embedding probe vs LR'). Fit tau_route, tau_hi (split-conformal, alpha 0.10), tau_lo per domain on the training folds only; out-of-fold predictions for E. Save the Laya head + calibrations to $NIGHT/models/laya_head/ and GCS.",
+   "hypotheses": ["H4", "H5", "H6", "H1", "H3"],
+   "success_check": "$NIGHT/results/oof_scores.jsonl has one row per (item, tier) with GL/LR/SH/B3 scores; calibrations.json and laya_head/ exist; timing_50step.json records the measured projection and the branch taken"
+  },
+  {
+   "id": "L6",
+   "kind": "local",
+   "max_hours": 1.5,
+   "cap_usd": 0,
+   "depends_on": ["L5"],
+   "what": "C5 analysis with gwaya/metrics_selective.py: cluster-stratified paired bootstrap (10,000, seed 0), exact McNemar, Holm. Primary: H1 (GL vs B3 at matched coverage; report 'matching failed' if the coverage-difference CI leaves +-3 pts), H3 (compute-seconds per correct answered item GL vs B5; L4 GPU-seconds if G1 ran, else CPU-seconds and labelled as deviation). Secondary: H4, H5 (+SH control), H6; H8 TOST only if G1(e) ran (exploratory, n<=300). Exploratory: H2, H7 (with Rust hidden-assert counts), 27B tier, CPU-vs-L4 replication. Systems: H13 from the ledger, H15 from the offline kill/resume test and any real preemption timestamps. Run release checks R1-R6 that apply. Write results/gwenlaya_v4_night/*.json (small, committed).",
+   "hypotheses": ["H1", "H3", "H4", "H5", "H6", "H2 (exploratory)", "H7 (exploratory)", "H8 (exploratory, conditional)", "H13", "H15"],
+   "success_check": "results/gwenlaya_v4_night/hypotheses.json has one entry per hypothesis with status in {PASS, FAIL, HARM, matching failed, estimate, NOT RUN} and every number copied from analysis output; release_checks.json written"
+  },
+  {
+   "id": "E1",
+   "kind": "endpoint",
+   "max_hours": 1.8,
+   "cap_usd": 2.0,
+   "depends_on": ["G1", "L5"],
+   "run_if": "G1 completed (9B q4_K_M GGUF staged in GCS us-central1) AND the Laya head from L5 exists AND the read-only Cloud Run L4 quota check (gcloud beta quotas info list --service=run.googleapis.com) shows L4 quota in us-central1 AND ledger sum + 0.84 + 2.0 <= 45 AND the exact deploy/teardown commands are authorized by the step prompt (plan.json: requires_user_approval_of_exact_commands); otherwise SKIPPED and H14 reported NOT RUN",
+   "what": "S7-lite: deploy gwenlaya-gen on Cloud Run L4 (us-central1, min-instances 0, max-instances 1, --no-allow-unauthenticated) from a public image (no Cloud Build; if no suitable public image, skip), model read from the GCS staging path; measure idle-to-zero once; 4 cold samples (cut order drops cold samples 5-6), each after scale-to-zero; 30 warm requests at 512 input tokens; teardown (delete service) and confirm. Ledger lines at deploy and teardown with instance-seconds.",
+   "hypotheses": ["H14", "H13"],
+   "success_check": "$NIGHT/results/endpoint.json with 4 cold TTFT values and 30 warm TTFT values read from request logs; gcloud run services list shows no gwenlaya service; ledger instance-hours <= 1.8"
+  },
+  {
+   "id": "L7",
+   "kind": "local",
+   "max_hours": 2.0,
+   "cap_usd": 0,
+   "depends_on": ["L6"],
+   "what": "Revised paper: papers/gwenlaya_v4_night.tex (revision of the v3 report) with tables generated by scripts/build_paper_tables.py from results/gwenlaya_v4_night/*.json only; sections: design as registered, what ran tonight, deviations (link docs/DEVIATIONS.md), results incl. null/negative ones, hypotheses NOT RUN with their registered design, limitations (CPU timings, 2 local tiers, reduced n, cross-fitting, single seed). Unknown values print TBD. pdflatex twice. Commit tex/pdf/results JSON on night/2026-10-07, push the branch, open a DRAFT PR to main (do not merge), upload PDF to gs://socrateai-datalake-gen-lang-client-0625573011/gwenlaya_v4/night/2026-10-07/paper/. Final release check: no purpose=gwenlaya VM/disk/Cloud Run service; ledger total printed.",
+   "hypotheses": ["all reported"],
+   "success_check": "papers/gwenlaya_v4_night.pdf exists and pdflatex exit 0; grep finds no number in the tex absent from results JSON (script check); git log on night/2026-10-07 shows the paper commit and origin has the branch; draft PR URL recorded"
+  }
+ ],
+ "order_and_concurrency": [
+  "L0 -> L1 -> L2 -> L3 -> L6 -> L7 is the local-only critical path (about 14 h worst case, all at $0); L4 runs alongside L3 on 2 cores and finishes after L3; L5 after L4",
+  "W (read-only poller) runs from L0; G1 runs on the remote VM in parallel with L2/L3 as soon as the slot frees; L4 verifies the L4 cache when it lands",
+  "E1 only after G1 and L5, before L7",
+  "if every GPU/endpoint step is skipped, the paper still reports H1, H3 (CPU-seconds), H4-H6, H2/H7 estimates, H13, H15 on E-night with 2 tiers, and the registered design for the rest"
+ ],
+ "dropped_or_deferred": {
+  "S3, S4a (SFT and DPO), S4b, S4c, S4d, S5": "deferred: no gate-verified traces tonight; H9 deferred (prior 0.25, about 0.5 power at MEI +3 pts with n=542, unproven Qwen3.5 QLoRA stack); H10 (0.05), H11 (0.12), H12 (0.12) dropped (prior < 0.15)",
+  "S6 full matrix": "replaced by G1 (3 tiers on primary E + exploratory 27B/q8/bf16 subsamples)",
+  "B4 self-consistency k=5": "dropped (first S6 item in cut_order; 5x generation cost)",
+  "Lean 4 (E, C, C2 elaboration, H11)": "dropped tonight; Lean is outside the pooled H1 analysis",
+  "GSM8K, AIME25, LiveCodeBench, MBPP continuity anchor, Qwen3.5-0.8B tier 0": "dropped (exploratory only, last in cut order)",
+  "second generation seed": "dropped (cut order)",
+  "TPU": "not planned (Qwen3.5/3.8 unproven on TPU, no TPU LoRA path)"
+ }
+}
