@@ -100,3 +100,21 @@ def test_live_ollama_smoke():
     code = extract_code_block(out)
     assert "def add" in code
     assert gen.last_stats is not None and gen.last_stats.completion_tokens <= 64
+
+
+def test_math_prompt_is_prose_not_code():
+    from gwaya.generators import OllamaGenerator
+    g = OllamaGenerator(model="m")
+    raw = g.build_raw_prompt("What is 2+3?", domain="math")
+    assert raw.endswith("<|im_start|>assistant\n")  # no ```python prefill
+    assert "boxed" in raw and "python programmer" not in raw
+    assert "```" not in g.stop_sequences("math")
+    assert g.wrap_output("so \\boxed{5}\n", "math") == "so \\boxed{5}"
+
+
+def test_code_prompt_keeps_fence_prefill_and_stop():
+    from gwaya.generators import OllamaGenerator
+    g = OllamaGenerator(model="m")
+    assert g.build_raw_prompt("f", domain="rust").endswith("```rust\n")
+    assert "```" in g.stop_sequences("rust")
+    assert g.wrap_output("fn f() {}", "rust") == "```rust\nfn f() {}\n```"

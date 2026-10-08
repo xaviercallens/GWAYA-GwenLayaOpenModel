@@ -695,7 +695,7 @@ def write_tables(path: Path, gen: dict, arms: dict, hyp: dict, unit: str, single
         L.append("\\multicolumn{6}{c}{no generations found} \\\\")
     L += ["\\bottomrule\\end{tabular}\\end{table}", ""]
     if single:
-        status = {"python": "headline", "rust": "unvalidated harness", "math": "INVALID prompt path; last-number fallback",
+        status = {"python": "headline", "rust": "validated harness (D27)", "math": "INVALID prompt path (D24/D28); boxed-only",
                   "math (boxed-only)": "INVALID prompt path; registered boxed-only", "pooled (boxed-only math)": "sensitivity"}
         L += ["\\begin{table}[t]\\centering\\small",
               "\\caption{Single unregistered arm \\texttt{base}, per domain (descriptive, not a test). Pass = passed the hidden checks "
@@ -755,7 +755,7 @@ def make_figures(outdir: Path, D: dict, arms: dict, scores_ctx: dict | None, D_h
             if np.isfinite(H[lab]["p"]).all():
                 curves.append((f"python, n={D_head['n']} (headline)", H[lab]["p"], H[lab]["correct"], "-"))
         for lab in conf:
-            curves.append((f"pooled, n={D['n']} (sensitivity: invalid math, unvalidated Rust)", A[lab]["p"], A[lab]["correct"], "--"))
+            curves.append((f"pooled, n={D['n']} (sensitivity: includes invalid math)", A[lab]["p"], A[lab]["correct"], "--"))
     else:
         curves = [(lab, A[lab]["p"], A[lab]["correct"], "-") for lab in conf]
     if curves:
@@ -880,7 +880,7 @@ def analyze(rows_files: list[Path], gens_files: list[Path], tasks_file: Path | N
                 arms = arm_summary(D, n_boot, seed, N, csrc, unit)  # pooled: sensitivity only (mixes domains)
                 N.meta["single_arm_note"] = ("descriptive only, not a pre-registered test; confidence = exp(mean_logprob) "
                                              "from gens.jsonl, uncalibrated and not cross-fitted. The pooled arm.* "
-                                             "numbers mix an invalid math prompt path and an unvalidated Rust harness; "
+                                             "numbers include the invalid night math generations (D24/D28); "
                                              "the headline is single_arm.by_domain.python")
                 single = single_arm_by_domain(rows, gens, extra, task_clusters, cost_fn, n_boot, seed, N, csrc, unit)
     hyp.update(run_secondary(scores, task_info, n_boot, seed, N, str(scores_file) if scores_file else "no scores file"))

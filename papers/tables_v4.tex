@@ -12,19 +12,19 @@ qwen3.5-2b-q4\_K\_M & rust & 26 & 98.5 & 2963 & stop:26 \\
 \caption{Single unregistered arm \texttt{base}, per domain (descriptive, not a test). Pass = passed the hidden checks (PASS\_HIDDEN), not the registered gate VERIFIED. Confidence = raw exp(mean log-prob). 95\% cluster bootstrap CI. Cost unit: cpu\_seconds. TBD = undefined (e.g. no passing item).}
 \begin{tabular}{p{2.6cm}p{3.0cm}rccccc}\toprule
 domain & status & n & pass rate & mean conf. & ECE & AUROC & cost / pass \\\midrule
-math & INVALID prompt path; last-number fallback & 26 & 0.115 [0.000, 0.231] & 0.832 [0.807, 0.857] & 0.734 [0.633, 0.833] & 0.348 [0.133, 0.583] & 3304 [1298, 11975] \\
+math & INVALID prompt path (D24/D28); boxed-only & 26 & 0.000 [0.000, 0.000] & 0.832 [0.807, 0.857] & 0.832 [0.807, 0.857] & TBD [TBD, TBD] & TBD [TBD, TBD] \\
 python & headline & 28 & 0.393 [0.214, 0.571] & 0.896 [0.875, 0.917] & 0.519 [0.392, 0.689] & 0.717 [0.483, 0.917] & 330 [174, 726] \\
-rust & unvalidated harness & 26 & 0.000 [0.000, 0.000] & 0.894 [0.882, 0.906] & 0.894 [0.882, 0.906] & TBD [TBD, TBD] & TBD [TBD, TBD] \\
+rust & validated harness (D27) & 26 & 0.231 [0.077, 0.385] & 0.894 [0.882, 0.906] & 0.675 [0.549, 0.813] & 0.875 [0.709, 0.990] & 494 [261, 1552] \\
 math (boxed-only) & INVALID prompt path; registered boxed-only & 26 & 0.000 [0.000, 0.000] & 0.832 [0.807, 0.857] & 0.832 [0.807, 0.857] & TBD [TBD, TBD] & TBD [TBD, TBD] \\
-pooled (boxed-only math) & sensitivity & 80 & 0.138 [0.075, 0.200] & 0.875 [0.863, 0.886] & 0.737 [0.676, 0.798] & 0.758 [0.568, 0.922] & 1500 [931, 2840] \\
-pooled & sensitivity (mixed) & 80 & 0.175 [0.100, 0.250] & 0.875 [0.863, 0.886] & 0.700 [0.626, 0.771] & 0.618 [0.422, 0.811] & 1178 [732, 2114] \\
+pooled (boxed-only math) & sensitivity & 80 & 0.212 [0.125, 0.300] & 0.875 [0.863, 0.886] & 0.662 [0.585, 0.741] & 0.806 [0.675, 0.917] & 970 [629, 1648] \\
+pooled & sensitivity (mixed) & 80 & 0.212 [0.125, 0.300] & 0.875 [0.863, 0.886] & 0.662 [0.585, 0.741] & 0.806 [0.675, 0.917] & 970 [629, 1648] \\
 \bottomrule\end{tabular}\end{table}
 
 \begin{table}[t]\centering\small
 \caption{Arms on the paired E-night items (percent; 95\% cluster bootstrap CI). Cost unit: cpu\_seconds. TBD = not run or not available.}
 \begin{tabular}{lccccc}\toprule
 arm & acc. & coverage & CWR & ans. acc. & cost / correct \\\midrule
-base & 17.5 [10.0, 25.0] & 100.0 [100.0, 100.0] & 82.5 [75.0, 90.0] & 17.5 [10.0, 25.0] & 1178.4 [731.8, 2113.9] \\
+base & 21.2 [12.5, 30.0] & 100.0 [100.0, 100.0] & 78.8 [70.0, 87.5] & 21.2 [12.5, 30.0] & 970.5 [629.2, 1647.9] \\
 \bottomrule\end{tabular}\end{table}
 
 \begin{table}[t]\centering\small

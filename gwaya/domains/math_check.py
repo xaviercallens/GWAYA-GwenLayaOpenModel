@@ -32,13 +32,18 @@ def _last_boxed(text: str) -> str | None:
     return None  # unbalanced braces
 
 
-def extract_final_answer(text: str) -> tuple[str, str] | None:
-    """Return (answer, method) using, in order: last \\boxed{}, last '####', last number."""
+def extract_final_answer(text: str, boxed_only: bool = False) -> tuple[str, str] | None:
+    """Return (answer, method) using, in order: last \\boxed{}, last '####', last number.
+
+    boxed_only=True is the registered scoring rule (D24): only the last \\boxed{} counts.
+    """
     if not text or not text.strip():
         return None
     boxed = _last_boxed(text)
     if boxed:
         return boxed, "boxed"
+    if boxed_only:
+        return None
     if "####" in text:
         tail = text.rsplit("####", 1)[1].strip().splitlines()
         if tail and tail[0].strip():
@@ -140,11 +145,13 @@ def answers_equivalent(candidate: str, gold: str) -> tuple[bool | None, str]:
         return None, "sympy_error"
 
 
-def check_math(response: str, gold: str) -> CheckResult:
-    ev: dict = {"gold": gold}
-    ext = extract_final_answer(response)
+def check_math(response: str, gold: str, boxed_only: bool = True) -> CheckResult:
+    """Fail-closed math check. By default only a final \\boxed{} answer is scored (registered rule,
+    D24); boxed_only=False enables the '####' / last-number fallback for sensitivity analyses."""
+    ev: dict = {"gold": gold, "boxed_only": boxed_only}
+    ext = extract_final_answer(response, boxed_only=boxed_only)
     if ext is None:
-        ev["reason"] = "no_extractable_answer"
+        ev["reason"] = "no_boxed_answer" if boxed_only else "no_extractable_answer"
         return CheckResult("UNVERIFIED", ev)
     ans, how = ext
     ev.update(extracted=ans, extraction=how)

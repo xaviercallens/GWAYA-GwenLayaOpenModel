@@ -94,3 +94,22 @@ seen before any of these choices.
 
 D22 note (appended, not rewritten): the Holm sentence in D22 is superseded by D26. The RNG part of
 D22 stands.
+
+D24 note (appended 2026-10-08, v3.3.1, not rewritten): the regenerated `numbers_v4.json`
+(from `night/cache/L2fix/rows.jsonl`) now has `single_arm.math_extraction.last_number.n_pass_hidden`
+= 0, because the re-scored rows apply the registered boxed-only rule by default (D28); the value 3
+above refers to the v3.3.0 rows (`night/cache/L2score`).
+
+## Post-v3.3.0 fixes (2026-10-08, after release v3.3.0, before any registered test)
+
+Written after v3.3.0 was released. No registered test has run. The night generations
+(`night/cache/L2score/gens.jsonl`, unchanged) were re-scored into `night/cache/L2fix/rows.jsonl`
+(copy: `results/gwenlaya_v4/night_L2fix/rows.jsonl`), and `papers/numbers_v4.json`,
+`papers/tables_v4.tex` and `papers/figures_v4/` were regenerated from it.
+
+| # | Prereg says | What was actually done / is now done | Reason |
+|---|---|---|---|
+| D27 | Rust hidden check: compile the candidate with the MultiPL-E test and run all asserts (prereg section 1); harness sanity on a passing program (D17 weakened this to typecheck only) | **Defect, v3.3.0 Rust result withdrawn.** Inside bwrap, rustc's linker `cc` resolves through `/etc/alternatives`, which the sandbox did not mount, so every Rust program failed to link; the v3.3.0 Rust result (0/26) was a harness artefact. Fixed in PR #4 (merged, 8cb37ad). Also fixed: the pass nonce was written into `main.rs`, so a candidate could read its own source or binary and forge a pass (reproduced, then closed: nonce via stdin, separate compile and run sandboxes, run sandbox without `/proc`, `unsafe` / `link_section` / `asm` rejected); `assert_ne!` now counted with `assert_eq!`. Validation (`results/gwenlaya_v4/rust_harness_validation.json`): 25/25 hand-written reference solutions VERIFIED and 9/9 wrong solutions FAILED, on 25 of the 26 night Rust tasks (`rs/HumanEval_132_is_nested` has no reference in the file). Night Rust re-scored: 6/26 PASS_HIDDEN, 20 FAIL_HIDDEN, 0 UNDECIDED (`numbers_v4.json` `single_arm.by_domain.rust.count.*`) | Harness defect (link failure) and forgeable pass signal |
+| D28 | Math: boxed answer scored by equivalence; unparseable = UNVERIFIED; a math prompt asking for `\boxed{}` | Night math generations went through the code path (python system prompt, ```` ```python ```` prefill, ```` ``` ```` stop), so they stay invalid (unchanged conclusion). Code fixed (2c1f6b1): prose math prompt ending in `\boxed{}`, Qwen3.x non-thinking via an empty think block; **boxed-only scoring is now the default** (the registered rule); the last-number fallback (D24) is opt-in only. Night re-score: math 0 PASS_HIDDEN, 0 FAIL_HIDDEN, 26 UNDECIDED. Also fixed: the self-consistency vote key for math used the extraction method instead of the answer; B4 did not run (D9), so no reported number changes | Prompt-path defect; restore the registered scoring rule as default |
+| D29 | Python hidden checks run in bwrap | With a uv-managed interpreter the venv `python` symlink chain went through a directory not bound into the sandbox, so Python could not start inside bwrap on the re-scoring machine. Fixed by recreating the interpreter symlinks (2c1f6b1). Night Python unchanged: 11/28 PASS_HIDDEN | Environment defect |
+| D30 | Not registered (TPU not in the plan; arms B1-B6/GL only) | **Unregistered descriptive TPU run #3** (one on-demand v5e chip, vllm-tpu 0.31.0, bf16, greedy, max_tokens 1024, non-thinking, fixed prompts): all 80 night tasks for Qwen/Qwen3.5-2B, Qwen/Qwen3.5-4B, Qwen/Qwen2.5-Coder-1.5B-Instruct (`results/gwenlaya_v4/tpu_run3/`). Python scoring on the TPU host was invalid (sandboxed checks launched from inside the vLLM process all failed), so all TPU generations were re-scored locally with the same checkers (`*.rescored.jsonl`, `summary.json`); Rust and math re-scores equal the TPU-host status on every item, Python does not. Math truncations at 1024 tokens count as UNVERIFIED. Reported as descriptive only: single sample, no logprobs, no gate, no calibration, not a registered arm. Qwen3.5 runs through the PyTorch fallback of tpu-inference with `SKIP_JAX_PRECOMPILE=1`; this supersedes the v3.3.0 statement that Qwen3.5-4B did not finish XLA compilation (that was run #1). No TPU LoRA path for dense Qwen3.5/Qwen3.8 (unchanged) | GPU slot unavailable (G); scoring defect on the TPU host (I) |

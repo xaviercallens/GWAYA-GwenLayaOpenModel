@@ -1,0 +1,308 @@
+[
+ {
+  "kind": "reference",
+  "task_id": "rs/HumanEval_39_prime_fib",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/mbpp_728_sum_list",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/HumanEval_35_max_element",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/HumanEval_66_digitSum",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/HumanEval_10_make_palindrome",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/mbpp_401_add_nested_tuples",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/HumanEval_64_vowels_count",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/HumanEval_79_decimal_to_binary",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/HumanEval_8_sum_product",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/mbpp_573_unique_product",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/mbpp_748_capital_words_spaces",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/mbpp_750_add_tuple",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/HumanEval_106_f",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/mbpp_435_last_Digit",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/mbpp_442_positive_count",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/mbpp_266_lateralsurface_cube",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/mbpp_239_get_total_number_of_sequences",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/mbpp_801_test_three_equal",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/mbpp_281_all_unique",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/mbpp_244_next_Perfect_Square",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/mbpp_394_check_distinct",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/mbpp_747_lcs_of_three",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/mbpp_135_hexagonal_num",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/mbpp_172_count_occurance",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "reference",
+  "task_id": "rs/mbpp_395_first_non_repeating_character",
+  "expected": "VERIFIED",
+  "status": "VERIFIED",
+  "as_expected": true,
+  "reason": "all_tests_passed",
+  "error": ""
+ },
+ {
+  "kind": "wrong",
+  "task_id": "rs/HumanEval_35_max_element",
+  "expected": "FAILED",
+  "status": "FAILED",
+  "as_expected": true,
+  "reason": "assertion_failed",
+  "error": "Test assertion failed (panicked)"
+ },
+ {
+  "kind": "wrong",
+  "task_id": "rs/mbpp_266_lateralsurface_cube",
+  "expected": "FAILED",
+  "status": "FAILED",
+  "as_expected": true,
+  "reason": "assertion_failed",
+  "error": "Test assertion failed (panicked)"
+ },
+ {
+  "kind": "wrong",
+  "task_id": "rs/HumanEval_8_sum_product",
+  "expected": "FAILED",
+  "status": "FAILED",
+  "as_expected": true,
+  "reason": "assertion_failed",
+  "error": "Test assertion failed (panicked)"
+ },
+ {
+  "kind": "wrong",
+  "task_id": "rs/mbpp_135_hexagonal_num",
+  "expected": "FAILED",
+  "status": "FAILED",
+  "as_expected": true,
+  "reason": "assertion_failed",
+  "error": "Test assertion failed (panicked)"
+ },
+ {
+  "kind": "wrong",
+  "task_id": "rs/HumanEval_79_decimal_to_binary",
+  "expected": "FAILED",
+  "status": "FAILED",
+  "as_expected": true,
+  "reason": "assertion_failed",
+  "error": "Test assertion failed (panicked)"
+ },
+ {
+  "kind": "wrong",
+  "task_id": "rs/mbpp_442_positive_count",
+  "expected": "FAILED",
+  "status": "FAILED",
+  "as_expected": true,
+  "reason": "assertion_failed",
+  "error": "Test assertion failed (panicked)"
+ },
+ {
+  "kind": "wrong",
+  "task_id": "rs/mbpp_435_last_Digit",
+  "expected": "FAILED",
+  "status": "FAILED",
+  "as_expected": true,
+  "reason": "assertion_failed",
+  "error": "Test assertion failed (panicked)"
+ },
+ {
+  "kind": "wrong",
+  "task_id": "rs/mbpp_172_count_occurance",
+  "expected": "FAILED",
+  "status": "FAILED",
+  "as_expected": true,
+  "reason": "assertion_failed",
+  "error": "Test assertion failed (panicked)"
+ },
+ {
+  "kind": "wrong",
+  "task_id": "rs/HumanEval_39_prime_fib",
+  "expected": "FAILED",
+  "status": "FAILED",
+  "as_expected": true,
+  "reason": "assertion_failed",
+  "error": "Test assertion failed (panicked)"
+ }
+]

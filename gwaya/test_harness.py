@@ -59,6 +59,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from gwaya.sandbox import interpreter_symlink_args
+
 ALLOW_UNISOLATED_ENV = "GWAYA_ALLOW_UNISOLATED"
 SANDBOX_WORKDIR = "/work"
 _MAX_REPORTED_OUTPUT = 4000
@@ -240,6 +242,7 @@ def _bwrap_argv(bwrap: str, work: Path) -> list[str]:
     base = Path(sys.base_prefix).resolve()
     if base != root:
         argv += ["--ro-bind", str(base), str(base)]
+    argv += interpreter_symlink_args([root, base])
     argv += [
         # The sandbox root is bwrap's own tmpfs (no host "/" bind), so /work can be created.
         "--bind", str(work), SANDBOX_WORKDIR,

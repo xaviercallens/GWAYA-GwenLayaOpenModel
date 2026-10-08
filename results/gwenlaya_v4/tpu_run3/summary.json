@@ -1,0 +1,45 @@
+{
+ "Qwen/Qwen2.5-Coder-1.5B-Instruct": {
+  "python": {
+   "VERIFIED": 18,
+   "FAILED": 10
+  },
+  "rust": {
+   "FAILED": 11,
+   "VERIFIED": 15
+  },
+  "math": {
+   "UNVERIFIED": 7,
+   "FAILED": 11,
+   "VERIFIED": 8
+  }
+ },
+ "Qwen/Qwen3.5-2B": {
+  "python": {
+   "VERIFIED": 11,
+   "FAILED": 17
+  },
+  "rust": {
+   "VERIFIED": 6,
+   "FAILED": 20
+  },
+  "math": {
+   "UNVERIFIED": 10,
+   "VERIFIED": 16
+  }
+ },
+ "Qwen/Qwen3.5-4B": {
+  "python": {
+   "VERIFIED": 20,
+   "FAILED": 8
+  },
+  "rust": {
+   "FAILED": 13,
+   "VERIFIED": 13
+  },
+  "math": {
+   "UNVERIFIED": 10,
+   "VERIFIED": 16
+  }
+ }
+}

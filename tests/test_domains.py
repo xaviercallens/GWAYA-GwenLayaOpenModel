@@ -98,13 +98,23 @@ class TestCheckMath:
         assert check_math(r"so \boxed{12}", "12").status == "VERIFIED"
         assert check_math(r"so \boxed{13}", "12").status == "FAILED"
         r = check_math("I do not know", "12")
+        assert r.status == "UNVERIFIED" and r.evidence["reason"] == "no_boxed_answer"
+
+    def test_registered_rule_is_boxed_only(self):
+        # D24: '####' and last-number answers are not scored unless the fallback is requested
+        assert check_math("#### 12", "12").status == "UNVERIFIED"
+        assert check_math("the answer is 12", "12").status == "UNVERIFIED"
+        assert check_math("#### 12", "12", boxed_only=False).status == "VERIFIED"
+        assert check_math("the answer is 12", "12", boxed_only=False).status == "VERIFIED"
+        r = check_math("I do not know", "12", boxed_only=False)
         assert r.status == "UNVERIFIED" and r.evidence["reason"] == "no_extractable_answer"
         r = check_math(r"\boxed{banana}", "12")
         assert r.status == "UNVERIFIED" and r.evidence["reason"] == "unparseable_answer"
 
     def test_dispatch_and_missing_reference(self):
         t = Task("math", "t", "q", {"answer": "5"})
-        assert check(t, "#### 5").status == "VERIFIED"
+        assert check(t, r"\boxed{5}").status == "VERIFIED"
+        assert check(t, "#### 5").status == "UNVERIFIED"
         assert check(Task("math", "t", "q", {}), "5").status == "UNVERIFIED"
 
 
@@ -191,7 +201,7 @@ class TestLoaders:
         p.write_text(json.dumps({"question": "q?", "answer": "steps\n#### 1,234"}) + "\n")
         (t,) = loaders.load_tasks("E", manifest=self._manifest("openai/gsm8k", p))
         assert t.domain == "math" and t.checker_payload["answer"] == "1234"
-        assert check(t, "answer: 1234").status == "VERIFIED"
+        assert check(t, r"answer: \boxed{1234}").status == "VERIFIED"
 
     def test_hendrycks_boxed(self, tmp_path):
         p = tmp_path / "m.json"
