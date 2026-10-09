@@ -1,0 +1,35 @@
+{
+ "mode": "calibrator",
+ "tiers": [
+  "qwen3.5-2b-bf16",
+  "qwen3.5-4b-bf16",
+  "qwen3.5-9b-bf16"
+ ],
+ "backbone": "answerdotai/ModernBERT-large",
+ "lora_r": 16,
+ "lora_targets": [
+  "Wqkv",
+  "Wo",
+  "Wi"
+ ],
+ "hidden_size": 1024,
+ "n_features": 0,
+ "gate_vocab": [
+  "verified",
+  "failed",
+  "unverified",
+  "compile_error",
+  "none"
+ ],
+ "signal_keys": [
+  "tests_passed_frac",
+  "selftest_agreement",
+  "mean_logprob",
+  "min_logprob",
+  "repair_rounds"
+ ],
+ "max_len": 512,
+ "shuffled_labels": false,
+ "text_only": true,
+ "calibration": "none fitted here (stage C6 fits temperature/isotonic on the C split)"
+}
