@@ -15,13 +15,13 @@ step venv 1500 "uv venv -q -p 3.12 vllm-venv && VIRTUAL_ENV=$R/vllm-venv uv pip 
 PY=$R/vllm-venv/bin/python
 # Hybrid (Qwen3.5) models can refuse to start when max-seqs is too high for the 16 GB chip
 # ("Mamba and attention pools together exceed the HBM budget"). Try a ladder; output is resumable.
-KINDS="${KINDS:-${KIND:-answer}}"            # answer | pot (program-of-thought programs for the math gate); several allowed
+KINDS="${KINDS:-${KIND:-answer}}"            # answer | pot (program-of-thought programs for the math gate) | sample (SAMPLES draws, T 0.8); several allowed
 for spec in $MODELS; do
   hf="${spec%%|*}"; served="${spec##*|}"
   for KIND in $KINDS; do
-    OUTPFX=raw_; [ "$KIND" = pot ] && OUTPFX=raw_pot_
+    OUTPFX=raw_; [ "$KIND" = pot ] && OUTPFX=raw_pot_; [ "$KIND" = sample ] && OUTPFX=raw_sample_
     for seqs in ${MAX_SEQS_LADDER:-96 32 16 8}; do
-      step "gen_${KIND}_${served}_s$seqs" 3600 "$PY repo/scripts/tpu/gen_batch.py --model $hf --served $served --tasks tasks_prompts.jsonl --out ${OUTPFX}$served.jsonl --kind $KIND --max-seqs $seqs --tensor-parallel ${TP:-1} ${LIMIT:+--limit $LIMIT}"
+      step "gen_${KIND}_${served}_s$seqs" 3600 "$PY repo/scripts/tpu/gen_batch.py --model $hf --served $served --tasks tasks_prompts.jsonl --out ${OUTPFX}$served.jsonl --kind $KIND --samples ${SAMPLES:-8} --max-seqs $seqs --tensor-parallel ${TP:-1} ${LIMIT:+--limit $LIMIT}"
       rc=$?
       [ $rc -eq 0 ] && break
       if [ $rc -eq 3 ]; then echo '{"step":"ABORT_NO_LOGPROBS","rc":3}' >> $R/status.jsonl; exit 3; fi
