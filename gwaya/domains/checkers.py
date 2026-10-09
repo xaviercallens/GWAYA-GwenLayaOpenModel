@@ -120,8 +120,13 @@ def check_lean4(task: Task, response: str) -> CheckResult:
         return CheckResult("FAILED", {"reason": "empty_response"})
     if stmt and _squash(stmt) not in _squash(code):
         return CheckResult("FAILED", {"reason": "statement_not_preserved"})
+    from gwaya.lean_project import default_project_dir
     from gwaya.oracles import Lean4CompilerOracle
-    res = Lean4CompilerOracle(timeout_s=float(task.checker_payload.get("timeout_s", 15.0))).verify_snippet(code)
+    # The pinned Mathlib project ($GWAYA_LEAN_MATHLIB_DIR or the standard location) when present; Mathlib imports
+    # need a longer default timeout. A configured but unbuilt project makes the oracle unavailable (fail-closed).
+    project = task.checker_payload.get("lean_project_dir") or default_project_dir()
+    timeout = float(task.checker_payload.get("timeout_s", 120.0 if project else 15.0))
+    res = Lean4CompilerOracle(timeout_s=timeout, project_dir=project).verify_snippet(code)
     out = _from_oracle(res, {"axiom_audit": "#print axioms; non-standard axioms and sorry rejected"})
     low = (res.error_message + res.stderr + res.stdout).lower()
     if out.status == "FAILED" and any(m in low for m in _LEAN_ENV_MARKERS):
