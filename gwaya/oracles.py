@@ -105,10 +105,18 @@ class RustCompilerOracle:
     Flags syntax errors, borrow checker violations, and lifetime errors in <100ms.
     """
 
-    def __init__(self, rustc_path: str | None = None, timeout_s: float = 5.0) -> None:
+    def __init__(self, rustc_path: str | None = None, timeout_s: float = 5.0, edition: str | None = None) -> None:
         self.rustc_path = rustc_path or shutil.which("rustc") or "rustc"
         self.timeout_s = timeout_s
         self.available = bool(shutil.which(self.rustc_path))
+        # None -> GWAYA_RUST_EDITION from the environment, else "" = no flag = rustc's default (edition 2015).
+        # The default stays 2015 until the edition sensitivity (docs/ANALYSIS_PLAN_E_TPU.md A15) says otherwise.
+        self.edition = (os.environ.get("GWAYA_RUST_EDITION", "") if edition is None else edition).strip()
+
+    def _edition_args(self) -> list[str]:
+        if self.edition not in ("", "2015", "2018", "2021", "2024"):
+            raise ValueError(f"unsupported Rust edition {self.edition!r}")
+        return ["--edition", self.edition] if self.edition else []
 
     def verify(self, code: str) -> OracleResult:
         return self.verify_snippet(code)
@@ -151,6 +159,7 @@ class RustCompilerOracle:
         try:
             cmd = [
                 self.rustc_path,
+                *self._edition_args(),
                 "--crate-type=lib",
                 "--emit=metadata",
                 "--out-dir",
@@ -256,7 +265,7 @@ class RustCompilerOracle:
         run_dir = Path(tempfile.mkdtemp(prefix="gwaya_rustrun_"))
         try:
             ok, _out, cerr, c_timed_out = run_in_sandbox(
-                [self.rustc_path, "-o", "/work/test", "/work/main.rs"],
+                [self.rustc_path, *self._edition_args(), "-o", "/work/test", "/work/main.rs"],
                 timeout_s=timeout_s,
                 mem_mb=2048,
                 cpu_s=int(timeout_s) + 5,
