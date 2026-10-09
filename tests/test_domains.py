@@ -227,6 +227,14 @@ class TestLoaders:
             "name": "n", "header": "import Mathlib\n", "formal_statement": "theorem n : True"}, 0)
         assert t.domain == "lean4" and t.checker_payload["formal_statement"] == "theorem n : True"
 
+    def test_lean_row_drops_the_sorry_placeholder(self):
+        t = loaders.row_to_task("cat-searcher/minif2f-lean4", {
+            "id": "n", "header": "import Mathlib\n", "formal_statement": "theorem n\n  (x : ℕ) :\n  x = x := sorry"}, 0)
+        assert t.checker_payload["formal_statement"] == "theorem n\n  (x : ℕ) :\n  x = x :="
+        assert "x = x := by\n  sorry" in t.prompt and "import Mathlib" in t.prompt
+        t2 = loaders.row_to_task("internlm/Lean-Workbook", {"id": "w", "formal_statement": "theorem w : 1 = 1 := by sorry"}, 0)
+        assert t2.checker_payload["formal_statement"] == "theorem w : 1 = 1 :="
+
     def test_missing_schema_field_raises(self):
         with pytest.raises(KeyError):
             loaders.row_to_task("openai/gsm8k", {"foo": 1}, 0)

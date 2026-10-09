@@ -118,6 +118,9 @@ def check_lean4(task: Task, response: str) -> CheckResult:
     code = _code_from(response, "lean4")
     if not code.strip():
         return CheckResult("FAILED", {"reason": "empty_response"})
+    header = task.checker_payload.get("header") or ""
+    if header and not re.search(r"^\s*import\s", code, re.M):
+        code = f"{header}\n\n{code}"  # the task's fixed imports when the model wrote only the theorem
     if stmt and _squash(stmt) not in _squash(code):
         return CheckResult("FAILED", {"reason": "statement_not_preserved"})
     from gwaya.lean_project import default_project_dir

@@ -6,6 +6,7 @@ unknown schemas raise KeyError rather than guessing."""
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any, Callable, Iterator
 
@@ -80,10 +81,19 @@ def _rust_multipl_e(r: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     return r["prompt"], {"tests": r["tests"]}
 
 
+_LEAN_PLACEHOLDER = re.compile(r":=\s*(?:by\s+)?sorry\s*$")
+
+
 def _lean(r: dict[str, Any]) -> tuple[str, dict[str, Any]]:
-    stmt = r.get("formal_statement") or r["statement"]
-    header = r.get("header", "")
-    prompt = f"Complete the following Lean 4 proof. Do not change the statement.\n\n{header}{stmt}"
+    # miniF2F / Lean-Workbook statements end in ":= sorry" (or ":= by sorry"). The gate requires the statement to be
+    # preserved verbatim, so the placeholder must not be part of it: keep everything up to and including ":=".
+    raw = (r.get("formal_statement") or r["statement"]).rstrip()
+    stmt = _LEAN_PLACEHOLDER.sub(":=", raw)
+    header = r.get("header", "").rstrip()
+    body = stmt[:-2].rstrip() if stmt.endswith(":=") else stmt
+    shown = f"{header}\n\n{body} := by\n  sorry" if header else f"{body} := by\n  sorry"
+    prompt = ("Complete the following Lean 4 proof: replace `sorry` with a proof. Do not change the imports or the "
+              f"theorem statement, and reply with the complete Lean 4 file.\n\n```lean4\n{shown}\n```")
     return prompt, {"formal_statement": stmt, "header": header}
 
 
