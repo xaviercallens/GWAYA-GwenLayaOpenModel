@@ -1,0 +1,23 @@
+{
+ "qwen3.5-2b-bf16": {
+  "n": 69,
+  "k_gate_verified": 21,
+  "topk_equals_gate_set": true,
+  "laya_min_inside_gate_set": 0.621272623538971,
+  "laya_max_outside_gate_set": 0.0018357336521148682
+ },
+ "qwen3.5-4b-bf16": {
+  "n": 69,
+  "k_gate_verified": 40,
+  "topk_equals_gate_set": true,
+  "laya_min_inside_gate_set": 0.7370430827140808,
+  "laya_max_outside_gate_set": 0.001952826976776123
+ },
+ "qwen3.5-9b-bf16": {
+  "n": 69,
+  "k_gate_verified": 45,
+  "topk_equals_gate_set": true,
+  "laya_min_inside_gate_set": 0.7522078156471252,
+  "laya_max_outside_gate_set": 0.001967310905456543
+ }
+}
