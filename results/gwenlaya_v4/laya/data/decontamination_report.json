@@ -1,0 +1,176 @@
+{
+ "decontamination": {
+  "n_in": 2694,
+  "n_kept": 2656,
+  "n_dropped": 38,
+  "by_reason": {
+   "cluster_in_E": 38
+  },
+  "by_domain": {
+   "py": 38
+  },
+  "dropped": [
+   {
+    "task_id": "py/MBPP/617",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/625",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/627",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/640",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/738",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/746",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/747",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/756",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/776",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/783",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/802",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/83",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/117",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/164",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/228",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/229",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/249",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/291",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/295",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/304",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/393",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/396",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/399",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/400",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/401",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/408",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/411",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/417",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/434",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/438",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/442",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/443",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/444",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/452",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/461",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/464",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/574",
+    "reason": "cluster_in_E"
+   },
+   {
+    "task_id": "py/MBPP/584",
+    "reason": "cluster_in_E"
+   }
+  ]
+ },
+ "sanity_dropped": [],
+ "mbpp_vs_mbppplus": {
+  "n_raw": 974,
+  "dropped_vs_mbppplus": {
+   "task_id_in_mbppplus": 378,
+   "prompt_hash_in_mbppplus": 2
+  },
+  "n_candidates": 594
+ }
+}
