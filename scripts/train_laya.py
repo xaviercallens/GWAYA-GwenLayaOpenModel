@@ -210,7 +210,13 @@ def train(args: argparse.Namespace, tr: list[dict], va: list[dict], tiers: Seque
     peft = _need("peft")
     st = _need("safetensors.torch")
     torch.manual_seed(SEED)
-    dev = "cuda" if args.device == "auto" and torch.cuda.is_available() else ("cpu" if args.device == "auto" else args.device)
+    xm = None
+    if args.device == "xla":  # TPU via torch_xla: fixed shapes (pad to max_len) so the graph compiles once
+        xm = _need("torch_xla.core.xla_model")
+        dev = xm.xla_device()
+    else:
+        dev = "cuda" if args.device == "auto" and torch.cuda.is_available() else ("cpu" if args.device == "auto" else args.device)
+    pad = "max_length" if xm is not None else True
 
     tok = tf.AutoTokenizer.from_pretrained(args.backbone)
     enc = tf.AutoModel.from_pretrained(args.backbone)
@@ -232,8 +238,10 @@ def train(args: argparse.Namespace, tr: list[dict], va: list[dict], tiers: Seque
     opt = torch.optim.AdamW(params, lr=args.lr, weight_decay=0.01)
 
     def forward(batch: list[dict]) -> Any:
-        t = tok([e["text"] for e in batch], padding=True, truncation=True, max_length=args.max_len, return_tensors="pt").to(dev)
-        h = enc(**t).last_hidden_state
+        t = tok([e["text"] for e in batch], padding=pad, truncation=True, max_length=args.max_len, return_tensors="pt").to(dev)
+        with torch.autocast("xla" if xm is not None else "cpu", dtype=torch.bfloat16, enabled=bool(args.bf16 and xm is not None)):
+            h = enc(**t).last_hidden_state
+        h = h.float()
         m = t["attention_mask"].unsqueeze(-1).to(h.dtype)
         pooled = (h * m).sum(1) / m.sum(1).clamp(min=1)
         if n_feat:
@@ -259,7 +267,11 @@ def train(args: argparse.Namespace, tr: list[dict], va: list[dict], tiers: Seque
             batch = [tr[j] for j in order[i:i + args.batch_size]]
             loss = loss_fn(forward(batch), batch)
             opt.zero_grad(); loss.backward(); opt.step()
+            if xm is not None:
+                xm.mark_step()
             losses.append(loss.item()); step += 1
+            if step % 25 == 0:
+                print(f"[train_laya] step {step}/{total} loss {sum(losses[-25:]) / 25:.4f} {time.time() - t0:.0f}s", flush=True)
     wall = time.time() - t0
     result: dict[str, Any] = {"steps": step, "wall_seconds": round(wall, 1),
                               "final_train_loss_last10_mean": round(sum(losses[-10:]) / max(1, len(losses[-10:])), 4)}
@@ -303,7 +315,8 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--epochs", type=int, default=3)
     ap.add_argument("--batch-size", type=int, default=8)
     ap.add_argument("--max-len", type=int, default=512)
-    ap.add_argument("--device", default="auto", help="auto | cpu | cuda")
+    ap.add_argument("--device", default="auto", help="auto | cpu | cuda | xla (TPU, needs torch_xla)")
+    ap.add_argument("--bf16", action="store_true", help="bfloat16 autocast (xla only)")
     ap.add_argument("--timing-steps", type=int, default=0, help="e.g. 50: time N steps, project hours, decide CPU vs L4")
     ap.add_argument("--shuffle-labels", action="store_true", help="SH negative control")
     ap.add_argument("--no-slice-filter", action="store_true", help="dev only: skip the router-train hash filter")

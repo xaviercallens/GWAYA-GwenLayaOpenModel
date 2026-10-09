@@ -82,9 +82,9 @@ for Z in $ZONES; do
        --labels purpose=gwenlaya-tpu --quiet 2>&1 | tail -2 && gcloud compute tpus tpu-vm describe "$TPU" --zone "$Z" >/dev/null 2>&1; then
     ZONE="$Z"; break
   fi
-  log "no capacity in $Z"
+  log "create failed in $Z (capacity or per-zone quota, e.g. v5e limit 4 chips/zone; see the error above)"
 done
-[ -n "$ZONE" ] || { log "ABORT: no capacity in: $ZONES"; exit 1; }
+[ -n "$ZONE" ] || { log "ABORT: could not create the slice in: $ZONES"; exit 1; }
 T_START="$(date +%s)"
 # independent watchdog: deletes the VM even if this driver is killed
 nohup bash -c "sleep $(( (MAX_MIN + 15) * 60 )); gcloud compute tpus tpu-vm delete $TPU --zone $ZONE --quiet" >/dev/null 2>&1 &
