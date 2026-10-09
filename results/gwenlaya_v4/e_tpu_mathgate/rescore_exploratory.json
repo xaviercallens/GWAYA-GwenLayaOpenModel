@@ -3,7 +3,7 @@
   "status": "EXPLORATORY post hoc re-score (docs/DEVIATIONS.md D62); the registered numbers remain the primary record",
   "old_scorer": "git show 78cf88b:gwaya/domains/math_check.py",
   "old_scorer_sha256": "14fad735ec9a4832e3da5c974bb2c180d45448599cf3d023329abf02f7c4e88f",
-  "new_scorer_sha256": "fb57ad6177b2130187c16b4fb7eccbd6b6d74259218b09b9d87a38a62227c6c7",
+  "new_scorer_sha256": "690a1658b4e3b3e0d3321dc987cf8efa1f58c9243611c8685534d18bcf1d73a9",
   "data": "/mnt/data/home/xavkal/gwaya-data/etpu",
   "python": "/mnt/data/xdev-cache/tmp/claude-1000/-home-xavkal-xdev-GWAYA-GwenLayaOpenModel/0cf9e15b-1839-4167-85fc-4fa02442ca1e/scratchpad/venv/bin/python",
   "n_tasks": 500,

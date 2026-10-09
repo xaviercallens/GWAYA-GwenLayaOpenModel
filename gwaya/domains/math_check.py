@@ -101,6 +101,8 @@ _UNIT = {a: canon for canon, al in _UNIT_ALIASES.items() for a in al.split()}
 _POWER_UNITS = {"millimeter", "centimeter", "meter", "kilometer", "inch", "foot", "yard", "mile", "unit"}
 _UNIT_TAIL = re.compile(r"^(.*\S)\s*\\(?:mbox|text|textnormal|mathrm)\{([^{}]*)\}\s*(\^\s*\{?\s*([23])\s*\}?)?$")
 _DEGREE_TAIL = re.compile(r"^(.*\S)\s*\^\s*(?:\\circ|\{\s*\\circ\s*\})$")
+_DOLLAR_HEAD = re.compile(r"^((?:[A-Za-z]\s*=\s*)?[+-]?)\s*\\\$\s*(?=\S)")
+_PERCENT_TAIL = re.compile(r"^(.*[^\s\\])\s*\\?%$")
 _ASSIGN = re.compile(r"([A-Za-z])\s*(=|\\in(?![A-Za-z]))\s*(?=\S)")
 _SPACING = re.compile(r"\\\\|\\(?:left|right|!|,|;|:| )")
 
@@ -142,20 +144,37 @@ def _parts(s: str) -> tuple[str, str | None, tuple[str, str] | None]:
     s = _braceless(s.replace("\\dfrac", "\\frac").replace("\\tfrac", "\\frac"))
     s = re.sub(r"\^\{?\\(?:text|mbox|textnormal)\{(?:st|nd|rd|th)\}\}?", "", s)  # 5^{\text{th}}
     s = s.rstrip(". ").strip()
-    unit = None
+    unit, raw_tail = None, ""
     m = _UNIT_TAIL.match(s)  # trailing unit text: '6 \mbox{ cm}^2', '50\text{ cents}'
     if m:
         unit = _canonical_unit(m.group(2), m.group(4))
         if unit is not None:
-            s = m.group(1)
+            s, raw_tail = m.group(1), s[len(m.group(1)):]
     if unit is None:
         m = _DEGREE_TAIL.match(s)  # '30^\circ' carries the unit degree
         if m:
-            s, unit = m.group(1), "degree"
+            s, unit, raw_tail = m.group(1), "degree", s[len(m.group(1)):]
+    # a leading '\$' is the unit dollar and a trailing '\%' the marker percent (D62): both are recorded, so
+    # '5\text{ cents}' vs '\$5' and '0.5\%' vs '0.5\text{ dollars}' are unit mismatches, while '50\%' vs '50'
+    # (one side only) stays True as in the registered scorer. With a second, different unit the unit text is
+    # put back, so the answer is unparseable (undecided). '\$', '\%' elsewhere (inside tuples) are dropped
+    # as in the registered scorer.
+    marker = None
+    m = _DOLLAR_HEAD.match(s)
+    if m:
+        s, marker = m.group(1) + s[m.end():], "dollar"
+    else:
+        m = _PERCENT_TAIL.match(s)
+        if m:
+            s, marker = m.group(1), "percent"
+    if marker is not None:
+        if unit is None or unit == marker:
+            unit = marker
+        else:
+            s, unit = s + raw_tail, None
     s = re.sub(r"\\text\{([^{}]*)\}", r"\1", s)
     s = _SPACING.sub(lambda t: t.group(0) if t.group(0) == "\\\\" else "", s)  # '\\' = matrix row break, kept
-    # '\%' is dropped as in the registered scorer (MATH writes gold '50\%' for 50), so '50\%' == '50' as
-    # before; the WORD 'percent' is not a unit and is kept, so '5\text{ percent}' vs '5' stays undecided
+    # the WORD 'percent' is not a unit and is kept, so '5\text{ percent}' vs '5' stays undecided
     s = s.replace("^\\circ", "").replace("^{\\circ}", "").replace("\\%", "").replace("%", "")
     s = s.replace("\\$", "").replace("$", "")
     s = s.rstrip(". ").strip()
@@ -171,6 +190,10 @@ def _parts(s: str) -> tuple[str, str | None, tuple[str, str] | None]:
 
 def _render(value: str, unit: str | None, assign: tuple[str, str] | None) -> str:
     pre = "" if assign is None else assign[0] + ("=" if assign[1] == "=" else "\\in ")
+    if unit == "percent":
+        return pre + value + "\\%"
+    if unit == "dollar":
+        return pre + "\\$" + value
     return pre + value + (f"\\text{{ {unit}}}" if unit else "")
 
 
@@ -294,8 +317,12 @@ def _structure(s: str):
 
 
 def _element(s: str) -> str:
-    s = re.sub(r"\s+", "", s)
-    return re.sub(r"\\frac\{([^{}]+)\}\{([^{}]+)\}", lambda m: (
+    """Whitespace-free element with simple fractions as a/b. A \\frac directly after a digit is a mixed
+    number ('2\\frac{1}{2}', '2 \\frac{1}{2}'): the space is kept and that \\frac is not rewritten, so the
+    element goes through the same mixed-number rule as a scalar (never '21/2')."""
+    s = re.sub(r"(?<=\d)\s+(?=\\frac)", "\x00", s.strip())
+    s = re.sub(r"\s+", "", s).replace("\x00", " ")
+    return re.sub(r"(?<![\d ])\\frac\{([^{}]+)\}\{([^{}]+)\}", lambda m: (
         f"{m.group(1)}/{m.group(2)}" if re.fullmatch(r"-?\d+", m.group(1)) and m.group(2).isdigit()
         else m.group(0)), s)
 
@@ -411,14 +438,15 @@ def answers_equivalent(candidate: str, gold: str) -> tuple[bool | None, str]:
 
     Units: if both sides carry a (whitelisted, canonical) unit they must be identical, else undecided; a
     unit on one side only is dropped ('6 \\text{ cm}^2' vs gold '6'). Assignment: a single leading
-    'x =' / 'x \\in' is dropped when the other side has none or names the same variable; 'x=3' vs 'y=3'
-    keeps both prefixes and is undecided."""
+    'x =' / 'x \\in' is dropped when the other side has none or has the same variable and operator;
+    'x=3' vs 'y=3' and 'x \\in S' vs 'x = S' keep both prefixes and are undecided. A leading '\\$' is the
+    unit dollar and a trailing '\\%' the marker percent."""
     (nc, uc, ac), (ng, ug, ag) = _parts(candidate), _parts(gold)
     if not nc or not ng:
         return None, "empty"
     if uc is not None and ug is not None and uc != ug:
         return None, "unit_mismatch"
-    if ac is not None and ag is not None and ac[0] != ag[0]:
+    if ac is not None and ag is not None and ac != ag:  # same variable AND same operator, else keep both
         nc, ng = _render(nc, None, ac), _render(ng, None, ag)
     sc, sg = _structure(nc), _structure(ng)
     if sc is not None and sg is not None:

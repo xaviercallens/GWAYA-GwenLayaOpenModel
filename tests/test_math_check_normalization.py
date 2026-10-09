@@ -93,7 +93,8 @@ def test_unparseable_stays_undecided(no_sympy):
 def test_normalize_keeps_matrix_row_breaks_and_value_words():
     assert "\\\\" in normalize_answer(r"\begin{pmatrix} 1 \\ 2 \end{pmatrix}")
     assert normalize_answer(r"5\text{ million}") == "5 million"
-    assert normalize_answer(r"\$1,000") == "1000"
+    assert normalize_answer(r"\$1,000") == r"\$1000"  # the dollar sign is kept as the unit dollar
+    assert answers_equivalent(r"\$1,000", "1000")[0] is True
     assert normalize_answer("x = y = 3") == "x = y = 3"  # only a single leading assignment is dropped
 
 
@@ -236,3 +237,77 @@ def test_run_study_consensus_keys_do_not_merge_different_answers():
             ("x = 3", "x=3"), (r"6\text{ cm}^2", r"6\mbox{ square centimeters}"), ("4210_{5}", "4210_5")]
     for a, b in same:
         assert key(a) == key(b), (a, b)
+
+
+# ── second review (2305d90): mixed numbers in structures, \$ / \%, assignment operator ─────────
+
+def _pm(cell: str) -> str:
+    return r"\begin{pmatrix} " + cell + r" \\ 1 \end{pmatrix}"
+
+
+SECOND_REVIEW_NEVER_EQUAL = [
+    (r"(2\frac{1}{2}, 1)", "(10.5, 1)"),          # '2\frac{1}{2}' must never become '21/2'
+    (r"(2 \frac{1}{2}, 1)", "(10.5, 1)"),
+    (r"(2\frac{1}{2}, 1)", r"(\frac{21}{2}, 1)"),
+    (r"(3\frac{1}{4}, 0)", r"(\frac{31}{4}, 0)"),
+    (r"(1\frac{1}{2}, 2)", "(5.5, 2)"),
+    (_pm(r"2\frac{1}{2}"), _pm("10.5")),
+    (_pm(r"2 \frac{1}{2}"), _pm(r"\frac{21}{2}")),
+    (r"5\text{ cents}", r"\$5"),                  # the dollar sign is the unit dollar
+    (r"0.5\%", r"0.5\text{ dollars}"),            # the percent marker vs a unit
+    (r"50\%", r"\$50"),
+    (r"\$5\text{ cents}", "5"),                   # two different units on one side: undecided
+    (r"x \in [1,2]", "x = [1,2]"),                # same variable, different operator
+    (r"x \in S", "x = S"),
+]
+
+
+@pytest.mark.parametrize("cand,gold", SECOND_REVIEW_NEVER_EQUAL)
+def test_second_review_never_equal(cand, gold):
+    assert answers_equivalent(cand, gold)[0] is not True
+    assert answers_equivalent(gold, cand)[0] is not True
+    assert check_math(rf"\boxed{{{cand}}}", gold).status != "VERIFIED"
+
+
+@pytest.mark.parametrize("cand,gold", SECOND_REVIEW_NEVER_EQUAL)
+def test_second_review_never_equal_without_sympy(no_sympy, cand, gold):
+    assert answers_equivalent(cand, gold)[0] is not True
+    assert answers_equivalent(gold, cand)[0] is not True
+
+
+@pytest.mark.parametrize("cand,gold", [
+    (r"(2\frac{1}{2},1)", r"(\frac{5}{2},1)"),   # a mixed number inside a tuple, as for a scalar
+    (r"(2 \frac{1}{2}, 1)", "(5/2, 1)"),
+    (r"(2\frac{1}{2}, 1)", "(2.5, 1)"),
+    (_pm(r"2\frac{1}{2}"), _pm(r"\frac{5}{2}")),
+    ("50\\%", "50"),                              # registered: a one-sided percent sign
+    (r"\$5", "5"),
+    (r"\$5", r"5\text{ dollars}"),
+    (r"x=\$5", r"\$5"),
+    ("50\\%", "50 \\%"),
+    (r"x \in [1,2]", r"x\in[1, 2]"),
+])
+def test_second_review_still_equivalent(no_sympy, cand, gold):
+    assert answers_equivalent(cand, gold)[0] is True
+    assert answers_equivalent(gold, cand)[0] is True
+
+
+def test_mixed_number_element_matches_scalar_rule():
+    pytest.importorskip("sympy")
+    # no space + improper fraction is a product, with a space a mixed number: the same in a tuple as a scalar
+    for el, val in [(r"2\frac{3}{2}", "3"), (r"2 \frac{3}{2}", r"\frac{7}{2}"), (r"2\frac{1}{2}", r"\frac52")]:
+        assert answers_equivalent(el, val)[0] is True
+        assert answers_equivalent(f"({el}, 1)", f"({val}, 1)")[0] is True
+
+
+def test_second_review_keys_distinct_and_idempotent():
+    from scripts.run_study import consensus_key
+
+    def key(a: str) -> str:
+        return consensus_key("math", rf"so \boxed{{{a}}}")
+
+    for a, b in [(r"5\text{ cents}", r"\$5"), (r"0.5\%", r"0.5\text{ dollars}"), (r"x \in S", "x = S"),
+                 (r"(2\frac{1}{2}, 1)", r"(\frac{21}{2}, 1)")]:
+        assert key(a) != key(b), (a, b)
+    for s in [r"\$5", "50\\%", r"x=\$5", r"-\$5"]:
+        assert normalize_answer(normalize_answer(s)) == normalize_answer(s)
