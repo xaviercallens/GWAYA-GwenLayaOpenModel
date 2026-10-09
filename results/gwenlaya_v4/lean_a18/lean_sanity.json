@@ -1,0 +1,125 @@
+{
+ "dataset": "cat-searcher/minif2f-lean4",
+ "split": "test",
+ "n": 244,
+ "elaborating": 223,
+ "excluded": [
+  {
+   "task_id": "cat-searcher/minif2f-lean4/aime_1983_p1",
+   "error": "/work/candidate.lean:18:10: error: unknown constant 'Real.log'\n/work/candidate.lean:18:23: error: unknown constant 'Real.log'\n/work/candidate.lean:18:46: error: unknown constant 'Real.log'\n/work/candidate.lean:18:59: error: unknown constant 'Real.log'\n/work/candidate.lean:19:10: error: unknown constant 'Real.log'\n/work/candidate.lean:19:23: error: unknown constant 'Real.log'\n/work/candidate.lean:1",
+   "class": "does_not_elaborate_under_pinned_mathlib"
+  },
+  {
+   "task_id": "cat-searcher/minif2f-lean4/amc12a_2020_p10",
+   "error": "/work/candidate.lean:23:2: error: unexpected token 'sorry'; expected command",
+   "class": "commented_out_in_dataset"
+  },
+  {
+   "task_id": "cat-searcher/minif2f-lean4/amc12b_2021_p9",
+   "error": "/work/candidate.lean:20:2: error: unexpected token 'sorry'; expected command",
+   "class": "commented_out_in_dataset"
+  },
+  {
+   "task_id": "cat-searcher/minif2f-lean4/induction_prod1p1onk3le3m1onn",
+   "error": "/work/candidate.lean:20:26: error: failed to synthesize instance\n  HAdd ℕ ℕ ℝ\n/work/candidate.lean:23:14: error: unknown constant 'induction_prod1p1onk3le3m1onn'",
+   "class": "does_not_elaborate_under_pinned_mathlib"
+  },
+  {
+   "task_id": "cat-searcher/minif2f-lean4/mathd_algebra_756",
+   "error": "/work/candidate.lean:23:2: error: unexpected token 'sorry'; expected command",
+   "class": "commented_out_in_dataset"
+  },
+  {
+   "task_id": "cat-searcher/minif2f-lean4/mathd_algebra_275",
+   "error": "/work/candidate.lean:22:2: error: unexpected token 'sorry'; expected command",
+   "class": "commented_out_in_dataset"
+  },
+  {
+   "task_id": "cat-searcher/minif2f-lean4/mathd_algebra_598",
+   "error": "/work/candidate.lean:25:2: error: unexpected token 'sorry'; expected command",
+   "class": "commented_out_in_dataset"
+  },
+  {
+   "task_id": "cat-searcher/minif2f-lean4/amc12a_2021_p14",
+   "error": "/work/candidate.lean:20:2: error: unexpected token 'sorry'; expected command",
+   "class": "commented_out_in_dataset"
+  },
+  {
+   "task_id": "cat-searcher/minif2f-lean4/algebra_others_exirrpowirrrat",
+   "error": "/work/candidate.lean:20:2: error: unexpected token 'sorry'; expected command",
+   "class": "commented_out_in_dataset"
+  },
+  {
+   "task_id": "cat-searcher/minif2f-lean4/amc12a_2021_p22",
+   "error": "/work/candidate.lean:24:2: error: unexpected token 'sorry'; expected command",
+   "class": "commented_out_in_dataset"
+  },
+  {
+   "task_id": "cat-searcher/minif2f-lean4/mathd_algebra_484",
+   "error": "/work/candidate.lean:20:2: error: unexpected token 'sorry'; expected command",
+   "class": "commented_out_in_dataset"
+  },
+  {
+   "task_id": "cat-searcher/minif2f-lean4/amc12b_2020_p22",
+   "error": "/work/candidate.lean:21:2: error: unexpected token 'sorry'; expected command",
+   "class": "commented_out_in_dataset"
+  },
+  {
+   "task_id": "cat-searcher/minif2f-lean4/amc12a_2020_p9",
+   "error": "/work/candidate.lean:22:2: error: unexpected token 'sorry'; expected command",
+   "class": "commented_out_in_dataset"
+  },
+  {
+   "task_id": "cat-searcher/minif2f-lean4/amc12a_2021_p19",
+   "error": "/work/candidate.lean:22:2: error: unexpected token 'sorry'; expected command",
+   "class": "commented_out_in_dataset"
+  },
+  {
+   "task_id": "cat-searcher/minif2f-lean4/amc12a_2019_p12",
+   "error": "/work/candidate.lean:18:10: error: unknown constant 'Real.log'\n/work/candidate.lean:18:23: error: unknown constant 'Real.log'\n/work/candidate.lean:18:36: error: unknown constant 'Real.log'\n/work/candidate.lean:18:50: error: unknown constant 'Real.log'\n/work/candidate.lean:19:5: error: unknown constant 'Real.log'\n/work/candidate.lean:19:24: error: unknown constant 'Real.log'\n/work/candidate.lean:22",
+   "class": "does_not_elaborate_under_pinned_mathlib"
+  },
+  {
+   "task_id": "cat-searcher/minif2f-lean4/amc12b_2021_p1",
+   "error": "/work/candidate.lean:22:2: error: unexpected token 'sorry'; expected command",
+   "class": "commented_out_in_dataset"
+  },
+  {
+   "task_id": "cat-searcher/minif2f-lean4/amc12b_2020_p13",
+   "error": "/work/candidate.lean:20:2: error: unexpected token 'sorry'; expected command",
+   "class": "commented_out_in_dataset"
+  },
+  {
+   "task_id": "cat-searcher/minif2f-lean4/amc12b_2021_p13",
+   "error": "/work/candidate.lean:22:2: error: unexpected token 'sorry'; expected command",
+   "class": "commented_out_in_dataset"
+  },
+  {
+   "task_id": "cat-searcher/minif2f-lean4/amc12a_2009_p6",
+   "error": "/work/candidate.lean:23:2: error: unexpected token 'sorry'; expected command",
+   "class": "commented_out_in_dataset"
+  },
+  {
+   "task_id": "cat-searcher/minif2f-lean4/imosl_2007_algebra_p6",
+   "error": "/work/candidate.lean:17:0: error: unexpected identifier; expected command",
+   "class": "does_not_elaborate_under_pinned_mathlib"
+  },
+  {
+   "task_id": "cat-searcher/minif2f-lean4/amc12a_2021_p25",
+   "error": "/work/candidate.lean:24:2: error: unexpected token 'sorry'; expected command",
+   "class": "commented_out_in_dataset"
+  }
+ ],
+ "mathlib": {
+  "lean_toolchain": "leanprover/lean4:v4.7.0",
+  "mathlib_tag": "v4.7.0",
+  "mathlib_commit": "a45ae63747140c1b2cbad9d46f518015c047047a",
+  "cache": "lake exe cache get",
+  "created": "2026-10-07"
+ },
+ "tasks_sha256": "be0603bcc6b274cbb6cb9f39663f1af9fef0a782f2922a2739953e0bc88dd6a7",
+ "excluded_by_class": {
+  "commented_out_in_dataset": 17,
+  "does_not_elaborate_under_pinned_mathlib": 4
+ }
+}
