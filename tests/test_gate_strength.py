@@ -43,3 +43,24 @@ def test_failed_and_other_domains_are_untouched(monkeypatch):
     monkeypatch.setitem(checkers._CHECKERS, "math", lambda t, r: CheckResult("VERIFIED", {"m": 1}))
     m = checkers.check(Task("math", "t", "p", {"answer": "4", "min_visible_tests": 9}), "r")
     assert m.status == "VERIFIED" and "visible_tests" not in m.evidence
+
+
+def test_rust_asserts_in_comments_and_strings_are_not_counted():
+    src = ('fn main() {\n    // assert_eq!(f(9), 9);\n    /* assert!(g()); */\n'
+           '    let s = "assert!(true)";\n    assert_eq!(f(1), 1);\n}\n')
+    assert visible_test_count("rust", src) == 1
+
+
+def test_rust_counts_test_functions_not_asserts():
+    one = "#[test]\nfn t() {\n" + "".join(f"    assert_eq!(f({i}), {i});\n" for i in range(5)) + "}\n"
+    assert visible_test_count("rust", one) == 1
+    three = "".join(f"#[test]\nfn t{i}() {{ assert_eq!(f({i}), {i}); assert!(g()); }}\n" for i in range(3))
+    assert visible_test_count("rust", three) == 3
+    attrs = '#[test]\n#[should_panic(expected = "boom")]\npub fn p() { f(0); }\n#[test] fn q() { assert!(g()); }\n'
+    assert visible_test_count("rust", attrs) == 2
+    assert visible_test_count("rust", "// #[test]\nfn main() { assert!(a()); assert!(b()); }") == 2
+
+
+def test_rust_fn_main_assert_list_still_counts_asserts():
+    src = "fn main() {\n    assert_eq!(f(1), 1);\n    assert_ne!(f(2), 3);\n    assert!(g());\n    assert!(h(), \"msg\");\n}\n"
+    assert visible_test_count("rust", src) == 4

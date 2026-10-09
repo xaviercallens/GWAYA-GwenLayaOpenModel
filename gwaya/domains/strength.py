@@ -5,6 +5,10 @@ confident-wrong rate (Python 4B: 13.9 percent with 1 test, 3.6 percent with 8; R
 at a coverage cost. This module counts the tests and lets a caller require a minimum; the policy is OFF unless the task
 payload carries ``min_visible_tests``. The count is a static lower-bound estimate of the executed checks and says nothing
 about their quality.
+
+Rust: comments and string literals are stripped first (an ``assert!`` inside ``// ...`` or ``"..."`` never runs); a spec
+with ``#[test]`` functions counts one per test function (several asserts in one test are one test case, so this stays a
+lower bound), otherwise the ``assert!``/``assert_eq!``/``assert_ne!`` macros are counted.
 """
 from __future__ import annotations
 
@@ -12,6 +16,8 @@ import ast
 import re
 
 _RUST_ASSERT = re.compile(r"\bassert(?:_eq|_ne)?!\s*[\(\[{]")
+# `#[test]`, optionally followed by more attributes and a visibility/async qualifier, then `fn`
+_RUST_TEST_FN = re.compile(r"#\s*\[\s*test\s*\]\s*(?:#\s*\[[^\]]*\]\s*)*(?:pub(?:\s*\([^)]*\))?\s+)?(?:async\s+)?fn\b")
 
 
 def _python_count(src: str) -> int | None:
@@ -31,6 +37,13 @@ def _python_count(src: str) -> int | None:
     return sum(isinstance(n, ast.Assert) for n in ast.walk(mod))
 
 
+def _rust_count(src: str) -> int:
+    from gwaya.oracles import _strip_rust_comments_and_strings
+    code = _strip_rust_comments_and_strings(src)
+    n_test_fns = len(_RUST_TEST_FN.findall(code))
+    return n_test_fns if n_test_fns else len(_RUST_ASSERT.findall(code))
+
+
 def visible_test_count(domain: str, tests: str | None) -> int | None:
     """Number of visible tests behind a gate payload (None when it cannot be determined)."""
     if not tests:
@@ -38,5 +51,5 @@ def visible_test_count(domain: str, tests: str | None) -> int | None:
     if domain == "python":
         return _python_count(tests)
     if domain == "rust":
-        return len(_RUST_ASSERT.findall(tests))
+        return _rust_count(tests)
     return None
