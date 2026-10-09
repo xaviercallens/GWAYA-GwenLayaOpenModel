@@ -1,0 +1,15 @@
+{
+ "lines_total": 25,
+ "total_usd": 17.7581,
+ "lines_3_7": 24,
+ "total_3_7": 17.2421,
+ "lines_new": 1,
+ "total_new": 0.516,
+ "textonly_items": {
+  "tpu_laya-textonly-204124": {
+   "seconds": 1548,
+   "usd": 0.516,
+   "accel": "v5litepod-1 on-demand"
+  }
+ }
+}
