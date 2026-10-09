@@ -121,3 +121,31 @@ had been analysed.
 - **What would count against the gate.** Low coverage (programs often fail), low precision (programs reproduce the same
   mistake as the reasoning), or a cost that exceeds the benefit. Any of these is reported as found.
 - **Not a registered test.** This changes the status of no hypothesis.
+
+## Addendum A11: cross-fitted calibrated abstention (written before any such model was fitted)
+Dated 2026-10-09. Exploratory; **not** the registered GL arm or H1/H3 (no Laya, no separate split C). Because E has
+already been analysed, the freeze rule cannot hold for E; this analysis replaces a fitted-on-C calibrator with a fully
+pre-specified cross-fitted procedure that is run once.
+
+- **Unit and tiers.** Each of the 1,536 E tasks x tier, for the 4B (headline) and the 2B (secondary).
+- **Features** (stored outputs only; the gold answer and hidden tests are never inputs): gate verdict one-hot
+  {VERIFIED, FAILED, UNVERIFIED} (code: visible-test gate; math: the A10 program-of-thought gate); mean token
+  log-prob; minimum token log-prob; mean of the lowest 10% of token log-probs (at least one token); log(1 + completion
+  tokens); truncated flag (finish_reason == length); domain one-hot (3). Output = P(correct), correct = hidden check.
+- **Models** (all evaluated only on out-of-fold predictions): M0 gate verdict (answer iff VERIFIED, also used as a
+  binary score); M1 mean log-prob only; M2 logistic regression on every non-gate feature; M3 logistic regression on all
+  features. Logistic regression = scikit-learn `LogisticRegression(penalty="l2", C=1.0, max_iter=1000)` after
+  `StandardScaler` fitted on the training portion; no interactions; no tuning of C.
+- **Folds.** 5 folds by source problem: fold = int(sha256(cluster)[:8], 16) mod 5 (deterministic, no RNG).
+- **Discrimination and calibration** (per domain; a pooled value is only a convenience): AUROC, Brier, ECE (15
+  equal-mass bins), AURC of the out-of-fold P(correct); 95% CIs by the same cluster bootstrap as A1-A9
+  (10,000 resamples, numpy `default_rng(0)`). Paired differences M3-M0, M3-M1, M2-M1.
+- **Target-risk operating points.** Selective risk = P(wrong | answered). For alpha in {0.05, 0.10}: inside each
+  outer training portion, inner 4-fold cross-fitted predictions choose the threshold with the largest coverage whose
+  inner selective risk is <= alpha (require >= 30 answered; otherwise answer nothing); the model is then fitted on the
+  whole training portion and the threshold applied to the held-out fold. Report realised coverage and realised
+  selective risk (pooled over folds, per domain) with cluster-bootstrap CIs, for M1, M3 and for the gate alone (which
+  has no threshold). Compare realised risk with alpha: a method "meets the target" only if the upper CI bound <= alpha
+  is NOT required; we report whether the point estimate and the CI cover alpha, without a pass/fail claim.
+- **What would count against it.** M3 not beating M0 or M1 on AURC; realised risk above alpha; coverage collapsing on
+  Rust or math. All are reported as found. No hyperparameter, feature or fold choice will be changed after seeing results.
