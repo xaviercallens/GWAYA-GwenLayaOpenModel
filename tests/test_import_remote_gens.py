@@ -131,3 +131,13 @@ def test_subset_reimport_keeps_original_attributed_seconds(tmp_path):
     kept = [r["gpu_s"] for r in rs.ChainedLog(tmp_path / "kept" / "gens.jsonl").records]
     assert naive == pytest.approx([3.0, 3.0], abs=1e-4)  # the bug this guards against
     assert kept == pytest.approx([1.2, 1.2], abs=1e-4)
+
+
+def test_chip_seconds_scale_with_the_number_of_chips(tmp_path):
+    rows = write_tasks(tmp_path / "tasks.jsonl")
+    write_raw(tmp_path / "raw.jsonl", rows, chunk_size=5)  # wall 6.0 s over 5 equal tasks
+    irg.import_gens(tmp_path / "tasks.jsonl", tmp_path / "raw.jsonl", "m-bf16", "bf16", tmp_path / "one")
+    meta = irg.import_gens(tmp_path / "tasks.jsonl", tmp_path / "raw.jsonl", "m-bf16", "bf16", tmp_path / "four", chips=4)
+    one = sum(r["gpu_s"] for r in rs.ChainedLog(tmp_path / "one" / "gens.jsonl").records)
+    four = sum(r["gpu_s"] for r in rs.ChainedLog(tmp_path / "four" / "gens.jsonl").records)
+    assert one == pytest.approx(6.0, abs=1e-4) and four == pytest.approx(24.0, abs=1e-3) and meta["chips"] == 4

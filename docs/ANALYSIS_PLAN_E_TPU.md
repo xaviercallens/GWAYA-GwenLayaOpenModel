@@ -149,3 +149,29 @@ pre-specified cross-fitted procedure that is run once.
   is NOT required; we report whether the point estimate and the CI cover alpha, without a pass/fail claim.
 - **What would count against it.** M3 not beating M0 or M1 on AURC; realised risk above alpha; coverage collapsing on
   Rust or math. All are reported as found. No hyperparameter, feature or fold choice will be changed after seeing results.
+
+## Addendum A12: a wider tier gap with Qwen3.5-9B (written before the 9B run completed; no 9B result seen)
+Dated 2026-10-09. Exploratory and post hoc relative to A1-A9; it restores the registered ladder's largest feasible tier
+(9B; the 27B did not fit the budget and is not attempted here).
+
+- **Generation.** Qwen3.5-9B, bf16, vLLM-TPU, one `v5litepod-4` slice (tensor parallel 4), greedy, same raw protocol,
+  prompts, stop sequences and log-probabilities as the 2B/4B; answers for all 1,536 E tasks and, for math, a
+  program-of-thought program per task (A10). A 6-task-per-domain smoke test (18 tasks) showed the model starts and
+  generates; its outputs are not analysed. Effective concurrency will be read from the engine log and reported.
+- **Cost unit.** Attributed seconds are the slice wall time split by token share **times the 4 chips in use**
+  (`--chips 4` in the importer), so chip-seconds are comparable with the single-chip 2B/4B. Dollar cost = chip-seconds x
+  $1.20 / 3600 (on-demand list price estimate). Different effective concurrency across tiers is stated, not corrected.
+- **Analyses.** (a) A1, A2 for the 9B. (b) A3/A4: gate-only on the 9B as the largest tier, per domain, with the A10 math
+  gate, and the per-domain-matched log-prob baseline. (c) Cascades with the executed gate and no router, replayed offline
+  from the cached generations: 2B -> 9B, 4B -> 9B, and the three-tier ladder 2B -> 4B -> 9B. For each: accuracy
+  (final candidate, answered or not), selective coverage and confident-wrong rate, escalation share, cost per task and
+  cost per correct answer (math charged for the programs of every tier consulted), cost ratio versus always-9B with and
+  without the first generation chunk (S2), and paired cluster-bootstrap CIs; exact McNemar for each cascade versus
+  always-9B, Holm over the three cascades. (d) The oracle-router ceiling over {2B, 4B, 9B} (cheapest correct tier),
+  as a ceiling only. (e) A11 repeated with the 9B as the tier.
+- **Reading rule fixed in advance.** A cascade "pays off" only if its cost ratio versus always-9B is below 1 in BOTH the
+  with-warm-up and without-warm-up readings AND the accuracy difference's CI does not exclude zero on the harmful side.
+  Anything else is reported as not paying off. We expect the answer to depend on the tier gap; no tuning follows.
+- **What would count against us / limits.** A gate-driven cascade that is still not cheaper than always-9B; a 9B that is
+  not much better than the 4B (little headroom); cost depending on effective concurrency (2B <= 54, 4B <= 11, 9B to be
+  read from the log); public benchmarks possibly seen in pretraining; single greedy sample.
