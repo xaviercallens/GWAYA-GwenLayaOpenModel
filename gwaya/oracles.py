@@ -99,6 +99,9 @@ def rust_placeholder_violations(code: str) -> list[str]:
     return found
 
 
+DEFAULT_RUST_EDITION = "2021"
+
+
 class RustCompilerOracle:
     """
     Evaluates Rust code candidates using `rustc` metadata emission or `cargo check`.
@@ -109,9 +112,10 @@ class RustCompilerOracle:
         self.rustc_path = rustc_path or shutil.which("rustc") or "rustc"
         self.timeout_s = timeout_s
         self.available = bool(shutil.which(self.rustc_path))
-        # None -> GWAYA_RUST_EDITION from the environment, else "" = no flag = rustc's default (edition 2015).
-        # The default stays 2015 until the edition sensitivity (docs/ANALYSIS_PLAN_E_TPU.md A15) says otherwise.
-        self.edition = (os.environ.get("GWAYA_RUST_EDITION", "") if edition is None else edition).strip()
+        # None -> GWAYA_RUST_EDITION from the environment, else DEFAULT_RUST_EDITION. "" = no flag = rustc's own default
+        # (edition 2015, what every result before revision 3.7.0 used; docs/ANALYSIS_PLAN_E_TPU.md A15: at most 1 of 507
+        # E tasks and 1 of 69 R' tasks per tier changes verdict, always fail -> pass).
+        self.edition = (os.environ.get("GWAYA_RUST_EDITION", DEFAULT_RUST_EDITION) if edition is None else edition).strip()
 
     def _edition_args(self) -> list[str]:
         if self.edition not in ("", "2015", "2018", "2021", "2024"):

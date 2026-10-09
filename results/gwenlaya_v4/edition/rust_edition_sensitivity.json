@@ -1,0 +1,92 @@
+{
+ "Rfresh/qwen3.5-2b-bf16": {
+  "n": 69,
+  "differences_first_pass": 0,
+  "differences_confirmed": 0,
+  "hidden_fail_to_pass": [],
+  "hidden_pass_to_fail": [],
+  "gate_fail_to_verified": [],
+  "gate_verified_to_fail": [],
+  "pass_2015": 6,
+  "pass_2021": 6,
+  "gate_verified_2015": 21,
+  "gate_verified_2021": 21
+ },
+ "Rfresh/qwen3.5-4b-bf16": {
+  "n": 69,
+  "differences_first_pass": 2,
+  "differences_confirmed": 2,
+  "hidden_fail_to_pass": [
+   "rs/exercism/allergies"
+  ],
+  "hidden_pass_to_fail": [],
+  "gate_fail_to_verified": [
+   "rs/exercism/allergies"
+  ],
+  "gate_verified_to_fail": [],
+  "pass_2015": 28,
+  "pass_2021": 29,
+  "gate_verified_2015": 40,
+  "gate_verified_2021": 41
+ },
+ "Rfresh/qwen3.5-9b-bf16": {
+  "n": 69,
+  "differences_first_pass": 0,
+  "differences_confirmed": 0,
+  "hidden_fail_to_pass": [],
+  "hidden_pass_to_fail": [],
+  "gate_fail_to_verified": [],
+  "gate_verified_to_fail": [],
+  "pass_2015": 37,
+  "pass_2021": 37,
+  "gate_verified_2015": 45,
+  "gate_verified_2021": 45
+ },
+ "E/qwen3.5-2b-bf16": {
+  "n": 507,
+  "differences_first_pass": 0,
+  "differences_confirmed": 0,
+  "hidden_fail_to_pass": [],
+  "hidden_pass_to_fail": [],
+  "gate_fail_to_verified": [],
+  "gate_verified_to_fail": [],
+  "pass_2015": 154,
+  "pass_2021": 154,
+  "gate_verified_2015": 186,
+  "gate_verified_2021": 186
+ },
+ "E/qwen3.5-4b-bf16": {
+  "n": 507,
+  "differences_first_pass": 2,
+  "differences_confirmed": 2,
+  "hidden_fail_to_pass": [
+   "rs/mbpp_90_len_log"
+  ],
+  "hidden_pass_to_fail": [],
+  "gate_fail_to_verified": [
+   "rs/mbpp_90_len_log"
+  ],
+  "gate_verified_to_fail": [],
+  "pass_2015": 268,
+  "pass_2021": 269,
+  "gate_verified_2015": 302,
+  "gate_verified_2021": 303
+ },
+ "E/qwen3.5-9b-bf16": {
+  "n": 507,
+  "differences_first_pass": 2,
+  "differences_confirmed": 2,
+  "hidden_fail_to_pass": [
+   "rs/mbpp_619_move_num"
+  ],
+  "hidden_pass_to_fail": [],
+  "gate_fail_to_verified": [
+   "rs/mbpp_619_move_num"
+  ],
+  "gate_verified_to_fail": [],
+  "pass_2015": 298,
+  "pass_2021": 299,
+  "gate_verified_2015": 329,
+  "gate_verified_2021": 330
+ }
+}

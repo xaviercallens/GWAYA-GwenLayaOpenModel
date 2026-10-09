@@ -105,13 +105,15 @@ _EDITION_2021_ONLY = ("use std::collections::HashSet;\n"
 
 
 @needs_rust
-def test_edition_flag_is_honoured_and_default_is_unchanged():
+def test_edition_flag_is_honoured_and_default_is_2021(monkeypatch):
+    monkeypatch.delenv("GWAYA_RUST_EDITION", raising=False)
     spec = "assert_eq!(uniq(vec![1, 1, 2]), 2);"
-    # `FromIterator` is in the 2021 prelude only: it must fail under the default (no flag = 2015) and pass under 2021
+    # `FromIterator` is in the 2021 prelude only: the new default accepts it, an explicit 2015 (what results before 3.7.0 used) rejects it
+    assert RustCompilerOracle().edition == "2021"
     default = RustCompilerOracle().verify_with_test(_EDITION_2021_ONLY, spec, timeout_s=60)
-    new = RustCompilerOracle(edition="2021").verify_with_test(_EDITION_2021_ONLY, spec, timeout_s=60)
-    assert not default.success and "Compilation failed" in default.error_message
-    assert new.success, new.error_message
+    old = RustCompilerOracle(edition="2015").verify_with_test(_EDITION_2021_ONLY, spec, timeout_s=60)
+    assert default.success, default.error_message
+    assert not old.success and "Compilation failed" in old.error_message
 
 
 def test_unsupported_edition_is_rejected():
