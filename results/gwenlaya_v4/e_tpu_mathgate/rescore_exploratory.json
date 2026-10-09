@@ -1,0 +1,1366 @@
+{
+ "meta": {
+  "status": "EXPLORATORY post hoc re-score (docs/DEVIATIONS.md D62); the registered numbers remain the primary record",
+  "old_scorer": "git show 78cf88b:gwaya/domains/math_check.py",
+  "old_scorer_sha256": "14fad735ec9a4832e3da5c974bb2c180d45448599cf3d023329abf02f7c4e88f",
+  "new_scorer_sha256": "78cbcf69a63adb270270cf9916965fe1650fc12737b0055fff9f73cde576ffb3",
+  "data": "/mnt/data/home/xavkal/gwaya-data/etpu",
+  "python": "/mnt/data/xdev-cache/tmp/claude-1000/-home-xavkal-xdev-GWAYA-GwenLayaOpenModel/0cf9e15b-1839-4167-85fc-4fa02442ca1e/scratchpad/venv/bin/python",
+  "n_tasks": 500,
+  "gate_rule": "stored gate verdict, replaced only where the re-run program reproduces the stored verdict under the old scorer and the new scorer changes the boxed-vs-program decision",
+  "caveat": "E is easy for these tiers; a zero count is bounded by the rule of three, not a claim of zero error. No low-tier model changed: only the scorer did."
+ },
+ "tiers": {
+  "2B": {
+   "model": "qwen3.5-2b-bf16",
+   "n": 500,
+   "registered_scorer_reproduces_stored_base_rows": "500/500",
+   "accuracy": {
+    "old": 0.514,
+    "new": 0.558
+   },
+   "label_flips": {
+    "wrong_to_right": 22,
+    "right_to_wrong": 0,
+    "wrong_to_right_items": [
+     {
+      "task_id": "ma/test/algebra/101.json",
+      "gold": "x \\in [-2,7]",
+      "extracted": "[-2, 7]",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/algebra/2193.json",
+      "gold": "x=5",
+      "extracted": "5",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/algebra/2257.json",
+      "gold": "\\frac9{19}",
+      "extracted": "\\frac{9}{19}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/algebra/2486.json",
+      "gold": "\\left(\\frac{3}{5},\\frac{8}{3}\\right]",
+      "extracted": "\\left(\\frac{3}{5}, \\frac{8}{3}\\right]",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/algebra/518.json",
+      "gold": "\\frac 34",
+      "extracted": "\\frac{3}{4}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/counting_and_probability/14.json",
+      "gold": "\\frac14",
+      "extracted": "\\frac{1}{4}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/geometry/1108.json",
+      "gold": "(2,4)",
+      "extracted": "(2, 4)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/geometry/473.json",
+      "gold": "864 \\mbox{ inches}^2",
+      "extracted": "864",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/intermediate_algebra/1410.json",
+      "gold": "\\frac65",
+      "extracted": "\\frac{6}{5}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/intermediate_algebra/1714.json",
+      "gold": "(5,\\infty)",
+      "extracted": "(5, \\infty)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/intermediate_algebra/47.json",
+      "gold": "(-2,1)",
+      "extracted": "(-2, 1)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/intermediate_algebra/515.json",
+      "gold": "\\frac43",
+      "extracted": "\\frac{4}{3}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/intermediate_algebra/690.json",
+      "gold": "(1,-16,-4,43)",
+      "extracted": "(1, -16, -4, 43)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/number_theory/459.json",
+      "gold": "\\frac{639}{40}",
+      "extracted": "15 \\frac{39}{40}",
+      "old": [
+       "FAILED",
+       "sympy_numeric"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/number_theory/847.json",
+      "gold": "4210_{5}",
+      "extracted": "4210_5",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "string_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/prealgebra/1114.json",
+      "gold": "15\\mbox{ cm}^2",
+      "extracted": "15",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/prealgebra/1302.json",
+      "gold": "11\\sqrt2",
+      "extracted": "11\\sqrt{2}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "sympy_simplify"
+      ]
+     },
+     {
+      "task_id": "ma/test/prealgebra/153.json",
+      "gold": "\\frac 59",
+      "extracted": "\\frac{5}{9}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/precalculus/43.json",
+      "gold": "(15,-29)",
+      "extracted": "(15, -29)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/precalculus/541.json",
+      "gold": "\\left( \\frac{3}{2}, -13 \\right)",
+      "extracted": "\\left(\\frac{3}{2}, -13\\right)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/precalculus/625.json",
+      "gold": "\\begin{pmatrix} 16/49 \\\\ 48/49 \\\\ 24/49 \\end{pmatrix}",
+      "extracted": "\\begin{pmatrix} \\frac{16}{49} \\\\ \\frac{48}{49} \\\\ \\frac{24}{49} \\end{pmatrix}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/precalculus/807.json",
+      "gold": "\\left( 3, \\frac{\\pi}{2} \\right)",
+      "extracted": "(3, \\frac{\\pi}{2})",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     }
+    ],
+    "right_to_wrong_items": [],
+    "status_changes_without_label_change": 1
+   },
+   "gate": {
+    "programs_rerun": true,
+    "stored_verdict_not_reproduced_on_rerun": [],
+    "comparison_flips": [
+     {
+      "task_id": "ma/test/algebra/2470.json",
+      "answer": "137\\frac{1}{2}",
+      "program_output": "275/2",
+      "old": [
+       "UNVERIFIED",
+       "sympy_numeric",
+       "mismatch"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact",
+       null
+      ],
+      "correct_new": true
+     },
+     {
+      "task_id": "ma/test/algebra/864.json",
+      "answer": "(-1,6)",
+      "program_output": "(-1, 6)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable",
+       "unparseable_output"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured",
+       null
+      ],
+      "correct_new": true
+     },
+     {
+      "task_id": "ma/test/precalculus/356.json",
+      "answer": "y = -2x",
+      "program_output": "-2*x",
+      "old": [
+       "UNVERIFIED",
+       "unparseable",
+       "unparseable_output"
+      ],
+      "new": [
+       "VERIFIED",
+       "sympy_simplify",
+       null
+      ],
+      "correct_new": true
+     },
+     {
+      "task_id": "ma/test/precalculus/541.json",
+      "answer": "\\left(\\frac{3}{2}, -13\\right)",
+      "program_output": "(1.5, -13)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable",
+       "unparseable_output"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured",
+       null
+      ],
+      "correct_new": true
+     },
+     {
+      "task_id": "ma/test/precalculus/807.json",
+      "answer": "(3, \\frac{\\pi}{2})",
+      "program_output": "(3, 1.570796327)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable",
+       "unparseable_output"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured",
+       null
+      ],
+      "correct_new": true
+     }
+    ],
+    "verified": {
+     "old": 144,
+     "new": 149
+    },
+    "verified_but_wrong": {
+     "old": 7,
+     "new": 2,
+     "old_items": [
+      "ma/test/algebra/2257.json",
+      "ma/test/algebra/518.json",
+      "ma/test/counting_and_probability/14.json",
+      "ma/test/geometry/1108.json",
+      "ma/test/prealgebra/1302.json",
+      "ma/test/prealgebra/1512.json",
+      "ma/test/prealgebra/1761.json"
+     ],
+     "new_items": [
+      "ma/test/prealgebra/1512.json",
+      "ma/test/prealgebra/1761.json"
+     ],
+     "new_labels_with_stored_gate": 2
+    },
+    "cwr_rate_over_n": {
+     "old": 0.014,
+     "new": 0.004,
+     "new_rule_of_three_upper95": null
+    },
+    "wrong_among_verified": {
+     "old": 0.0486,
+     "new": 0.0134,
+     "new_rule_of_three_upper95": null
+    }
+   },
+   "answer_if_boxed_confident_wrong": {
+    "n_boxed": 301,
+    "old": 0.088,
+    "new": 0.044,
+    "count_old": 44,
+    "count_new": 22,
+    "note": "answer whenever a final \\boxed{} exists; wrong = not VERIFIED (FAILED or unparseable), rate over all n tasks"
+   },
+   "cwr_all": {
+    "old": 0.486,
+    "new": 0.442,
+    "n_no_boxed": 199,
+    "note": "answer everything (A3.cwr_all): counts tasks with no boxed answer (mostly truncated at 1024 tokens) as wrong"
+   },
+   "registered_A3": {
+    "cov": 0.288,
+    "prec": 0.9513888888888888,
+    "cwr": 0.014
+   }
+  },
+  "4B": {
+   "model": "qwen3.5-4b-bf16",
+   "n": 500,
+   "registered_scorer_reproduces_stored_base_rows": "500/500",
+   "accuracy": {
+    "old": 0.612,
+    "new": 0.664
+   },
+   "label_flips": {
+    "wrong_to_right": 26,
+    "right_to_wrong": 0,
+    "wrong_to_right_items": [
+     {
+      "task_id": "ma/test/algebra/101.json",
+      "gold": "x \\in [-2,7]",
+      "extracted": "[-2, 7]",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/algebra/2193.json",
+      "gold": "x=5",
+      "extracted": "5",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/algebra/2257.json",
+      "gold": "\\frac9{19}",
+      "extracted": "\\frac{9}{19}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/algebra/2486.json",
+      "gold": "\\left(\\frac{3}{5},\\frac{8}{3}\\right]",
+      "extracted": "\\left( \\frac{3}{5}, \\frac{8}{3} \\right]",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/algebra/518.json",
+      "gold": "\\frac 34",
+      "extracted": "\\frac{3}{4}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/algebra/864.json",
+      "gold": "(-1,6)",
+      "extracted": "(-1, 6)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/counting_and_probability/14.json",
+      "gold": "\\frac14",
+      "extracted": "\\frac{1}{4}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/geometry/1108.json",
+      "gold": "(2,4)",
+      "extracted": "(2, 4)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/geometry/473.json",
+      "gold": "864 \\mbox{ inches}^2",
+      "extracted": "864",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/geometry/538.json",
+      "gold": "(8,-2)",
+      "extracted": "(8, -2)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/intermediate_algebra/1410.json",
+      "gold": "\\frac65",
+      "extracted": "\\frac{6}{5}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/intermediate_algebra/1714.json",
+      "gold": "(5,\\infty)",
+      "extracted": "(5, \\infty)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/intermediate_algebra/1981.json",
+      "gold": "(2,12) \\cup (12,102)",
+      "extracted": "(2, 12) \\cup (12, 102)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/intermediate_algebra/1992.json",
+      "gold": "(0,9) \\cup (9,36)",
+      "extracted": "(0, 9) \\cup (9, 36)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/intermediate_algebra/515.json",
+      "gold": "\\frac43",
+      "extracted": "\\frac{4}{3}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/intermediate_algebra/690.json",
+      "gold": "(1,-16,-4,43)",
+      "extracted": "(1, -16, -4, 43)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/number_theory/847.json",
+      "gold": "4210_{5}",
+      "extracted": "4210_5",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "string_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/prealgebra/1044.json",
+      "gold": "5.4 \\text{ cents}",
+      "extracted": "5.4",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "numeric_tolerance"
+      ]
+     },
+     {
+      "task_id": "ma/test/prealgebra/1114.json",
+      "gold": "15\\mbox{ cm}^2",
+      "extracted": "15",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/prealgebra/1302.json",
+      "gold": "11\\sqrt2",
+      "extracted": "11\\sqrt{2}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "sympy_simplify"
+      ]
+     },
+     {
+      "task_id": "ma/test/prealgebra/153.json",
+      "gold": "\\frac 59",
+      "extracted": "\\frac{5}{9}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/prealgebra/1865.json",
+      "gold": "12",
+      "extracted": "12^{\\text{th}}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/precalculus/43.json",
+      "gold": "(15,-29)",
+      "extracted": "(15, -29)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/precalculus/541.json",
+      "gold": "\\left( \\frac{3}{2}, -13 \\right)",
+      "extracted": "\\left(\\frac{3}{2}, -13\\right)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/precalculus/625.json",
+      "gold": "\\begin{pmatrix} 16/49 \\\\ 48/49 \\\\ 24/49 \\end{pmatrix}",
+      "extracted": "\\begin{pmatrix} \\frac{16}{49} \\\\ \\frac{48}{49} \\\\ \\frac{24}{49} \\end{pmatrix}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/precalculus/807.json",
+      "gold": "\\left( 3, \\frac{\\pi}{2} \\right)",
+      "extracted": "(3, \\frac{\\pi}{2})",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     }
+    ],
+    "right_to_wrong_items": [],
+    "status_changes_without_label_change": 0
+   },
+   "gate": {
+    "programs_rerun": true,
+    "stored_verdict_not_reproduced_on_rerun": [
+     {
+      "task_id": "ma/test/intermediate_algebra/1555.json",
+      "stored": "VERIFIED",
+      "rerun_old": "UNVERIFIED",
+      "reason": "program_timeout"
+     }
+    ],
+    "comparison_flips": [
+     {
+      "task_id": "ma/test/prealgebra/1865.json",
+      "answer": "12^{\\text{th}}",
+      "program_output": "12",
+      "old": [
+       "UNVERIFIED",
+       "unparseable",
+       "unparseable_output"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact",
+       null
+      ],
+      "correct_new": true
+     },
+     {
+      "task_id": "ma/test/precalculus/356.json",
+      "answer": "y = -2x",
+      "program_output": "-2*x",
+      "old": [
+       "UNVERIFIED",
+       "unparseable",
+       "unparseable_output"
+      ],
+      "new": [
+       "VERIFIED",
+       "sympy_simplify",
+       null
+      ],
+      "correct_new": true
+     },
+     {
+      "task_id": "ma/test/precalculus/807.json",
+      "answer": "(3, \\frac{\\pi}{2})",
+      "program_output": "(3, pi/2)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable",
+       "unparseable_output"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured",
+       null
+      ],
+      "correct_new": true
+     }
+    ],
+    "verified": {
+     "old": 227,
+     "new": 230
+    },
+    "verified_but_wrong": {
+     "old": 13,
+     "new": 0,
+     "old_items": [
+      "ma/test/algebra/2257.json",
+      "ma/test/algebra/518.json",
+      "ma/test/algebra/864.json",
+      "ma/test/counting_and_probability/14.json",
+      "ma/test/geometry/1108.json",
+      "ma/test/geometry/473.json",
+      "ma/test/intermediate_algebra/515.json",
+      "ma/test/intermediate_algebra/690.json",
+      "ma/test/prealgebra/1044.json",
+      "ma/test/prealgebra/1114.json",
+      "ma/test/prealgebra/1302.json",
+      "ma/test/prealgebra/153.json",
+      "ma/test/precalculus/43.json"
+     ],
+     "new_items": [],
+     "new_labels_with_stored_gate": 0
+    },
+    "cwr_rate_over_n": {
+     "old": 0.026,
+     "new": 0.0,
+     "new_rule_of_three_upper95": 0.006
+    },
+    "wrong_among_verified": {
+     "old": 0.0573,
+     "new": 0.0,
+     "new_rule_of_three_upper95": 0.013
+    }
+   },
+   "answer_if_boxed_confident_wrong": {
+    "n_boxed": 340,
+    "old": 0.068,
+    "new": 0.016,
+    "count_old": 34,
+    "count_new": 8,
+    "note": "answer whenever a final \\boxed{} exists; wrong = not VERIFIED (FAILED or unparseable), rate over all n tasks"
+   },
+   "cwr_all": {
+    "old": 0.388,
+    "new": 0.336,
+    "n_no_boxed": 160,
+    "note": "answer everything (A3.cwr_all): counts tasks with no boxed answer (mostly truncated at 1024 tokens) as wrong"
+   },
+   "registered_A3": {
+    "cov": 0.454,
+    "prec": 0.9427312775330396,
+    "cwr": 0.026,
+    "cwr_all": 0.388
+   }
+  },
+  "9B": {
+   "model": "qwen3.5-9b-bf16",
+   "n": 500,
+   "registered_scorer_reproduces_stored_base_rows": "500/500",
+   "accuracy": {
+    "old": 0.642,
+    "new": 0.694
+   },
+   "label_flips": {
+    "wrong_to_right": 26,
+    "right_to_wrong": 0,
+    "wrong_to_right_items": [
+     {
+      "task_id": "ma/test/algebra/101.json",
+      "gold": "x \\in [-2,7]",
+      "extracted": "[-2, 7]",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/algebra/2193.json",
+      "gold": "x=5",
+      "extracted": "5",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/algebra/2257.json",
+      "gold": "\\frac9{19}",
+      "extracted": "\\frac{9}{19}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/algebra/2486.json",
+      "gold": "\\left(\\frac{3}{5},\\frac{8}{3}\\right]",
+      "extracted": "\\left( \\frac{3}{5}, \\frac{8}{3} \\right]",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/algebra/518.json",
+      "gold": "\\frac 34",
+      "extracted": "\\frac{3}{4}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/algebra/864.json",
+      "gold": "(-1,6)",
+      "extracted": "(-1, 6)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/counting_and_probability/14.json",
+      "gold": "\\frac14",
+      "extracted": "\\frac{1}{4}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/geometry/1108.json",
+      "gold": "(2,4)",
+      "extracted": "(2, 4)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/geometry/473.json",
+      "gold": "864 \\mbox{ inches}^2",
+      "extracted": "864",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/geometry/538.json",
+      "gold": "(8,-2)",
+      "extracted": "(8, -2)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/intermediate_algebra/1410.json",
+      "gold": "\\frac65",
+      "extracted": "\\frac{6}{5}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/intermediate_algebra/1714.json",
+      "gold": "(5,\\infty)",
+      "extracted": "(5, \\infty)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/intermediate_algebra/1981.json",
+      "gold": "(2,12) \\cup (12,102)",
+      "extracted": "(2, 12) \\cup (12, 102)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/intermediate_algebra/1992.json",
+      "gold": "(0,9) \\cup (9,36)",
+      "extracted": "(0, 9) \\cup (9, 36)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/intermediate_algebra/515.json",
+      "gold": "\\frac43",
+      "extracted": "\\frac{4}{3}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/intermediate_algebra/690.json",
+      "gold": "(1,-16,-4,43)",
+      "extracted": "(1, -16, -4, 43)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/number_theory/847.json",
+      "gold": "4210_{5}",
+      "extracted": "4210_5",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "string_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/prealgebra/1044.json",
+      "gold": "5.4 \\text{ cents}",
+      "extracted": "5.4",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "numeric_tolerance"
+      ]
+     },
+     {
+      "task_id": "ma/test/prealgebra/1114.json",
+      "gold": "15\\mbox{ cm}^2",
+      "extracted": "15",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/prealgebra/1302.json",
+      "gold": "11\\sqrt2",
+      "extracted": "11\\sqrt{2}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "sympy_simplify"
+      ]
+     },
+     {
+      "task_id": "ma/test/prealgebra/153.json",
+      "gold": "\\frac 59",
+      "extracted": "\\frac{5}{9}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/prealgebra/1865.json",
+      "gold": "12",
+      "extracted": "12^{\\text{th}} \\text{ grade}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "fraction_exact"
+      ]
+     },
+     {
+      "task_id": "ma/test/precalculus/43.json",
+      "gold": "(15,-29)",
+      "extracted": "(15, -29)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/precalculus/541.json",
+      "gold": "\\left( \\frac{3}{2}, -13 \\right)",
+      "extracted": "(\\frac{3}{2}, -13)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/precalculus/625.json",
+      "gold": "\\begin{pmatrix} 16/49 \\\\ 48/49 \\\\ 24/49 \\end{pmatrix}",
+      "extracted": "\\begin{pmatrix} \\frac{16}{49} \\\\ \\frac{48}{49} \\\\ \\frac{24}{49} \\end{pmatrix}",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     },
+     {
+      "task_id": "ma/test/precalculus/807.json",
+      "gold": "\\left( 3, \\frac{\\pi}{2} \\right)",
+      "extracted": "(3, \\frac{\\pi}{2})",
+      "old": [
+       "UNVERIFIED",
+       "unparseable"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured"
+      ]
+     }
+    ],
+    "right_to_wrong_items": [],
+    "status_changes_without_label_change": 0
+   },
+   "gate": {
+    "programs_rerun": true,
+    "stored_verdict_not_reproduced_on_rerun": [],
+    "comparison_flips": [
+     {
+      "task_id": "ma/test/precalculus/356.json",
+      "answer": "y = -2x",
+      "program_output": "y = -2x + 0",
+      "old": [
+       "UNVERIFIED",
+       "unparseable",
+       "unparseable_output"
+      ],
+      "new": [
+       "VERIFIED",
+       "sympy_simplify",
+       null
+      ],
+      "correct_new": true
+     },
+     {
+      "task_id": "ma/test/precalculus/807.json",
+      "answer": "(3, \\frac{\\pi}{2})",
+      "program_output": "(3.0, 1.5707963267948966)",
+      "old": [
+       "UNVERIFIED",
+       "unparseable",
+       "unparseable_output"
+      ],
+      "new": [
+       "VERIFIED",
+       "structured",
+       null
+      ],
+      "correct_new": true
+     }
+    ],
+    "verified": {
+     "old": 234,
+     "new": 236
+    },
+    "verified_but_wrong": {
+     "old": 10,
+     "new": 0,
+     "old_items": [
+      "ma/test/algebra/2257.json",
+      "ma/test/algebra/518.json",
+      "ma/test/counting_and_probability/14.json",
+      "ma/test/geometry/473.json",
+      "ma/test/intermediate_algebra/515.json",
+      "ma/test/prealgebra/1044.json",
+      "ma/test/prealgebra/1114.json",
+      "ma/test/prealgebra/1302.json",
+      "ma/test/prealgebra/153.json",
+      "ma/test/precalculus/43.json"
+     ],
+     "new_items": [],
+     "new_labels_with_stored_gate": 0
+    },
+    "cwr_rate_over_n": {
+     "old": 0.02,
+     "new": 0.0,
+     "new_rule_of_three_upper95": 0.006
+    },
+    "wrong_among_verified": {
+     "old": 0.0427,
+     "new": 0.0,
+     "new_rule_of_three_upper95": 0.0127
+    }
+   },
+   "answer_if_boxed_confident_wrong": {
+    "n_boxed": 347,
+    "old": 0.052,
+    "new": 0.0,
+    "count_old": 26,
+    "count_new": 0,
+    "note": "answer whenever a final \\boxed{} exists; wrong = not VERIFIED (FAILED or unparseable), rate over all n tasks"
+   },
+   "cwr_all": {
+    "old": 0.358,
+    "new": 0.306,
+    "n_no_boxed": 153,
+    "note": "answer everything (A3.cwr_all): counts tasks with no boxed answer (mostly truncated at 1024 tokens) as wrong"
+   },
+   "registered_A3": {}
+  }
+ }
+}
