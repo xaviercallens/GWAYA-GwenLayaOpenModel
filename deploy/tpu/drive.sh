@@ -10,7 +10,7 @@
 # price_source (list-price estimate, not the bill).
 set -uo pipefail
 
-NAME="run"; SCRIPT=""; UPLOAD=""; DOWNLOAD=""; MAX_MIN=90; ACCEL="v5litepod-1"; VERSION="v2-alpha-tpuv5-lite"
+NAME="run"; SCRIPT=""; UPLOAD=""; DOWNLOAD=""; REMOTE_ENV=""; MAX_MIN=90; ACCEL="v5litepod-1"; VERSION="v2-alpha-tpuv5-lite"
 PROV="on-demand"; ZONES="us-central1-a us-west4-a us-east5-b us-south1-a"; YES=0
 LAKE="${GWAYA_LAKE:-gs://socrateai-datalake-gen-lang-client-0625573011/gwenlaya_v4/tpu_runs}"
 LEDGER="${GWAYA_LEDGER:-${GWAYA_DATA_ROOT:-$HOME/gwaya-data}/spend_ledger.jsonl}"
@@ -22,7 +22,7 @@ OUT_DIR="${GWAYA_TPU_OUT:-./tpu_out}"
 while [ $# -gt 0 ]; do case "$1" in
   --name) NAME="$2"; shift ;; --script) SCRIPT="$2"; shift ;; --upload) UPLOAD="$2"; shift ;;
   --download) DOWNLOAD="$2"; shift ;; --max-minutes) MAX_MIN="$2"; shift ;; --accel) ACCEL="$2"; shift ;;
-  --spot) PROV="spot" ;; --zones) ZONES="$2"; shift ;; --out) OUT_DIR="$2"; shift ;; --yes-spend) YES=1 ;;
+  --remote-env) REMOTE_ENV="$2"; shift ;; --spot) PROV="spot" ;; --zones) ZONES="$2"; shift ;; --out) OUT_DIR="$2"; shift ;; --yes-spend) YES=1 ;;
   *) echo "unknown arg $1" >&2; exit 2 ;; esac; shift; done
 [ -n "$SCRIPT" ] || { echo "--script is required" >&2; exit 2; }
 
@@ -97,5 +97,5 @@ FILES="$SCRIPT"; for f in $UPLOAD; do FILES="$FILES $f"; done
 gcloud compute tpus tpu-vm scp $FILES "$TPU:~/smoke/" --zone "$ZONE" --quiet
 RS="$(basename "$SCRIPT")"
 log "running $RS (hard cap ${MAX_MIN} min)"
-timeout "$(( MAX_MIN * 60 ))" gcloud compute tpus tpu-vm ssh "$TPU" --zone "$ZONE" --quiet --command "cd ~/smoke && chmod +x $RS && ./$RS" 2>&1 | tail -30
+timeout "$(( MAX_MIN * 60 ))" gcloud compute tpus tpu-vm ssh "$TPU" --zone "$ZONE" --quiet --command "cd ~/smoke && chmod +x $RS && $REMOTE_ENV ./$RS" 2>&1 | tail -30
 log "remote script finished (rc=${PIPESTATUS[0]})"

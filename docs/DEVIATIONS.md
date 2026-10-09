@@ -149,7 +149,7 @@ D41 describes how scoring was run.
 | D34 | H3 cost in L4 GPU-seconds (D3: CPU-seconds locally) | **Accelerator chip-seconds**: chunk wall time split by token share (registered attribution rule), throughput not latency, not comparable to GPU-seconds. The first chunk of each model (62 s / 144 s / 192 s vs 9-10 / 21-23 / 50-55 s later, consistent with lazy compilation) is included. CPU time of the gate is not counted | Plan |
 | D35 | B3 threshold set on split C to match GL coverage | A4 baseline answers the **k most confident tasks** (exp(mean log-prob)), with k = the gate's answered count **in the same domain**; no outcome labels are used to choose k; ties broken pessimistically. k is matched on E rather than taken from a threshold frozen on a separate split. No direction of bias is claimed (the earlier "favours the baseline" was unsupported, re-audit AB11/E45). Pooled number: coverage matched within each domain (math k = 0), -0.063 (-0.074 to -0.054); the earlier global-threshold pooled -0.042 is withdrawn (re-audit E47). Not B3, not H1 | No split C; plan |
 | D36 | GL = gate + Laya router/calibrator; H3 = GL vs B5 | A5 "gate cascade" = 2B -> executed gate -> 4B (run_study arm `gwenlaya`, static ladder, no Laya), compared with B1/B2 (not B5), Holm over two exploratory contrasts. Not GL, not H3 | No Laya head; plan |
-| D37 | Math gate = sandboxed program-of-thought re-execution that reproduces the boxed answer (prereg section 1 table; needs no task payload) | **Not implemented.** Our gate executes only the task's `gate_payload`, which is empty for all 500 math rows, so every math gate verdict is UNVERIFIED: coverage 0, the cascade always escalates, matched-coverage math comparisons are empty. This is an implementation gap in the checker, not a property of math tasks | Implementation gap; stated in plan (A3); reworded after re-audit E42 |
+| D37 | Math gate = sandboxed program-of-thought re-execution that reproduces the boxed answer (prereg section 1 table; needs no task payload) | **Not implemented.** Our gate executes only the task's `gate_payload`, which is empty for all 500 math rows, so every math gate verdict is UNVERIFIED: coverage 0, the cascade always escalates, matched-coverage math comparisons are empty. This is an implementation gap in the checker, not a property of math tasks | Implementation gap; stated in plan (A3); reworded after re-audit E42. **Superseded for the gate by D43 (revision 3.5.0)**; the E-set numbers of 3.4.0 stay as published |
 | D38 | (A7 in plan: CPU vs TPU on 80 night tasks) | A7 **restricted to Python/Rust** (54 tasks): CPU night math came from the defective code prompt (D24/D28). Decided after seeing a pooled p driven by math | Post hoc (plan amendment 1) |
 | D39 | (A8 in plan: timeout audit) | A8 became a correction: all 1,536 non-passing Python/Rust rows re-checked serially (3 flips); contention flips applied as an **overlay** (`scripts/tpu/serial_overlay.py`, originals untouched; py/MBPP/271 for 2B and 4B); `rs/mbpp_130_max_occurrences` (4B) is nondeterministic (Rust HashMap order) and stays FAILED; all 1,572 passing rows re-run once (0 changes); sensitivity S1 counts every item with two different outcomes as wrong. Overlay importer bug (re-attributed seconds inflated cost) fixed and tested before the final numbers | Post hoc (plan amendments 2 and 4) |
 | D40 | Log-probabilities captured (D21) | A first TPU pass (VM gwenlaya-tpu-e-gen-210955; ledger 963 s, 0.321 USD) returned **no log-probabilities** (`mean_logprob` null in all 1,536 Coder and 1,536 2B rows; 4B failed to start). Per the maintainer it used `logprobs=0`. It was set aside and not used; all three models were regenerated with `logprobs=1` (VM gwenlaya-tpu-e-gen2-214445); `gen_batch.py` now fails fast without log-probabilities | Implementation defect; during generation |
@@ -172,3 +172,39 @@ answered (selective coverage 0.507, CWR 0.103 pooled, `A5.cascade_selective_*`).
 source-problem cluster has one item, so the cluster bootstrap is effectively item-level stratified by domain.
 A warm-up-excluded cost sensitivity S2 (post hoc) is reported next to the planned cost: pooled cascade/4B
 ratio 1.243 (1.224-1.260) without the first chunk vs 1.357 with it.
+
+## Revision 3.5.0 (2026-10-09): D43-D47. All are post hoc relative to the E baselines of 3.4.0 and to the registered H1/H3
+
+All of the following were decided after the E baselines (A1-A9) had been seen. They are exploratory and change
+the status of no registered hypothesis. The plan addenda A10, A11, A12 in `docs/ANALYSIS_PLAN_E_TPU.md` were
+written before the corresponding results were computed (A12: before the 9B run completed).
+
+D43. **Program-of-thought math gate added after seeing the E baselines.** Prereg says the math gate is a sandboxed
+program-of-thought re-execution (D37 recorded that it was not implemented). It was implemented
+(`gwaya/domains/math_gate.py`) and run on E math for the 2B and 4B after the zero math coverage had been seen
+(addendum A10). The gold answer is never an input. One greedy program (max 1,024 new tokens) per tier and math task;
+programs are a second accelerator generation and are charged to every gated arm for each tier consulted; ungated arms
+are not charged. The math rows of the overlay were replaced by the new replay (originals untouched). The 3.4.0
+statement "math gate coverage 0" is superseded; the cascade cost and selective numbers change for math and pooled.
+
+D44. **Qwen3.5-9B added post hoc.** The registered ladder lists 2B/4B/9B/27B; D32 had cut it to 2B/4B. After the
+E results, to restore the registered ladder's largest feasible tier (addendum A12), the 9B was run on all 1,536 E tasks plus math programs
+(addendum A12, written before the 9B run completed; a smoke test of 6 tasks per domain was not analysed). The 27B
+was not attempted (budget). The reading rule for "cascade pays off" was fixed in A12 before results.
+
+D45. **Multi-chip chip-seconds.** The 9B ran on a `v5litepod-4` slice (tensor parallel 4). Attributed seconds are the
+slice wall time split by token share times 4 chips (`--chips 4` in `scripts/import_remote_gens.py`), so they are
+comparable in unit with the single-chip 2B/4B but not a measure of equal engine concurrency. The 9B effective
+concurrency was not measured, so its cost is less certain. Dollar cost at the 1.20 USD/chip-hour list price.
+
+D46. **A11 cross-fitted calibrated abstention added post hoc** (`scripts/analyze_abstention.py`, addendum A11;
+`results/gwenlaya_v4/e_tpu_mathgate/abstention_a11.json`). It replaces a calibrator fitted on split C (which does not
+exist) with a 5-fold cross-fitted logistic regression, run once on E. Model M3 uses the gate verdict as a feature, so
+its gain over a log-prob-only score is calibration gain, not independent evidence. CIs resample clusters of fixed
+out-of-fold predictions and do not include model-fit variability. ECE percentile-bootstrap CIs sometimes exclude their
+own point estimate (known upward bias of ECE under resampling). A11 was run for the 4B and 2B only, not the 9B.
+
+D47. **Spend.** The ledger has 11 lines totalling 4.9136 USD (list-price estimate, not the bill): the PoT run
+(`tpu_pot-082416`, 0.33), the 9B smoke (`tpu_nineb-smoke-084942`, 0.7827) and the 9B full run
+(`tpu_nineb-full-091403`, 1.272) were added since 3.4.0 (2.5289). The 9B lines are v5litepod-4 at 4 x 1.20 USD/hour.
+
