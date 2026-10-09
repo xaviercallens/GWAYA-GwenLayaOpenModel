@@ -90,7 +90,13 @@ def render_calibrator_text(r: dict[str, Any]) -> str:
             f"[prompt]\n{r['prompt']}\n[candidate]\n{str(r.get('candidate', ''))[:CAND_CHARS]}")
 
 
-def make_examples(rows: Sequence[dict[str, Any]], mode: str, tiers: Sequence[str]) -> list[dict[str, Any]]:
+def render_calibrator_text_only(r: dict[str, Any]) -> str:
+    """A16 ablation: no [signals] line (gate verdict, log-probs); only domain, tier, prompt and candidate."""
+    return (f"[domain] {r.get('domain', '?')} [tier] {r.get('tier', '?')}\n"
+            f"[prompt]\n{r['prompt']}\n[candidate]\n{str(r.get('candidate', ''))[:CAND_CHARS]}")
+
+
+def make_examples(rows: Sequence[dict[str, Any]], mode: str, tiers: Sequence[str], text_only: bool = False) -> list[dict[str, Any]]:
     """-> [{key, text, feats, labels, mask}]; router has len(tiers) labels (masked), calibrator has one."""
     out = []
     for r in rows:
@@ -103,7 +109,8 @@ def make_examples(rows: Sequence[dict[str, Any]], mode: str, tiers: Sequence[str
         else:
             if "correct" not in r:
                 continue
-            ex = dict(text=render_calibrator_text(r), feats=gate_features(r.get("signals")),
+            ex = dict(text=(render_calibrator_text_only(r) if text_only else render_calibrator_text(r)),
+                      feats=([] if text_only else gate_features(r.get("signals"))),
                       labels=[float(bool(r["correct"]))], mask=[1.0])
         ex["key"] = row_key(r)
         ex["tier"] = r.get("tier")
@@ -233,7 +240,7 @@ def train(args: argparse.Namespace, tr: list[dict], va: list[dict], tiers: Seque
                                                        target_modules=targets, bias="none"))
     hidden = enc.config.hidden_size
     n_out = len(tiers) if args.mode == "router" else 1
-    n_feat = 0 if args.mode == "router" else N_FEATURES
+    n_feat = 0 if (args.mode == "router" or args.text_only) else N_FEATURES
     head = torch.nn.Sequential(torch.nn.Linear(hidden + n_feat, hidden // 2), torch.nn.GELU(),
                                torch.nn.Dropout(0.1), torch.nn.Linear(hidden // 2, n_out))
     if args.load_dir:
@@ -306,7 +313,7 @@ def train(args: argparse.Namespace, tr: list[dict], va: list[dict], tiers: Seque
     result["val_metrics"] = metrics_for(args.mode, tiers, probs, va) if va else "TBD (no validation rows)"
     for spec in args.predict or []:  # NAME=PATH: raw scores for other row files (calibration split, evaluation set)
         name, _, path = spec.partition("=")
-        ex = make_examples(read_jsonl(path), args.mode, tiers)
+        ex = make_examples(read_jsonl(path), args.mode, tiers, args.text_only)
         pr = predict(ex)
         with open(out / f"preds_{name}.jsonl", "w") as f:
             for e, p_ in zip(ex, pr):
@@ -318,7 +325,7 @@ def train(args: argparse.Namespace, tr: list[dict], va: list[dict], tiers: Seque
     (out / "head_config.json").write_text(json.dumps({
         "mode": args.mode, "tiers": list(tiers), "backbone": args.backbone, "lora_r": args.r, "lora_targets": targets,
         "hidden_size": hidden, "n_features": n_feat, "gate_vocab": list(GATE_VOCAB), "signal_keys": list(SIGNAL_KEYS),
-        "max_len": args.max_len, "shuffled_labels": args.shuffle_labels,
+        "max_len": args.max_len, "shuffled_labels": args.shuffle_labels, "text_only": bool(args.text_only),
         "calibration": "none fitted here (stage C6 fits temperature/isotonic on the C split)"}, indent=1))
     result["versions"] = {m: getattr(importlib.import_module(m), "__version__", "?") for m in ("torch", "transformers", "peft")}
     (out / "run_manifest.json").write_text(json.dumps(result, indent=1, default=str))
@@ -342,6 +349,7 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--max-len", type=int, default=512)
     ap.add_argument("--device", default="auto", help="auto | cpu | cuda | xla (TPU, needs torch_xla)")
     ap.add_argument("--load-dir", default=None, help="predict-only: load adapter/ + heads.safetensors from a previous --out-dir")
+    ap.add_argument("--text-only", action="store_true", help="A16 ablation: calibrator sees only domain/tier/prompt/candidate text (no signals line, no numeric features)")
     ap.add_argument("--init-only", action="store_true", help="zero training steps: score with the untrained (seeded) head, the 'twin' of a trained run")
     ap.add_argument("--predict", nargs="*", help="NAME=PATH row files to score after training/loading (writes preds_NAME.jsonl)")
     ap.add_argument("--bf16", action="store_true", help="bfloat16 autocast (xla only)")
@@ -357,7 +365,7 @@ def main(argv: list[str] | None = None) -> int:
     tiers = [t for t in args.tiers.split(",") if t]
     rows = read_jsonl(args.data)
     tr_rows, va_rows, counts = select_rows(rows, not args.no_slice_filter)
-    tr, va = make_examples(tr_rows, args.mode, tiers), make_examples(va_rows, args.mode, tiers)
+    tr, va = make_examples(tr_rows, args.mode, tiers, args.text_only), make_examples(va_rows, args.mode, tiers, args.text_only)
     if args.shuffle_labels:
         tr = shuffle_labels(tr)
     plan = {"mode": args.mode, "backbone": args.backbone, "lora_r": args.r, "tiers": tiers if args.mode == "router" else None,
