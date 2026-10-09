@@ -1,0 +1,35 @@
+{
+ "qwen3.5-2b-bf16": {
+  "n": 69,
+  "pass": 6,
+  "accuracy": 0.08695652173913043,
+  "gate_verified": 21,
+  "gate_coverage": 0.30434782608695654,
+  "gate_precision": 0.2857142857142857,
+  "confident_wrong_gate": 0.21739130434782608,
+  "confident_wrong_answer_all": 0.9130434782608696,
+  "truncated_share": 0.08695652173913043
+ },
+ "qwen3.5-4b-bf16": {
+  "n": 69,
+  "pass": 28,
+  "accuracy": 0.4057971014492754,
+  "gate_verified": 40,
+  "gate_coverage": 0.5797101449275363,
+  "gate_precision": 0.7,
+  "confident_wrong_gate": 0.17391304347826086,
+  "confident_wrong_answer_all": 0.5942028985507246,
+  "truncated_share": 0.043478260869565216
+ },
+ "qwen3.5-9b-bf16": {
+  "n": 69,
+  "pass": 37,
+  "accuracy": 0.5362318840579711,
+  "gate_verified": 45,
+  "gate_coverage": 0.6521739130434783,
+  "gate_precision": 0.8222222222222222,
+  "confident_wrong_gate": 0.11594202898550725,
+  "confident_wrong_answer_all": 0.46376811594202894,
+  "truncated_share": 0.014492753623188406
+ }
+}
