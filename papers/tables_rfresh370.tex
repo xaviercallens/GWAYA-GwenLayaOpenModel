@@ -61,7 +61,7 @@ E & 9B & 507 & 298 / 299 & 329 / 330 & 1 & 0\\
 \bottomrule\end{tabular}\end{table}
 
 \begin{table}[!htbp]\centering\small\setlength{\tabcolsep}{3pt}
-\caption{A15.2, visible-test depth dial on the stored Rust answers of E (\code{rust_gate_depth.json}; edition 2015; 505 of 507 tasks have at least 3 assertions; the splitter rebuilt the stored k=1 gate payload with 0 mismatches over 507 tasks). The gate runs the first $k$ assertions. Coverage = share of tasks verified; precision = share of verified that pass; CW = verified and failing over all tasks. 95\% cluster-bootstrap CIs (10,000, seed 0). Descriptive; not a hypothesis test.}\label{tab:depth}
+\caption{A15.2, visible-test depth dial on the stored Rust answers of E (\code{rust_gate_depth.json}; edition 2015; 505 of 507 tasks have at least 3 assertions; the splitter rebuilt the stored k=1 gate payload with 0 mismatches over 507 tasks). The gate runs the first $k$ assertions. Coverage = share of tasks verified; precision = share of verified that pass; CW = verified and failing over all tasks. 95\% cluster-bootstrap CIs (10,000, seed 0). Descriptive; not a hypothesis test. In the 4B rows $k=2$ and $k=3$ one item (\code{rs/mbpp\_130\_max\_occurrences}) is non-deterministic under the real checker; see the text.}\label{tab:depth}
 \begin{tabular}{llccc}\toprule
 Tier (accuracy) & $k$ & coverage [CI] & precision [CI] & CW [CI]\\\midrule
 4B (0.527) & 1 & 0.594 [0.550, 0.638] & 0.887 [0.849, 0.921] & 0.067 [0.048, 0.091]\\
