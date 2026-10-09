@@ -106,6 +106,7 @@ def make_examples(rows: Sequence[dict[str, Any]], mode: str, tiers: Sequence[str
             ex = dict(text=render_calibrator_text(r), feats=gate_features(r.get("signals")),
                       labels=[float(bool(r["correct"]))], mask=[1.0])
         ex["key"] = row_key(r)
+        ex["tier"] = r.get("tier")
         out.append(ex)
     return out
 
@@ -225,13 +226,18 @@ def train(args: argparse.Namespace, tr: list[dict], va: list[dict], tiers: Seque
     if not targets:
         raise SystemExit(f"none of {MODERNBERT_TARGETS} match Linear modules of {args.backbone}; "
                          f"edit MODERNBERT_TARGETS (found e.g. {names[:6]})")
-    enc = peft.get_peft_model(enc, peft.LoraConfig(r=args.r, lora_alpha=2 * args.r, lora_dropout=0.05,
-                                                   target_modules=targets, bias="none"))
+    if args.load_dir:
+        enc = peft.PeftModel.from_pretrained(enc, str(Path(args.load_dir) / "adapter"))
+    else:
+        enc = peft.get_peft_model(enc, peft.LoraConfig(r=args.r, lora_alpha=2 * args.r, lora_dropout=0.05,
+                                                       target_modules=targets, bias="none"))
     hidden = enc.config.hidden_size
     n_out = len(tiers) if args.mode == "router" else 1
     n_feat = 0 if args.mode == "router" else N_FEATURES
     head = torch.nn.Sequential(torch.nn.Linear(hidden + n_feat, hidden // 2), torch.nn.GELU(),
                                torch.nn.Dropout(0.1), torch.nn.Linear(hidden // 2, n_out))
+    if args.load_dir:
+        head.load_state_dict(st.load_file(str(Path(args.load_dir) / "heads.safetensors")))
     enc.to(dev)
     head.to(dev)
     params = [p for p in enc.parameters() if p.requires_grad] + list(head.parameters())
@@ -256,7 +262,7 @@ def train(args: argparse.Namespace, tr: list[dict], va: list[dict], tiers: Seque
 
     rng = random.Random(SEED)
     steps_per_epoch = math.ceil(len(tr) / args.batch_size)
-    total = args.timing_steps or steps_per_epoch * args.epochs
+    total = 0 if args.load_dir else (args.timing_steps or steps_per_epoch * args.epochs)
     enc.train(); head.train()
     step, t0, losses = 0, time.time(), []
     while step < total:
@@ -276,17 +282,33 @@ def train(args: argparse.Namespace, tr: list[dict], va: list[dict], tiers: Seque
     result: dict[str, Any] = {"steps": step, "wall_seconds": round(wall, 1),
                               "final_train_loss_last10_mean": round(sum(losses[-10:]) / max(1, len(losses[-10:])), 4)}
     out = Path(args.out_dir); out.mkdir(parents=True, exist_ok=True)
-    if args.timing_steps:
+    if args.timing_steps and not args.load_dir:
         result["timing"] = project_timing(wall / max(1, step), len(tr), args.batch_size, args.epochs)
         (out / "timing.json").write_text(json.dumps(result, indent=1))
         return result
 
     enc.eval(); head.eval()
-    probs: list[list[float]] = []
-    with torch.no_grad():
-        for i in range(0, len(va), args.batch_size):
-            probs += torch.sigmoid(forward(va[i:i + args.batch_size])).float().cpu().tolist()
+
+    def predict(examples: list[dict]) -> list[list[float]]:
+        res: list[list[float]] = []
+        with torch.no_grad():
+            for i in range(0, len(examples), args.batch_size):
+                res += torch.sigmoid(forward(examples[i:i + args.batch_size])).float().cpu().tolist()
+        return res
+
+    probs = predict(va) if va else []
     result["val_metrics"] = metrics_for(args.mode, tiers, probs, va) if va else "TBD (no validation rows)"
+    for spec in args.predict or []:  # NAME=PATH: raw scores for other row files (calibration split, evaluation set)
+        name, _, path = spec.partition("=")
+        ex = make_examples(read_jsonl(path), args.mode, tiers)
+        pr = predict(ex)
+        with open(out / f"preds_{name}.jsonl", "w") as f:
+            for e, p_ in zip(ex, pr):
+                f.write(json.dumps({"key": list(e["key"]), "tier": e.get("tier"), "probs": p_}) + "\n")
+        result.setdefault("predicted", {})[name] = len(ex)
+    if args.load_dir:
+        (out / "predict_manifest.json").write_text(json.dumps(result, indent=1, default=str))
+        return result
     enc.save_pretrained(str(out / "adapter"))  # peft: adapter_model.safetensors
     tok.save_pretrained(str(out / "adapter"))
     st.save_file({k: v.detach().cpu().contiguous() for k, v in head.state_dict().items()}, str(out / "heads.safetensors"))
@@ -316,6 +338,8 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--batch-size", type=int, default=8)
     ap.add_argument("--max-len", type=int, default=512)
     ap.add_argument("--device", default="auto", help="auto | cpu | cuda | xla (TPU, needs torch_xla)")
+    ap.add_argument("--load-dir", default=None, help="predict-only: load adapter/ + heads.safetensors from a previous --out-dir")
+    ap.add_argument("--predict", nargs="*", help="NAME=PATH row files to score after training/loading (writes preds_NAME.jsonl)")
     ap.add_argument("--bf16", action="store_true", help="bfloat16 autocast (xla only)")
     ap.add_argument("--timing-steps", type=int, default=0, help="e.g. 50: time N steps, project hours, decide CPU vs L4")
     ap.add_argument("--shuffle-labels", action="store_true", help="SH negative control")
@@ -340,6 +364,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.print_plan:
         print(json.dumps(plan, indent=1))
         return 0
+    if args.load_dir and not tr:
+        tr = [{"text": "x", "feats": [0.0] * (0 if args.mode == "router" else N_FEATURES),
+               "labels": [0.0] * (len(tiers) if args.mode == "router" else 1), "mask": [1.0] * (len(tiers) if args.mode == "router" else 1)}]
     if not tr or not args.out_dir:
         print("error: need training examples and --out-dir", file=sys.stderr)
         return 2

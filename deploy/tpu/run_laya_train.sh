@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Runs ON a TPU VM: LoRA-train Laya (ModernBERT router + calibrator heads) with torch_xla, plus a bounded generator-LoRA probe.
-# Inputs next to this script: repo.tgz, router.jsonl, calibrator.jsonl.  Env: EPOCHS, BATCH, MAXLEN, TIMING_ONLY=1, PROBE=1.
+# Inputs next to this script: repo.tgz, router.jsonl, calibrator.jsonl, router_calib.jsonl, calibrator_calib.jsonl.  Env: EPOCHS, BATCH, MAXLEN, TIMING_ONLY=1, PROBE=1.
 set -uo pipefail
 R=~/smoke; cd "$R"
 export HF_HOME=$R/hf PATH=$HOME/.local/bin:$PATH PJRT_DEVICE=TPU
@@ -13,10 +13,10 @@ PY=$R/tx-venv/bin/python
 ARGS="--device xla --bf16 --epochs ${EPOCHS:-3} --batch-size ${BATCH:-16} --max-len ${MAXLEN:-512} --no-slice-filter"
 step timing_cal 1200 "$PY repo/scripts/train_laya.py --mode calibrator --data calibrator.jsonl --out-dir out/timing $ARGS --timing-steps 30"
 if [ "${TIMING_ONLY:-0}" != 1 ]; then
-  step train_router 5400 "$PY repo/scripts/train_laya.py --mode router --data router.jsonl --out-dir out/router $ARGS"
-  step train_calibrator 7200 "$PY repo/scripts/train_laya.py --mode calibrator --data calibrator.jsonl --out-dir out/calibrator $ARGS"
-  step train_router_sh 5400 "$PY repo/scripts/train_laya.py --mode router --data router.jsonl --out-dir out/router_sh $ARGS --shuffle-labels"
-  step train_calibrator_sh 7200 "$PY repo/scripts/train_laya.py --mode calibrator --data calibrator.jsonl --out-dir out/calibrator_sh $ARGS --shuffle-labels"
+  step train_router 5400 "$PY repo/scripts/train_laya.py --mode router --data router.jsonl --out-dir out/router $ARGS --predict calib=router_calib.jsonl"
+  step train_calibrator 7200 "$PY repo/scripts/train_laya.py --mode calibrator --data calibrator.jsonl --out-dir out/calibrator $ARGS --predict calib=calibrator_calib.jsonl"
+  step train_router_sh 5400 "$PY repo/scripts/train_laya.py --mode router --data router.jsonl --out-dir out/router_sh $ARGS --shuffle-labels --predict calib=router_calib.jsonl"
+  step train_calibrator_sh 7200 "$PY repo/scripts/train_laya.py --mode calibrator --data calibrator.jsonl --out-dir out/calibrator_sh $ARGS --shuffle-labels --predict calib=calibrator_calib.jsonl"
 fi
 [ "${PROBE:-1}" = 1 ] && step lora_probe 1500 "$PY repo/scripts/tpu/lora_probe.py --out out/lora_probe.json"
 tar czf out.tgz out status.jsonl 2>/dev/null
