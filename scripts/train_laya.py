@@ -262,7 +262,7 @@ def train(args: argparse.Namespace, tr: list[dict], va: list[dict], tiers: Seque
 
     rng = random.Random(SEED)
     steps_per_epoch = math.ceil(len(tr) / args.batch_size)
-    total = 0 if args.load_dir else (args.timing_steps or steps_per_epoch * args.epochs)
+    total = 0 if (args.load_dir or args.init_only) else (args.timing_steps or steps_per_epoch * args.epochs)
     enc.train(); head.train()
     step, t0, losses = 0, time.time(), []
     while step < total:
@@ -288,6 +288,12 @@ def train(args: argparse.Namespace, tr: list[dict], va: list[dict], tiers: Seque
         return result
 
     enc.eval(); head.eval()
+    if not args.load_dir and not args.init_only:  # save first, from CPU: safetensors cannot read XLA-device storage, and a late failure would lose the run
+        enc.to("cpu"); head.to("cpu")
+        enc.save_pretrained(str(out / "adapter"))  # peft: adapter_model.safetensors
+        tok.save_pretrained(str(out / "adapter"))
+        st.save_file({k: v.detach().cpu().contiguous() for k, v in head.state_dict().items()}, str(out / "heads.safetensors"))
+        enc.to(dev); head.to(dev)
 
     def predict(examples: list[dict]) -> list[list[float]]:
         res: list[list[float]] = []
@@ -306,12 +312,9 @@ def train(args: argparse.Namespace, tr: list[dict], va: list[dict], tiers: Seque
             for e, p_ in zip(ex, pr):
                 f.write(json.dumps({"key": list(e["key"]), "tier": e.get("tier"), "probs": p_}) + "\n")
         result.setdefault("predicted", {})[name] = len(ex)
-    if args.load_dir:
+    if args.load_dir or args.init_only:
         (out / "predict_manifest.json").write_text(json.dumps(result, indent=1, default=str))
         return result
-    enc.save_pretrained(str(out / "adapter"))  # peft: adapter_model.safetensors
-    tok.save_pretrained(str(out / "adapter"))
-    st.save_file({k: v.detach().cpu().contiguous() for k, v in head.state_dict().items()}, str(out / "heads.safetensors"))
     (out / "head_config.json").write_text(json.dumps({
         "mode": args.mode, "tiers": list(tiers), "backbone": args.backbone, "lora_r": args.r, "lora_targets": targets,
         "hidden_size": hidden, "n_features": n_feat, "gate_vocab": list(GATE_VOCAB), "signal_keys": list(SIGNAL_KEYS),
@@ -339,6 +342,7 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--max-len", type=int, default=512)
     ap.add_argument("--device", default="auto", help="auto | cpu | cuda | xla (TPU, needs torch_xla)")
     ap.add_argument("--load-dir", default=None, help="predict-only: load adapter/ + heads.safetensors from a previous --out-dir")
+    ap.add_argument("--init-only", action="store_true", help="zero training steps: score with the untrained (seeded) head, the 'twin' of a trained run")
     ap.add_argument("--predict", nargs="*", help="NAME=PATH row files to score after training/loading (writes preds_NAME.jsonl)")
     ap.add_argument("--bf16", action="store_true", help="bfloat16 autocast (xla only)")
     ap.add_argument("--timing-steps", type=int, default=0, help="e.g. 50: time N steps, project hours, decide CPU vs L4")

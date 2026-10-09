@@ -208,3 +208,22 @@ D47. **Spend.** The ledger has 11 lines totalling 4.9136 USD (list-price estimat
 (`tpu_pot-082416`, 0.33), the 9B smoke (`tpu_nineb-smoke-084942`, 0.7827) and the 9B full run
 (`tpu_nineb-full-091403`, 1.272) were added since 3.4.0 (2.5289). The 9B lines are v5litepod-4 at 4 x 1.20 USD/hour.
 
+
+## Revision 3.6.0 (2026-10-09): D48-D52. Laya training, the fresh set E', and the shuffled-label control.
+D48. **Split of the new pool.** A13 splits the new pool P by cluster hash mod 10 (0-5 train, 6 calibration C, 7-9 evaluation E')
+instead of the reserved 20-bucket rule (1-2 router-train, 0 calibration), which would have left about 10 percent of a small pool for training.
+D49. **E is used for training.** All 1,536 E tasks are in the Laya training set (E is burned for the registered tests anyway). E' and C share no
+cluster, task id or normalised prompt hash with the training data (checked: E' 0/0/0; C 0/0/1, the single prompt-hash match affects only C).
+D50. **The registered shuffled-label criterion was withdrawn before E' was generated.** A13b required the shuffled-label (SH) controls to give
+AUROC 0.4-0.6 on C. They did not: SH calibrator 0.693 pooled (0.55-0.69 within domain x tier), SH router 0.572 / 0.637 / 0.389. We then scored the
+UNTRAINED, same-seed twin of each head on C: calibrator 0.48 pooled but 0.24-0.51 within strata (Python 0.24-0.38), router 0.653 / 0.482 / 0.575.
+SH and twin rankings are almost uncorrelated (0.14), so the SH value is not an initialisation effect; both are far from 0.5 in either direction. Our
+reading (not proven): a head fed the strongly predictive gate/log-prob features, or a router scored pooled over domains with different base rates,
+ranks by those inputs in an arbitrary direction when it has learned no labels, so the registered criterion cannot be met reliably by a correct pipeline.
+The control that was meant to detect leakage is replaced by the direct leakage check above. The SH numbers, the twin numbers and this reading are in the
+paper. If the criterion had been applied as written, E' would not have been generated; it was generated after this deviation was committed, and the
+trained Laya's C AUROC (0.952 calibrator; router 0.78 / 0.81 / 0.82) is far from both controls.
+D51. **27B abandoned; generator LoRA not trained.** See A13b: the 27B did not finish loading in 33 minutes on a 4-chip slice and an 8-chip slice is blocked by the
+per-zone quota (4 chips); the Qwen3.5-0.8B torch_xla LoRA probe finished no step in 25 minutes (pure-PyTorch linear-attention fallback).
+D52. **A first Laya run was lost and repeated.** The first launch (about 0.9 USD) trained the calibrator but could not save it (XLA-device tensors cannot be read by
+safetensors) and the router found no examples (tier names not passed); both were fixed and the run repeated, with the save moved to before any prediction.

@@ -10,13 +10,14 @@ mkdir -p repo && tar xzf repo.tgz -C repo
 step uv 300 "curl -LsSf https://astral.sh/uv/install.sh | sh"
 step venv 1500 "uv venv -q -p 3.11 tx-venv && VIRTUAL_ENV=$R/tx-venv uv pip install -q 'torch==2.8.0' 'torch_xla[tpu]==2.8.0' -f https://storage.googleapis.com/libtpu-wheels/index.html && VIRTUAL_ENV=$R/tx-venv uv pip install -q transformers peft safetensors accelerate && $R/tx-venv/bin/python -c 'import torch_xla.core.xla_model as xm, torch; print(torch.__version__, xm.xla_device())'"
 PY=$R/tx-venv/bin/python
-ARGS="--device xla --bf16 --epochs ${EPOCHS:-3} --batch-size ${BATCH:-16} --max-len ${MAXLEN:-512} --no-slice-filter"
+TIERS="${TIERS:-qwen3.5-2b-bf16,qwen3.5-4b-bf16,qwen3.5-9b-bf16}"
+ARGS="--tiers $TIERS --device xla --bf16 --epochs ${EPOCHS:-3} --batch-size ${BATCH:-16} --max-len ${MAXLEN:-512} --no-slice-filter"
 step timing_cal 1200 "$PY repo/scripts/train_laya.py --mode calibrator --data calibrator.jsonl --out-dir out/timing $ARGS --timing-steps 30"
 if [ "${TIMING_ONLY:-0}" != 1 ]; then
-  step train_router 5400 "$PY repo/scripts/train_laya.py --mode router --data router.jsonl --out-dir out/router $ARGS --predict calib=router_calib.jsonl"
-  step train_calibrator 7200 "$PY repo/scripts/train_laya.py --mode calibrator --data calibrator.jsonl --out-dir out/calibrator $ARGS --predict calib=calibrator_calib.jsonl"
-  step train_router_sh 5400 "$PY repo/scripts/train_laya.py --mode router --data router.jsonl --out-dir out/router_sh $ARGS --shuffle-labels --predict calib=router_calib.jsonl"
-  step train_calibrator_sh 7200 "$PY repo/scripts/train_laya.py --mode calibrator --data calibrator.jsonl --out-dir out/calibrator_sh $ARGS --shuffle-labels --predict calib=calibrator_calib.jsonl"
+  step train_router 5400 "$PY repo/scripts/train_laya.py --mode router --data router.jsonl --out-dir out/router $ARGS --predict calib=router_calib.jsonl" || { echo "{\"step\":\"ABORT_AFTER_train_router\"}" >> $R/status.jsonl; tar czf out.tgz out status.jsonl; exit 1; }
+  step train_calibrator 7200 "$PY repo/scripts/train_laya.py --mode calibrator --data calibrator.jsonl --out-dir out/calibrator $ARGS --predict calib=calibrator_calib.jsonl" || { echo "{\"step\":\"ABORT_AFTER_train_calibrator\"}" >> $R/status.jsonl; tar czf out.tgz out status.jsonl; exit 1; }
+  step train_router_sh 5400 "$PY repo/scripts/train_laya.py --mode router --data router.jsonl --out-dir out/router_sh $ARGS --shuffle-labels --predict calib=router_calib.jsonl" || { echo "{\"step\":\"ABORT_AFTER_train_router_sh\"}" >> $R/status.jsonl; tar czf out.tgz out status.jsonl; exit 1; }
+  step train_calibrator_sh 7200 "$PY repo/scripts/train_laya.py --mode calibrator --data calibrator.jsonl --out-dir out/calibrator_sh $ARGS --shuffle-labels --predict calib=calibrator_calib.jsonl" || { echo "{\"step\":\"ABORT_AFTER_train_calibrator_sh\"}" >> $R/status.jsonl; tar czf out.tgz out status.jsonl; exit 1; }
 fi
 [ "${PROBE:-1}" = 1 ] && step lora_probe 1500 "$PY repo/scripts/tpu/lora_probe.py --out out/lora_probe.json"
 tar czf out.tgz out status.jsonl 2>/dev/null
