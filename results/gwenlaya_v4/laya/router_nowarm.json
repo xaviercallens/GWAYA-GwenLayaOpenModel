@@ -1,0 +1,16 @@
+{
+ "tau": 0.5,
+ "warmup_chunk_tasks": 192,
+ "router_over_large_nowarm": {
+  "point": 0.8946342023790124,
+  "lo": 0.8658187836641809,
+  "hi": 0.9242676140503834,
+  "n_valid": 10000
+ },
+ "router_over_ladder_nowarm": {
+  "point": 0.7121112974500322,
+  "lo": 0.6875066230697414,
+  "hi": 0.739264147841416,
+  "n_valid": 10000
+ }
+}

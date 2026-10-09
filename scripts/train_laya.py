@@ -106,6 +106,7 @@ def make_examples(rows: Sequence[dict[str, Any]], mode: str, tiers: Sequence[str
             ex = dict(text=render_calibrator_text(r), feats=gate_features(r.get("signals")),
                       labels=[float(bool(r["correct"]))], mask=[1.0])
         ex["key"] = row_key(r)
+        ex["tier"] = r.get("tier")
         out.append(ex)
     return out
 
@@ -210,7 +211,13 @@ def train(args: argparse.Namespace, tr: list[dict], va: list[dict], tiers: Seque
     peft = _need("peft")
     st = _need("safetensors.torch")
     torch.manual_seed(SEED)
-    dev = "cuda" if args.device == "auto" and torch.cuda.is_available() else ("cpu" if args.device == "auto" else args.device)
+    xm = None
+    if args.device == "xla":  # TPU via torch_xla: fixed shapes (pad to max_len) so the graph compiles once
+        xm = _need("torch_xla.core.xla_model")
+        dev = xm.xla_device()
+    else:
+        dev = "cuda" if args.device == "auto" and torch.cuda.is_available() else ("cpu" if args.device == "auto" else args.device)
+    pad = "max_length" if xm is not None else True
 
     tok = tf.AutoTokenizer.from_pretrained(args.backbone)
     enc = tf.AutoModel.from_pretrained(args.backbone)
@@ -219,21 +226,28 @@ def train(args: argparse.Namespace, tr: list[dict], va: list[dict], tiers: Seque
     if not targets:
         raise SystemExit(f"none of {MODERNBERT_TARGETS} match Linear modules of {args.backbone}; "
                          f"edit MODERNBERT_TARGETS (found e.g. {names[:6]})")
-    enc = peft.get_peft_model(enc, peft.LoraConfig(r=args.r, lora_alpha=2 * args.r, lora_dropout=0.05,
-                                                   target_modules=targets, bias="none"))
+    if args.load_dir:
+        enc = peft.PeftModel.from_pretrained(enc, str(Path(args.load_dir) / "adapter"))
+    else:
+        enc = peft.get_peft_model(enc, peft.LoraConfig(r=args.r, lora_alpha=2 * args.r, lora_dropout=0.05,
+                                                       target_modules=targets, bias="none"))
     hidden = enc.config.hidden_size
     n_out = len(tiers) if args.mode == "router" else 1
     n_feat = 0 if args.mode == "router" else N_FEATURES
     head = torch.nn.Sequential(torch.nn.Linear(hidden + n_feat, hidden // 2), torch.nn.GELU(),
                                torch.nn.Dropout(0.1), torch.nn.Linear(hidden // 2, n_out))
+    if args.load_dir:
+        head.load_state_dict(st.load_file(str(Path(args.load_dir) / "heads.safetensors")))
     enc.to(dev)
     head.to(dev)
     params = [p for p in enc.parameters() if p.requires_grad] + list(head.parameters())
     opt = torch.optim.AdamW(params, lr=args.lr, weight_decay=0.01)
 
     def forward(batch: list[dict]) -> Any:
-        t = tok([e["text"] for e in batch], padding=True, truncation=True, max_length=args.max_len, return_tensors="pt").to(dev)
-        h = enc(**t).last_hidden_state
+        t = tok([e["text"] for e in batch], padding=pad, truncation=True, max_length=args.max_len, return_tensors="pt").to(dev)
+        with torch.autocast("xla" if xm is not None else "cpu", dtype=torch.bfloat16, enabled=bool(args.bf16 and xm is not None)):
+            h = enc(**t).last_hidden_state
+        h = h.float()
         m = t["attention_mask"].unsqueeze(-1).to(h.dtype)
         pooled = (h * m).sum(1) / m.sum(1).clamp(min=1)
         if n_feat:
@@ -248,7 +262,7 @@ def train(args: argparse.Namespace, tr: list[dict], va: list[dict], tiers: Seque
 
     rng = random.Random(SEED)
     steps_per_epoch = math.ceil(len(tr) / args.batch_size)
-    total = args.timing_steps or steps_per_epoch * args.epochs
+    total = 0 if (args.load_dir or args.init_only) else (args.timing_steps or steps_per_epoch * args.epochs)
     enc.train(); head.train()
     step, t0, losses = 0, time.time(), []
     while step < total:
@@ -259,25 +273,48 @@ def train(args: argparse.Namespace, tr: list[dict], va: list[dict], tiers: Seque
             batch = [tr[j] for j in order[i:i + args.batch_size]]
             loss = loss_fn(forward(batch), batch)
             opt.zero_grad(); loss.backward(); opt.step()
+            if xm is not None:
+                xm.mark_step()
             losses.append(loss.item()); step += 1
+            if step % 25 == 0:
+                print(f"[train_laya] step {step}/{total} loss {sum(losses[-25:]) / 25:.4f} {time.time() - t0:.0f}s", flush=True)
     wall = time.time() - t0
     result: dict[str, Any] = {"steps": step, "wall_seconds": round(wall, 1),
                               "final_train_loss_last10_mean": round(sum(losses[-10:]) / max(1, len(losses[-10:])), 4)}
     out = Path(args.out_dir); out.mkdir(parents=True, exist_ok=True)
-    if args.timing_steps:
+    if args.timing_steps and not args.load_dir:
         result["timing"] = project_timing(wall / max(1, step), len(tr), args.batch_size, args.epochs)
         (out / "timing.json").write_text(json.dumps(result, indent=1))
         return result
 
     enc.eval(); head.eval()
-    probs: list[list[float]] = []
-    with torch.no_grad():
-        for i in range(0, len(va), args.batch_size):
-            probs += torch.sigmoid(forward(va[i:i + args.batch_size])).float().cpu().tolist()
+    if not args.load_dir and not args.init_only:  # save first, from CPU: safetensors cannot read XLA-device storage, and a late failure would lose the run
+        enc.to("cpu"); head.to("cpu")
+        enc.save_pretrained(str(out / "adapter"))  # peft: adapter_model.safetensors
+        tok.save_pretrained(str(out / "adapter"))
+        st.save_file({k: v.detach().cpu().contiguous() for k, v in head.state_dict().items()}, str(out / "heads.safetensors"))
+        enc.to(dev); head.to(dev)
+
+    def predict(examples: list[dict]) -> list[list[float]]:
+        res: list[list[float]] = []
+        with torch.no_grad():
+            for i in range(0, len(examples), args.batch_size):
+                res += torch.sigmoid(forward(examples[i:i + args.batch_size])).float().cpu().tolist()
+        return res
+
+    probs = predict(va) if va else []
     result["val_metrics"] = metrics_for(args.mode, tiers, probs, va) if va else "TBD (no validation rows)"
-    enc.save_pretrained(str(out / "adapter"))  # peft: adapter_model.safetensors
-    tok.save_pretrained(str(out / "adapter"))
-    st.save_file({k: v.detach().cpu().contiguous() for k, v in head.state_dict().items()}, str(out / "heads.safetensors"))
+    for spec in args.predict or []:  # NAME=PATH: raw scores for other row files (calibration split, evaluation set)
+        name, _, path = spec.partition("=")
+        ex = make_examples(read_jsonl(path), args.mode, tiers)
+        pr = predict(ex)
+        with open(out / f"preds_{name}.jsonl", "w") as f:
+            for e, p_ in zip(ex, pr):
+                f.write(json.dumps({"key": list(e["key"]), "tier": e.get("tier"), "probs": p_}) + "\n")
+        result.setdefault("predicted", {})[name] = len(ex)
+    if args.load_dir or args.init_only:
+        (out / "predict_manifest.json").write_text(json.dumps(result, indent=1, default=str))
+        return result
     (out / "head_config.json").write_text(json.dumps({
         "mode": args.mode, "tiers": list(tiers), "backbone": args.backbone, "lora_r": args.r, "lora_targets": targets,
         "hidden_size": hidden, "n_features": n_feat, "gate_vocab": list(GATE_VOCAB), "signal_keys": list(SIGNAL_KEYS),
@@ -303,7 +340,11 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--epochs", type=int, default=3)
     ap.add_argument("--batch-size", type=int, default=8)
     ap.add_argument("--max-len", type=int, default=512)
-    ap.add_argument("--device", default="auto", help="auto | cpu | cuda")
+    ap.add_argument("--device", default="auto", help="auto | cpu | cuda | xla (TPU, needs torch_xla)")
+    ap.add_argument("--load-dir", default=None, help="predict-only: load adapter/ + heads.safetensors from a previous --out-dir")
+    ap.add_argument("--init-only", action="store_true", help="zero training steps: score with the untrained (seeded) head, the 'twin' of a trained run")
+    ap.add_argument("--predict", nargs="*", help="NAME=PATH row files to score after training/loading (writes preds_NAME.jsonl)")
+    ap.add_argument("--bf16", action="store_true", help="bfloat16 autocast (xla only)")
     ap.add_argument("--timing-steps", type=int, default=0, help="e.g. 50: time N steps, project hours, decide CPU vs L4")
     ap.add_argument("--shuffle-labels", action="store_true", help="SH negative control")
     ap.add_argument("--no-slice-filter", action="store_true", help="dev only: skip the router-train hash filter")
@@ -327,6 +368,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.print_plan:
         print(json.dumps(plan, indent=1))
         return 0
+    if args.load_dir and not tr:
+        tr = [{"text": "x", "feats": [0.0] * (0 if args.mode == "router" else N_FEATURES),
+               "labels": [0.0] * (len(tiers) if args.mode == "router" else 1), "mask": [1.0] * (len(tiers) if args.mode == "router" else 1)}]
     if not tr or not args.out_dir:
         print("error: need training examples and --out-dir", file=sys.stderr)
         return 2

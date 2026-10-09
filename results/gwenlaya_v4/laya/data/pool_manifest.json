@@ -1,0 +1,92 @@
+{
+ "addendum": "A13",
+ "deviation": "D48",
+ "seed": 20261009,
+ "split_rule": "int(sha256(cluster).hexdigest(),16) % 10: 0-5 train, 6 calib, 7-9 eval (E')",
+ "e_note": "E (all tasks of tasks_E_primary.d25.jsonl) goes to TRAIN only; not rewritten here",
+ "e_tasks_file": "/mnt/data/home/xavkal/gwaya-data/night/results/tasks_E_primary.d25.jsonl",
+ "e_tasks_sha256": "2143110c78a3a9f57599dce77021cf4571fc57cf2584017f16ebdd08d5acba66",
+ "e_rows": 1536,
+ "source_revisions": {
+  "EleutherAI/hendrycks_math": "21a5633873b6a120296cce3e2df9d5550074f4a3",
+  "openai/gsm8k": "740312add88f781978c0658806c59bc2815b9866",
+  "google-research-datasets/mbpp": "4bb6404fdc6cacfda99d4ac4205087b89d32030c",
+  "evalplus/mbppplus": "b2d74c91837c3f2a20c1299ae98133cbe7cfa077"
+ },
+ "files": {
+  "tasks_P_all.jsonl": {
+   "rows": 2656,
+   "sha256": "b379d1193d1bcce68f60efe999f3bb4af13634f7ab0871846dd37bacfc00469e"
+  },
+  "tasks_P_train.jsonl": {
+   "rows": 1545,
+   "sha256": "5a963b6923c0ba1f8f2743524b38b2be418c98b3cadf2a00f54b7ae652e584dd"
+  },
+  "tasks_P_calib.jsonl": {
+   "rows": 283,
+   "sha256": "6459009978a2694ed1359a4664a5914cf8071f892f8f83985c5d87290deb2298"
+  },
+  "tasks_Eprime.jsonl": {
+   "rows": 828,
+   "sha256": "29591eb077ed8bb18b725f34c47c4995b4a1ce716c7d9a636142004172fa178d"
+  }
+ },
+ "counts_per_domain_split": {
+  "math": {
+   "train": 1223,
+   "eval": 659,
+   "calib": 218
+  },
+  "python": {
+   "eval": 169,
+   "train": 322,
+   "calib": 65
+  },
+  "all": {
+   "train": 1545,
+   "eval": 828,
+   "calib": 283
+  }
+ },
+ "counts_per_source": {
+  "ma/gsm8k": 600,
+  "ma/train": 1500,
+  "py/MBPP": 556
+ },
+ "sampling": {
+  "n_math_train_available": 7496,
+  "n_math_sampled": 1500,
+  "n_gsm8k_available": 7473,
+  "n_gsm8k_sampled": 600
+ },
+ "mbpp": {
+  "n_raw": 974,
+  "dropped_vs_mbppplus": {
+   "task_id_in_mbppplus": 378,
+   "prompt_hash_in_mbppplus": 2
+  },
+  "n_candidates": 594
+ },
+ "decontamination": {
+  "n_in": 2694,
+  "n_kept": 2656,
+  "n_dropped": 38,
+  "by_reason": {
+   "cluster_in_E": 38
+  },
+  "by_domain": {
+   "py": 38
+  }
+ },
+ "sanity": {
+  "ran": true,
+  "n_dropped": 0,
+  "by_domain": {}
+ },
+ "source_problems": [
+  "MATH train algebra/888: no boxed answer, dropped",
+  "MATH train algebra/1011: no boxed answer, dropped",
+  "MATH train number_theory/661: no boxed answer, dropped",
+  "MATH train number_theory/663: no boxed answer, dropped"
+ ]
+}
