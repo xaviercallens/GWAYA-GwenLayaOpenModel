@@ -101,7 +101,11 @@ def summarize(tiers: list[str], greedy: dict, sampled: dict, ids: list[str], chi
             if r["status"] != "VERIFIED":
                 k = "truncated" if r.get("finish_reason") == "length" else (r.get("reason") or "lean_error")
                 k = k if k in ("truncated", "statement_not_preserved", "empty_response", "prompt_too_long",
-                               "lean_environment_missing_dependency") else ("forbidden_construct" if "Unsound" in k else "lean_error")
+                               "lean_environment_missing_dependency", "forbidden_construct", "unknown_import",
+                               "timeout", "target_theorem_missing", "target_not_theorem", "statement_mismatch",
+                               "nonstandard_axioms", "kernel_replay_failed", "no_formal_statement",
+                               "lean_project_missing", "reference_not_elaborated") \
+                    else ("forbidden_construct" if "Unsound" in k else "lean_error")
                 reasons[k] = reasons.get(k, 0) + 1
         all_rows = list(g.values()) + [x for v in s.values() for x in v]
         out["tiers"][t] = {

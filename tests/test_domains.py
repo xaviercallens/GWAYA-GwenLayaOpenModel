@@ -173,10 +173,19 @@ class TestLean:
         t = Task("lean4", "t", "p", {"formal_statement": "theorem foo : 2 + 2 = 4"})
         assert check(t, "theorem foo : 2 + 2 = 4 := by sorry").status != "VERIFIED"
 
-    @pytest.mark.skipif(not shutil.which("lean") or not is_sandbox_available(), reason="lean/bwrap missing")
     def test_real_lean(self):
+        # the hardened gate needs the pinned project (trusted check); without it Lean tasks are UNVERIFIED
+        from gwaya.lean_project import discover
         t = Task("lean4", "t", "p", {"formal_statement": "theorem foo : 2 + 2 = 4"})
-        assert check(t, "theorem foo : 2 + 2 = 4 := rfl").status == "VERIFIED"
+        r = check(t, "theorem foo : 2 + 2 = 4 := rfl")
+        if discover() is not None and is_sandbox_available():
+            assert r.status == "VERIFIED", r.evidence
+        else:
+            assert r.status == "UNVERIFIED"
+
+    def test_missing_statement_is_unverified(self):
+        r = check(Task("lean4", "t", "p", {"header": "import Mathlib"}), "theorem easy : True := trivial")
+        assert r.status == "UNVERIFIED" and r.evidence["reason"] == "no_formal_statement"
 
     def test_checker_exception_is_unverified(self, monkeypatch):
         monkeypatch.setitem(ck._CHECKERS, "math", lambda t, r: 1 / 0)

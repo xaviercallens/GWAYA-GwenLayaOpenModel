@@ -171,7 +171,7 @@ def test_check_lean4_wires_the_pinned_project_and_a_longer_timeout(monkeypatch, 
         def __init__(self, timeout_s, project_dir=None):
             seen.update(timeout_s=timeout_s, project_dir=project_dir)
 
-        def verify_snippet(self, code):
+        def verify_theorem(self, code, formal_statement, header=""):
             return oracles.OracleResult(success=True, compiler="lean4")
 
     monkeypatch.setattr(oracles, "Lean4CompilerOracle", FakeOracle)
@@ -179,9 +179,11 @@ def test_check_lean4_wires_the_pinned_project_and_a_longer_timeout(monkeypatch, 
     st = "theorem t : 1 = 1 := by"
     checkers.check(Task("lean4", "t", "p", {"formal_statement": st}), f"```lean4\n{st}\n  rfl\n```")
     assert seen == {"timeout_s": 120.0, "project_dir": tmp_path}
+    checkers.check(Task("lean4", "t", "p", {"formal_statement": st, "timeout_s": 300}), f"```lean4\n{st}\n  rfl\n```")
+    assert seen == {"timeout_s": 300.0, "project_dir": tmp_path}
     monkeypatch.setattr(lean_project, "default_project_dir", lambda: None)
     checkers.check(Task("lean4", "t", "p", {"formal_statement": st}), f"```lean4\n{st}\n  rfl\n```")
-    assert seen == {"timeout_s": 15.0, "project_dir": None}
+    assert seen == {"timeout_s": 60.0, "project_dir": None}
 
 
 def test_check_lean4_prepends_the_task_header_when_the_answer_has_no_imports(monkeypatch):
@@ -193,7 +195,7 @@ def test_check_lean4_prepends_the_task_header_when_the_answer_has_no_imports(mon
         def __init__(self, timeout_s, project_dir=None):
             pass
 
-        def verify_snippet(self, code):
+        def verify_theorem(self, code, formal_statement, header=""):
             seen["code"] = code
             return oracles.OracleResult(success=True, compiler="lean4")
 

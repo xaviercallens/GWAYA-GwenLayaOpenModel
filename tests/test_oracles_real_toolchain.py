@@ -32,12 +32,12 @@ def test_lean_rejects_escape_hatches(code):
 
 @needs_lean
 def test_lean_axiom_audit_catches_lexical_bypass():
-    # The "--" inside a string hides `axiom` from the comment-stripping lexical scan;
-    # the kernel-level `#print axioms` probe must still reject the proof.
+    # The "--" inside a string hid `axiom` from the old regex comment stripping (the `#print axioms` probe caught it);
+    # the Lean-aware lexer (gwaya/lean_gate.strip_lean) now sees it directly.
     code = 'def s : String := "--" axiom bad : False\ntheorem t : 1 = 2 := bad.elim'
     r = Lean4CompilerOracle().verify_snippet(code)
     assert not r.success
-    assert "bad" in r.details.get("disallowed_axioms", []), r.error_message
+    assert "axiom" in r.details.get("forbidden", []) or "bad" in r.details.get("disallowed_axioms", []), r.error_message
 
 
 @needs_lean
