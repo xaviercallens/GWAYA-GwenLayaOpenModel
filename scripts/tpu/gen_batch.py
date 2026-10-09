@@ -43,17 +43,26 @@ def read_tasks(path: str) -> list[dict]:
     return [json.loads(line) for line in Path(path).read_text().splitlines() if line.strip()]
 
 
-def done_keys(path: Path) -> set[tuple[str, str]]:
+def done_keys(path: Path, need: int = 1) -> set[tuple[str, str]]:
+    """(domain, task_id) of tasks with at least `need` rows written (need = --samples for --kind sample)."""
     if not path.exists():
         return set()
-    out = set()
+    count: dict[tuple[str, str], int] = {}
     for line in path.read_text().splitlines():
         try:
             d = json.loads(line)
         except ValueError:
             continue  # torn last line from a kill mid-write
-        out.add((d["domain"], d["task_id"]))
-    return out
+        key = (d["domain"], d["task_id"])
+        count[key] = count.get(key, 0) + (need if d.get("finish_reason") == "prompt_too_long" else 1)
+    return {k for k, n in count.items() if n >= need}
+
+
+def sample_params(kind: str, samples: int, temperature: float, top_p: float, seed: int) -> dict:
+    """Greedy for answer/pot; for sample, n independent draws (the registered Lean protocol: k=8, T=0.8, top_p 0.95)."""
+    if kind != "sample":
+        return {"temperature": 0.0}
+    return {"n": samples, "temperature": temperature, "top_p": top_p, "seed": seed}
 
 
 class NoLogprobsError(RuntimeError):
@@ -91,8 +100,13 @@ def main(argv: list[str] | None = None) -> int:
                     help="prefill buffer; 2048 starves the KV/state cache of hybrid Qwen3.5 models on a 16 GB v5e chip")
     ap.add_argument("--limit", type=int, help="max tasks per domain (smoke tests)")
     ap.add_argument("--tensor-parallel", type=int, default=1)
-    ap.add_argument("--kind", choices=["answer", "pot"], default="answer",
-                    help="pot: program-of-thought programs for the math gate (math tasks only)")
+    ap.add_argument("--kind", choices=["answer", "pot", "sample"], default="answer",
+                    help="pot: program-of-thought programs for the math gate (math tasks only); "
+                         "sample: --samples draws per task at --temperature/--top-p (one row per draw)")
+    ap.add_argument("--samples", type=int, default=8)
+    ap.add_argument("--temperature", type=float, default=0.8)
+    ap.add_argument("--top-p", type=float, default=0.95)
+    ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args(argv)
 
     from gwaya.generators import OllamaGenerator
@@ -110,7 +124,7 @@ def main(argv: list[str] | None = None) -> int:
                 kept.append(t)
         tasks = kept
     out = Path(args.out)
-    done = done_keys(out)
+    done = done_keys(out, args.samples if args.kind == "sample" else 1)
     todo = [t for t in tasks if (t["domain"], t["task_id"]) not in done]
     print(f"[gen_batch] {args.served}: {len(tasks)} tasks, {len(done)} already done, {len(todo)} to do", flush=True)
     if not todo:
@@ -137,7 +151,8 @@ def main(argv: list[str] | None = None) -> int:
                 prompts = [gen.build_raw_prompt(t["prompt"], t["domain"]) for t in chunk]
             lens = [len(tok.encode(p)) for p in prompts]
             ok = [i for i, n in enumerate(lens) if n <= MAX_PROMPT_TOKENS]
-            params = [SamplingParams(temperature=0.0, max_tokens=MAX_NEW_TOKENS[chunk[i]["domain"]],
+            sp = sample_params(args.kind, args.samples, args.temperature, args.top_p, args.seed)
+            params = [SamplingParams(**sp, max_tokens=MAX_NEW_TOKENS[chunk[i]["domain"]],
                                      stop=gen.stop_sequences("math_pot" if args.kind == "pot" else chunk[i]["domain"]),
                                      logprobs=1) for i in ok]
             t1 = time.time()
@@ -145,17 +160,20 @@ def main(argv: list[str] | None = None) -> int:
             wall = time.time() - t1
             by_idx = dict(zip(ok, outs))
             for i, t in enumerate(chunk):
-                row = {"domain": t["domain"], "task_id": t["task_id"], "prompt_tokens": lens[i], "kind": args.kind,
-                       "chunk": ci // args.chunk, "chunk_wall_s": round(wall, 3), "chunk_size": len(chunk)}
+                base = {"domain": t["domain"], "task_id": t["task_id"], "prompt_tokens": lens[i], "kind": args.kind,
+                        "chunk": ci // args.chunk, "chunk_wall_s": round(wall, 3), "chunk_size": len(chunk)}
                 if i in by_idx:
-                    o = by_idx[i].outputs[0]
-                    mean_lp, lp_list = mean_and_list(o)
-                    row.update(text=o.text, completion_tokens=len(o.token_ids), finish_reason=o.finish_reason or "stop",
-                               mean_logprob=mean_lp, token_logprobs=lp_list)
+                    rows = []
+                    for j, o in enumerate(by_idx[i].outputs):
+                        mean_lp, lp_list = mean_and_list(o)
+                        rows.append({**base, **({"sample": j} if args.kind == "sample" else {}), "text": o.text,
+                                     "completion_tokens": len(o.token_ids), "finish_reason": o.finish_reason or "stop",
+                                     "mean_logprob": mean_lp, "token_logprobs": lp_list})
                 else:  # prompt longer than we can serve: recorded, never silently dropped
-                    row.update(text="", completion_tokens=0, finish_reason="prompt_too_long", mean_logprob=None,
-                               token_logprobs=[])
-                fh.write(json.dumps(row) + "\n")
+                    rows = [{**base, "text": "", "completion_tokens": 0, "finish_reason": "prompt_too_long",
+                             "mean_logprob": None, "token_logprobs": []}]
+                # all draws of a task in one write, so a resumed run never sees half a task
+                fh.write("".join(json.dumps(row) + "\n" for row in rows))
             fh.flush()
             os.fsync(fh.fileno())
             if ci == 0:
@@ -164,7 +182,7 @@ def main(argv: list[str] | None = None) -> int:
                 except NoLogprobsError as exc:
                     print(f"[gen_batch] FATAL: {exc}", flush=True)
                     return 3
-            toks = sum(len(by_idx[i].outputs[0].token_ids) for i in ok)
+            toks = sum(len(o.token_ids) for i in ok for o in by_idx[i].outputs)
             print(f"[gen_batch] chunk {ci // args.chunk + 1}/{(len(todo) + args.chunk - 1) // args.chunk}: "
                   f"{len(chunk)} tasks, {toks} tokens, {wall:.0f}s, {toks / max(wall, 1e-6):.0f} tok/s", flush=True)
     return 0
