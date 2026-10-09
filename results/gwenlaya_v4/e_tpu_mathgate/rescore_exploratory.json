@@ -3,7 +3,7 @@
   "status": "EXPLORATORY post hoc re-score (docs/DEVIATIONS.md D62); the registered numbers remain the primary record",
   "old_scorer": "git show 78cf88b:gwaya/domains/math_check.py",
   "old_scorer_sha256": "14fad735ec9a4832e3da5c974bb2c180d45448599cf3d023329abf02f7c4e88f",
-  "new_scorer_sha256": "78cbcf69a63adb270270cf9916965fe1650fc12737b0055fff9f73cde576ffb3",
+  "new_scorer_sha256": "fb57ad6177b2130187c16b4fb7eccbd6b6d74259218b09b9d87a38a62227c6c7",
   "data": "/mnt/data/home/xavkal/gwaya-data/etpu",
   "python": "/mnt/data/xdev-cache/tmp/claude-1000/-home-xavkal-xdev-GWAYA-GwenLayaOpenModel/0cf9e15b-1839-4167-85fc-4fa02442ca1e/scratchpad/venv/bin/python",
   "n_tasks": 500,
@@ -928,10 +928,10 @@
    "registered_scorer_reproduces_stored_base_rows": "500/500",
    "accuracy": {
     "old": 0.642,
-    "new": 0.694
+    "new": 0.692
    },
    "label_flips": {
-    "wrong_to_right": 26,
+    "wrong_to_right": 25,
     "right_to_wrong": 0,
     "wrong_to_right_items": [
      {
@@ -1208,19 +1208,6 @@
       ]
      },
      {
-      "task_id": "ma/test/prealgebra/1865.json",
-      "gold": "12",
-      "extracted": "12^{\\text{th}} \\text{ grade}",
-      "old": [
-       "UNVERIFIED",
-       "unparseable"
-      ],
-      "new": [
-       "VERIFIED",
-       "fraction_exact"
-      ]
-     },
-     {
       "task_id": "ma/test/precalculus/43.json",
       "gold": "(15,-29)",
       "extracted": "(15, -29)",
@@ -1349,14 +1336,14 @@
    "answer_if_boxed_confident_wrong": {
     "n_boxed": 347,
     "old": 0.052,
-    "new": 0.0,
+    "new": 0.002,
     "count_old": 26,
-    "count_new": 0,
+    "count_new": 1,
     "note": "answer whenever a final \\boxed{} exists; wrong = not VERIFIED (FAILED or unparseable), rate over all n tasks"
    },
    "cwr_all": {
     "old": 0.358,
-    "new": 0.306,
+    "new": 0.308,
     "n_no_boxed": 153,
     "note": "answer everything (A3.cwr_all): counts tasks with no boxed answer (mostly truncated at 1024 tokens) as wrong"
    },
