@@ -142,9 +142,26 @@ _CHECKERS: dict[str, Callable[[Task, str], CheckResult]] = {
 }
 
 
+def _apply_strength(task: Task, res: CheckResult) -> CheckResult:
+    """Record how many visible tests stood behind the verdict and, if the task asks for it, fail closed below a minimum.
+
+    ``min_visible_tests`` in the payload is OFF by default (absent or 0): results are unchanged apart from the additive
+    ``visible_tests`` evidence key. See gwaya/domains/strength.py for what the count means.
+    """
+    from gwaya.domains.strength import visible_test_count
+    if task.domain not in ("python", "rust"):
+        return res
+    n = visible_test_count(task.domain, task.checker_payload.get("tests"))
+    need = int(task.checker_payload.get("min_visible_tests") or 0)
+    if res.status == "VERIFIED" and need and (n is None or n < need):
+        return CheckResult("UNVERIFIED", {**res.evidence, "reason": "insufficient_visible_tests",
+                                          "visible_tests": n, "required_visible_tests": need})
+    return CheckResult(res.status, {**res.evidence, "visible_tests": n})
+
+
 def check(task: Task, response: str) -> CheckResult:
     """Dispatch on task.domain. Any checker exception becomes UNVERIFIED (fail-closed)."""
     try:
-        return _CHECKERS[task.domain](task, response or "")
+        return _apply_strength(task, _CHECKERS[task.domain](task, response or ""))
     except Exception as exc:  # noqa: BLE001
         return CheckResult("UNVERIFIED", {"reason": "checker_error", "error": f"{type(exc).__name__}: {exc}"[:300]})
