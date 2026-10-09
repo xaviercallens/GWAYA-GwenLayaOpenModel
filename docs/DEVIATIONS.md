@@ -228,7 +228,7 @@ per-zone quota (4 chips); the Qwen3.5-0.8B torch_xla LoRA probe finished no step
 D52. **A first Laya run was lost and repeated.** The first launch (about 0.9 USD) trained the calibrator but could not save it (XLA-device tensors cannot be read by
 safetensors) and the router found no examples (tier names not passed); both were fixed and the run repeated, with the save moved to before any prediction.
 
-## Revision 3.7.0 (2026-10-09): D53-D57. A fresh Rust set R' for the frozen Laya (addendum A14)
+## Revision 3.7.0 (2026-10-09): D53-D58. A fresh Rust set R' for the frozen Laya (addendum A14)
 D53. **R' was built post hoc, after the E' results were known.** Rust had no fresh evaluation in 3.6.0 (MultiPL-E Rust is all in E). R' was decided after seeing that
 Laya's E' advantage was on math and Python only. The plan (A14, commits 0f47b15/ecdd44e) was committed before any model generated for R'; no Laya score and no model output
 on R' had been seen. The results are exploratory/confirmatory in the A13b sense only (same definitions, Rust only); no registered test is involved.
