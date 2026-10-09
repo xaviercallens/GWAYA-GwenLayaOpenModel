@@ -450,6 +450,22 @@ def consensus_key(domain: str, text: str) -> str:
     return "txt:" + hashlib.sha256(norm_code(text).encode()).hexdigest()[:16]
 
 
+class GateDispatch:
+    """Routes a math GATE task (payload carries a program of thought, never the gold answer) to the
+    program-of-thought math gate; every other task goes to the base checker unchanged. Module level so a
+    spawn-context process pool can pickle it."""
+
+    def __init__(self, base: Callable[..., Any]) -> None:
+        self.base = base
+
+    def __call__(self, task: Task, text: str) -> Any:
+        p = task.checker_payload
+        if task.domain == "math" and "pot" in p and "answer" not in p:
+            from gwaya.domains.math_gate import check_math_gate
+            return check_math_gate(text, p["pot"])
+        return self.base(task, text)
+
+
 def memoize_checker(checker: Callable[..., Any]) -> Callable[..., Any]:
     """Checks are pure in (task payload, answer text), so arms that replay the same cached answer
     (base, always_largest, gate_only, cascade, ...) execute it in the sandbox once per run.
@@ -496,8 +512,8 @@ class Study:
         self.sampler, self.sync, self.sync_interval_s, self.log = sampler or VramSampler(enabled=False), sync, sync_interval_s, log
         if checker is None:
             from gwaya.domains.checkers import check as checker
-        self._raw_checker = checker
-        self.checker = memoize_checker(checker) if checker is not None else None
+        self._raw_checker = GateDispatch(checker) if checker is not None else None
+        self.checker = memoize_checker(self._raw_checker) if checker is not None else None
         self.max_tokens = dict(plan.get("generation_settings", {}).get("max_new_tokens", {}))
         # item_index = position in the task_id-sorted list, so seeds do not depend on eval order
         ordered = sorted(tasks, key=lambda t: (t.domain, t.task_id))
@@ -509,6 +525,12 @@ class Study:
         self.gens = ChainedLog(self.out_dir / "gens.jsonl")
         self.rows = ChainedLog(self.out_dir / "rows.jsonl")
         self.gen_index = {r["key"]: r for r in self.gens.records}
+        # program-of-thought generations for the math gate (kind == "pot"), one per (tier, task)
+        self.pot_index = {(r["model"], r["domain"], r["task_id"]): r["text"]
+                          for r in self.gens.records if r.get("kind") == "pot"}
+        # accelerator seconds of the program-of-thought call: charged to every arm that uses the math gate
+        self.pot_cost = {(r["model"], r["domain"], r["task_id"]): float(r.get("gpu_s") or 0.0)
+                         for r in self.gens.records if r.get("kind") == "pot"}
         self.row_keys = {r["key"] for r in self.rows.records}
         self.new_gens = self.new_rows = 0
         self._last_sync = time.monotonic()
@@ -548,11 +570,18 @@ class Study:
             return None
         return self.checker(task, text).status
 
-    def _gate(self, task: Task, text: str) -> str:
+    def _gate_task(self, task: Task, model: str | None) -> Task:
+        payload = dict(task.checker_payload.get("__gate__", {}))
+        if task.domain == "math" and model is not None:
+            pot = self.pot_index.get((model, task.domain, task.task_id))
+            if pot is not None:
+                payload["pot"] = pot  # in the payload so the check memo keys on it; the gold answer never enters
+        return Task(task.domain, task.task_id, task.prompt, payload)
+
+    def _gate(self, task: Task, text: str, model: str | None = None) -> str:
         if self.mode == "generate":
             return "UNVERIFIED"  # placeholder: keeps escalation paths walking so every tier gets generated
-        gt = Task(task.domain, task.task_id, task.prompt, dict(task.checker_payload.get("__gate__", {})))
-        return self.checker(gt, text).status
+        return self.checker(self._gate_task(task, model), text).status
 
     def _emit(self, key: str, row: dict[str, Any]) -> None:
         if self.mode == "generate":
@@ -576,11 +605,12 @@ class Study:
         if self._done(key):
             return
         g = self._greedy(model, quant, task)
-        verdict = self._gate(task, g["text"]) if gated else None
+        verdict = self._gate(task, g["text"], model) if gated else None
+        pot = self.pot_cost.get((model, task.domain, task.task_id), 0.0) if gated else 0.0
         self._emit(key, {"arm": arm, "domain": task.domain, "task_id": task.task_id, "model": model, "quant": quant,
                          "seed": self.seed_for(task, 0), "gate": verdict,
                          "answered": (verdict == "VERIFIED") if gated else True,
-                         "score": self._score(task, g["text"]), "gpu_s": g["gpu_s"],
+                         "score": self._score(task, g["text"]), "gpu_s": (g["gpu_s"] or 0.0) + pot, "pot_gpu_s": pot,
                          "completion_tokens": g["completion_tokens"], **(extra or {})})
 
     def prefetch_checks(self, workers: int, timeout_log: Callable[[str], None] | None = None) -> int:
@@ -596,9 +626,9 @@ class Study:
         jobs: dict[tuple[str, str, str, str], tuple[Task, str]] = {}
         for rec in self.gens.records:
             task = by_id.get((rec["domain"], rec["task_id"]))
-            if task is None or rec.get("temperature") != 0.0:
+            if task is None or rec.get("temperature") != 0.0 or rec.get("kind") == "pot":
                 continue
-            gate_task = Task(task.domain, task.task_id, task.prompt, dict(task.checker_payload.get("__gate__", {})))
+            gate_task = self._gate_task(task, rec["model"])
             for t in (task, gate_task):
                 k = (t.domain, t.task_id, json.dumps(t.checker_payload, sort_keys=True, default=str),
                      hashlib.sha256(rec["text"].encode("utf-8", "replace")).hexdigest())
@@ -625,16 +655,18 @@ class Study:
         if self._done(key):
             return
         used: list[dict[str, Any]] = []
+        current = {"tier": None}
 
         def mk(name: str) -> Tier:
             def _g(_prompt: str, _domain: str) -> str:
                 g = self._greedy(name, quant, task)
                 used.append(g)
+                current["tier"] = name
                 return g["text"]
             return Tier(name, _g)
 
         gate_checker = (lambda t, r: types.SimpleNamespace(status="UNVERIFIED", evidence={})) \
-            if self.mode == "generate" else self.checker
+            if self.mode == "generate" else (lambda t, r: self.checker(self._gate_task(task, current["tier"]), r))
         system = GwenLaya([mk(n) for n in ladder], calibrations=self.calibrations, checker=gate_checker)
         out = system.answer(task.prompt, task.domain, task.checker_payload.get("__gate__", {}), task.task_id)
         last = used[-1]["text"] if used else None
@@ -642,7 +674,8 @@ class Study:
                          "quant": quant, "seed": self.seed_for(task, 0), "gate": out["verdict"],
                          "answered": bool(out["answered"]), "p_correct": out["p_correct"],
                          "tiers_invoked": [u["model"] for u in used],
-                         "score": self._score(task, last), "gpu_s": round(sum(u["gpu_s"] or 0.0 for u in used), 6),
+                         "score": self._score(task, last),
+                         "gpu_s": round(sum(u["gpu_s"] or 0.0 for u in used) + sum(self.pot_cost.get((u["model"], task.domain, task.task_id), 0.0) for u in used), 6),
                          "completion_tokens": sum(u["completion_tokens"] or 0 for u in used)})
 
     def _run_b3(self, model: str, quant: str, task: Task) -> None:
@@ -742,6 +775,8 @@ def summarize_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
 def throughput(gens: list[dict[str, Any]]) -> dict[str, Any]:
     acc: dict[str, list[float]] = defaultdict(lambda: [0.0, 0.0, 0.0, 0.0])
     for g in gens:
+        if g.get("kind") == "pot":
+            continue  # program-of-thought gate calls are reported separately
         a = acc[f"{g['model']}|{g['quant']}"]
         a[0] += g.get("completion_tokens") or 0
         a[1] += g.get("eval_s") or 0.0

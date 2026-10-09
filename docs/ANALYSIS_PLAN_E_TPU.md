@@ -96,3 +96,28 @@ Dated 2026-10-08. These were decided after seeing the first results and are labe
    - Concurrency: engine logs show the KV cache re-split for at most 54 concurrent requests (2B) and 11 (4B), not
      the requested 96 and 32. Chip-second costs are therefore throughput at those effective concurrencies; the 4B
      ran at lower concurrency than the 2B, which understates the cascade's cost penalty.
+
+## Addendum A10: the registered math gate, implemented after the E analysis (written before any program was generated)
+Dated 2026-10-09. Post hoc relative to A1-A9 and labelled so: the math-gate gap was found in the re-audit, after E
+had been analysed.
+
+- **Gate.** Registered design (GWENLAYA_PREREGISTRATION.md l.166): the tier that answered writes a short Python
+  program that computes the answer and prints it; the program runs in the bwrap sandbox (no network, no host files,
+  time and memory limits); the gate VERIFIES iff the program's last output line is equivalent to the answer's final
+  `\boxed{}` value (same equivalence as the scorer). The gold answer is never an input (tested). No boxed answer, no
+  program, crash, timeout, unparseable output, or a MISMATCH are all UNVERIFIED (a wrong program is not a refutation).
+- **Generation.** One greedy program per (tier, math task), prompt = the problem without its boxed-answer
+  instruction, system prompt in `gwaya/generators.py`, `max_new_tokens` 1024, same TPU, engine and settings as the
+  answers. Cache keys carry a `|pot` suffix and call index 1; records are marked `kind: pot` and are never scored as
+  answers.
+- **Cost.** The program is a second accelerator generation. Every arm that uses the gate (gate-only and the cascade) is
+  charged the program's attributed chip-seconds for each tier it consults; ungated arms are not. Cost is therefore
+  comparable to the code domains only if the same charge is applied; it is stated.
+- **Analyses (math only, plus the pooled cascade recomputed with the new math rows).** Gate coverage, precision
+  P(correct | VERIFIED), confident-wrong rate vs answer-everything, and the per-domain coverage-matched log-prob
+  baseline (same construction as A4). Cascade 2B -> gate -> 4B on math: accuracy, cost with program cost, escalation
+  share, cost per correct answer, and the oracle ceiling (unchanged). Math rows from the new replay replace the old
+  math rows in the overlay (originals untouched).
+- **What would count against the gate.** Low coverage (programs often fail), low precision (programs reproduce the same
+  mistake as the reasoning), or a cost that exceeds the benefit. Any of these is reported as found.
+- **Not a registered test.** This changes the status of no hypothesis.
