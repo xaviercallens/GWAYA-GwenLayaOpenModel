@@ -50,3 +50,12 @@ def test_confirmatory_detects_a_clearly_better_score():
     res = L.confirmatory(dom, clu, y, laya, mlp, gate, rng.random(n), n_boot=300, seed=0)
     assert res["H1_supported"] and res["H3_supported"]
     assert res["H1_dAURC_laya_minus_logprob"]["point"] < 0
+
+
+def test_metrics_block_needs_probabilities_for_ece_and_brier():
+    y = np.array([True, True, False, False])
+    p = np.array([0.9, 0.8, 0.3, 0.2])
+    m = L.metrics_block(p, y)
+    assert 0.0 <= m["ece15"] <= 1.0 and 0.0 <= m["brier"] <= 1.0
+    # a negative 'mean log-prob' used directly as a probability would give a Brier above 1 (the 3.6.0 audit finding)
+    assert L.metrics_block(-p, y)["brier"] > 1.0

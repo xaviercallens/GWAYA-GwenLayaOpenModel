@@ -216,7 +216,7 @@ def main(argv: list[str] | None = None) -> int:
         mlp = np.array([(r["signals"].get("mean_logprob") if r["signals"].get("mean_logprob") is not None else -20.0) for r in sub])
         gate = np.array([str(r["signals"].get("gate")).lower() == "verified" for r in sub])
         block = {"n": len(sub), "accuracy": float(y.mean()), "gate_coverage": float(gate.mean()),
-                 "metrics": {"laya": metrics_block(laya_e[idx], y), "raw_logprob": metrics_block(mlp, y),
+                 "metrics": {"laya": metrics_block(laya_e[idx], y), "raw_logprob": metrics_block(np.exp(np.minimum(mlp, 0.0)), y),  # exp(mean log-prob) is the probability-like score; ECE/Brier need [0,1]
                              "gate": metrics_block(gate.astype(float), y), "hand_lr": metrics_block(lr_e[idx], y)}}
         block["inference"] = confirmatory(dom, clu, y, laya_e[idx], mlp, gate, lr_e[idx], a.n_boot, a.seed)
         res["per_tier"][tier] = block
