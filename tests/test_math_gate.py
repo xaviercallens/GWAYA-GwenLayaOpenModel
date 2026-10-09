@@ -70,7 +70,7 @@ def test_unboxed_fallbacks_do_not_count():
     ("raise SystemExit(0)", r"\boxed{5}", "UNVERIFIED"),
 ])
 def test_real_sandbox(program, resp, status):
-    r = mg.check_math_gate(resp, "```python\n" + program + "\n```", timeout_s=4.0)
+    r = mg.check_math_gate(resp, "```python\n" + program + "\n```", timeout_s=20.0)  # a loaded machine needs seconds to import sympy; a timeout is fail-closed UNVERIFIED
     assert r.status == status, r.evidence
 
 

@@ -1,0 +1,11 @@
+{
+ "tasks": 69,
+ "router_rows": 69,
+ "calibrator_rows": 207,
+ "tasks_without_any_tier": 0,
+ "tiers": [
+  "qwen3.5-2b-bf16",
+  "qwen3.5-4b-bf16",
+  "qwen3.5-9b-bf16"
+ ]
+}

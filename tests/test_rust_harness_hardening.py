@@ -98,3 +98,24 @@ def test_early_exit_is_not_a_pass():
     r = RustCompilerOracle().verify_with_test(
         "pub fn add(a: i32, b: i32) -> i32 { std::process::exit(0) }", "assert_eq!(add(1, 2), 3);", timeout_s=60)
     assert not r.success and r.details["reason"] == "missing_result"
+
+
+_EDITION_2021_ONLY = ("use std::collections::HashSet;\n"
+                      "pub fn uniq(v: Vec<i32>) -> usize { HashSet::<i32>::from_iter(v).len() }")
+
+
+@needs_rust
+def test_edition_flag_is_honoured_and_default_is_2021(monkeypatch):
+    monkeypatch.delenv("GWAYA_RUST_EDITION", raising=False)
+    spec = "assert_eq!(uniq(vec![1, 1, 2]), 2);"
+    # `FromIterator` is in the 2021 prelude only: the new default accepts it, an explicit 2015 (what results before 3.7.0 used) rejects it
+    assert RustCompilerOracle().edition == "2021"
+    default = RustCompilerOracle().verify_with_test(_EDITION_2021_ONLY, spec, timeout_s=60)
+    old = RustCompilerOracle(edition="2015").verify_with_test(_EDITION_2021_ONLY, spec, timeout_s=60)
+    assert default.success, default.error_message
+    assert not old.success and "Compilation failed" in old.error_message
+
+
+def test_unsupported_edition_is_rejected():
+    with pytest.raises(ValueError):
+        RustCompilerOracle(edition="1999")._edition_args()
