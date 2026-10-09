@@ -1,0 +1,391 @@
+{
+ "kept": [
+  {
+   "slug": "accumulate",
+   "tests": 12,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "acronym",
+   "tests": 10,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "allergies",
+   "tests": 50,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "armstrong-numbers",
+   "tests": 9,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "beer-song",
+   "tests": 8,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "binary-search",
+   "tests": 14,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "bob",
+   "tests": 26,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "bowling",
+   "tests": 32,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "circular-buffer",
+   "tests": 18,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "clock",
+   "tests": 52,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "collatz-conjecture",
+   "tests": 5,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "crypto-square",
+   "tests": 8,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "custom-set",
+   "tests": 40,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "diamond",
+   "tests": 5,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "dominoes",
+   "tests": 13,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "eliuds-eggs",
+   "tests": 4,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "etl",
+   "tests": 4,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "fizzy",
+   "tests": 7,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "flower-field",
+   "tests": 13,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "grade-school",
+   "tests": 10,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "hamming",
+   "tests": 9,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "hello-world",
+   "tests": 1,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "hexadecimal",
+   "tests": 10,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "high-scores",
+   "tests": 15,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "isbn-verifier",
+   "tests": 21,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "isogram",
+   "tests": 14,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "knapsack",
+   "tests": 7,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "largest-series-product",
+   "tests": 15,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "leap",
+   "tests": 9,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "luhn",
+   "tests": 22,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "luhn-from",
+   "tests": 14,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "luhn-trait",
+   "tests": 8,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "matching-brackets",
+   "tests": 20,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "matrix",
+   "tests": 10,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "minesweeper",
+   "tests": 12,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "nth-prime",
+   "tests": 4,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "nucleotide-codons",
+   "tests": 11,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "nucleotide-count",
+   "tests": 10,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "pangram",
+   "tests": 10,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "pascals-triangle",
+   "tests": 8,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "phone-number",
+   "tests": 18,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "prime-factors",
+   "tests": 12,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "protein-translation",
+   "tests": 30,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "proverb",
+   "tests": 6,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "pythagorean-triplet",
+   "tests": 7,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "queen-attack",
+   "tests": 13,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "rail-fence-cipher",
+   "tests": 7,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "raindrops",
+   "tests": 18,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "react",
+   "tests": 20,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "rectangles",
+   "tests": 14,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "rna-transcription",
+   "tests": 11,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "robot-simulator",
+   "tests": 18,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "roman-numerals",
+   "tests": 27,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "saddle-points",
+   "tests": 9,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "say",
+   "tests": 19,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "scrabble-score",
+   "tests": 13,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "secret-handshake",
+   "tests": 11,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "series",
+   "tests": 9,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "sieve",
+   "tests": 5,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "spiral-matrix",
+   "tests": 6,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "sublist",
+   "tests": 18,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "sum-of-multiples",
+   "tests": 16,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "tournament",
+   "tests": 12,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "triangle",
+   "tests": 21,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "two-bucket",
+   "tests": 11,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "two-fer",
+   "tests": 3,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "word-count",
+   "tests": 14,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "wordy",
+   "tests": 29,
+   "stub_status": "FAILED"
+  },
+  {
+   "slug": "yacht",
+   "tests": 29,
+   "stub_status": "FAILED"
+  }
+ ],
+ "dropped": {
+  "affine-cipher": "reference_not_verified:FAILED",
+  "all-your-base": "ValueError: external_crate_in_tests",
+  "alphametics": "reference_not_verified:FAILED",
+  "anagram": "reference_not_verified:FAILED",
+  "atbash-cipher": "ValueError: external_crate_in_tests",
+  "book-store": "reference_not_verified:FAILED",
+  "bottle-song": "ValueError: external_crate_in_tests",
+  "decimal": "reference_not_verified:FAILED",
+  "difference-of-squares": "ValueError: external_crate_in_tests",
+  "diffie-hellman": "reference_not_verified:FAILED",
+  "dot-dsl": "reference_not_verified:FAILED",
+  "doubly-linked-list": "ValueError: tests_files!=1",
+  "forth": "ValueError: tests_files!=1",
+  "gigasecond": "ValueError: has_dependencies",
+  "grains": "ValueError: should_panic",
+  "grep": "ValueError: has_dependencies",
+  "kindergarten-garden": "reference_not_verified:FAILED",
+  "list-ops": "ValueError: external_crate_in_tests",
+  "macros": "reference_not_verified:FAILED",
+  "ocr-numbers": "ValueError: external_crate_in_tests",
+  "paasio": "reference_not_verified:FAILED",
+  "palindrome-products": "reference_not_verified:FAILED",
+  "parallel-letter-frequency": "ValueError: external_crate_in_tests",
+  "perfect-numbers": "reference_too_slow_for_a_stable_timeout:7940ms",
+  "pig-latin": "reference_not_verified:FAILED",
+  "poker": "reference_not_verified:FAILED",
+  "pov": "ValueError: external_crate_in_tests",
+  "reverse-string": "reference_not_verified:FAILED",
+  "robot-name": "ValueError: has_dependencies",
+  "rotational-cipher": "ValueError: external_crate_in_tests",
+  "run-length-encoding": "ValueError: external_crate_in_tests",
+  "scale-generator": "ValueError: no_test_functions",
+  "simple-cipher": "ValueError: has_dependencies",
+  "simple-linked-list": "reference_not_verified:FAILED",
+  "space-age": "reference_not_verified:UNVERIFIED",
+  "variable-length-quantity": "ValueError: external_crate_in_tests",
+  "xorcism": "ValueError: external_crate_in_tests"
+ },
+ "n_kept": 69,
+ "n_dropped": 37,
+ "source": "https://github.com/exercism/rust (MIT)"
+}
