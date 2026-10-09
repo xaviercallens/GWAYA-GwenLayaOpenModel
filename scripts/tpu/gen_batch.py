@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -90,12 +91,16 @@ def main(argv: list[str] | None = None) -> int:
                     help="prefill buffer; 2048 starves the KV/state cache of hybrid Qwen3.5 models on a 16 GB v5e chip")
     ap.add_argument("--limit", type=int, help="max tasks per domain (smoke tests)")
     ap.add_argument("--tensor-parallel", type=int, default=1)
+    ap.add_argument("--kind", choices=["answer", "pot"], default="answer",
+                    help="pot: program-of-thought programs for the math gate (math tasks only)")
     args = ap.parse_args(argv)
 
     from gwaya.generators import OllamaGenerator
 
     gen = OllamaGenerator(model=args.served)
     tasks = read_tasks(args.tasks)
+    if args.kind == "pot":
+        tasks = [t for t in tasks if t["domain"] == "math"]
     if args.limit:
         seen: dict[str, int] = {}
         kept = []
@@ -125,17 +130,22 @@ def main(argv: list[str] | None = None) -> int:
     with out.open("a") as fh:
         for ci in range(0, len(todo), args.chunk):
             chunk = todo[ci:ci + args.chunk]
-            prompts = [gen.build_raw_prompt(t["prompt"], t["domain"]) for t in chunk]
+            if args.kind == "pot":  # the problem text without the boxed-answer instruction
+                prompts = [gen.build_raw_prompt(re.sub(r"\s*Put the final answer in \\boxed\{\}\.?\s*$", "", t["prompt"]),
+                                                "math_pot") for t in chunk]
+            else:
+                prompts = [gen.build_raw_prompt(t["prompt"], t["domain"]) for t in chunk]
             lens = [len(tok.encode(p)) for p in prompts]
             ok = [i for i, n in enumerate(lens) if n <= MAX_PROMPT_TOKENS]
             params = [SamplingParams(temperature=0.0, max_tokens=MAX_NEW_TOKENS[chunk[i]["domain"]],
-                                     stop=gen.stop_sequences(chunk[i]["domain"]), logprobs=1) for i in ok]
+                                     stop=gen.stop_sequences("math_pot" if args.kind == "pot" else chunk[i]["domain"]),
+                                     logprobs=1) for i in ok]
             t1 = time.time()
             outs = llm.generate([prompts[i] for i in ok], params) if ok else []
             wall = time.time() - t1
             by_idx = dict(zip(ok, outs))
             for i, t in enumerate(chunk):
-                row = {"domain": t["domain"], "task_id": t["task_id"], "prompt_tokens": lens[i],
+                row = {"domain": t["domain"], "task_id": t["task_id"], "prompt_tokens": lens[i], "kind": args.kind,
                        "chunk": ci // args.chunk, "chunk_wall_s": round(wall, 3), "chunk_size": len(chunk)}
                 if i in by_idx:
                     o = by_idx[i].outputs[0]

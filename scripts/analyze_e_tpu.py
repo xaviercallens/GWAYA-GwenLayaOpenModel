@@ -391,7 +391,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--night-tasks", type=Path)
     ap.add_argument("--unstable-audits", nargs="*", type=Path, default=[],
                     help="recheck_failures.py JSONs (both modes); every flipped item is marked unstable for the S1 sensitivity")
-    ap.add_argument("--overlay-tiers", type=Path, help="serial re-score rows (scripts/tpu/serial_overlay.py) that take precedence")
+    ap.add_argument("--overlay-tiers", nargs="*", type=Path, default=[],
+                    help="rows.jsonl files that take precedence over the tiers rows, later files winning: serial re-scores "
+                         "(scripts/tpu/serial_overlay.py), the math-gate replay, ...")
     ap.add_argument("--overlay-coder", type=Path)
     ap.add_argument("--n-boot", type=int, default=10000)
     ap.add_argument("--seed", type=int, default=0)
@@ -404,11 +406,14 @@ def main(argv: list[str] | None = None) -> int:
     tier_rows = read_jsonl(a.tiers / "rows.jsonl")
     coder_rows = read_jsonl(a.coder / "rows.jsonl") if a.coder else []
     corrections: dict[str, list] = {}
-    for label, orig, ov_path in (("tiers", tier_rows, a.overlay_tiers), ("coder", coder_rows, a.overlay_coder)):
-        if ov_path and Path(ov_path).exists():
-            ov = read_jsonl(ov_path)
-            corrections[label] = overlay_corrections(orig, ov)
-            orig.extend(ov)  # later rows win in build()
+    overlay_info: dict[str, Any] = {}
+    for label, orig, ov_paths in (("tiers", tier_rows, a.overlay_tiers), ("coder", coder_rows, [a.overlay_coder] if a.overlay_coder else [])):
+        for ov_path in ov_paths:
+            if ov_path and Path(ov_path).exists():
+                ov = read_jsonl(ov_path)
+                corrections.setdefault(label, []).extend(overlay_corrections(orig, ov))
+                overlay_info.setdefault(label, []).append({"file": Path(ov_path).name, "rows": len(ov)})
+                orig.extend(ov)  # later rows win in build()
     coder = (coder_rows, read_jsonl(a.coder / "gens.jsonl"), a.coder_name) if a.coder else None
     D = build(tasks, tier_rows, read_jsonl(a.tiers / "gens.jsonl"), a.small, a.large, coder)
     unstable_counts = {}
@@ -426,7 +431,7 @@ def main(argv: list[str] | None = None) -> int:
                     "models": list(D.models), "plan": "docs/ANALYSIS_PLAN_E_TPU.md",
                     "cost_unit": "accelerator chip-seconds (chunk wall time split by token share)",
                     "sources": {"tiers": str(a.tiers), "coder": str(a.coder) if a.coder else None, "tasks": str(a.tasks)}},
-           "serial_recheck_corrections": corrections, "stability_audit": unstable_counts,
+           "serial_recheck_corrections": corrections, "overlays": overlay_info, "stability_audit": unstable_counts,
            **R, "A7_night_cpu_vs_tpu": night}
     a.out_numbers.parent.mkdir(parents=True, exist_ok=True)
     a.out_numbers.write_text(json.dumps(out, indent=1))

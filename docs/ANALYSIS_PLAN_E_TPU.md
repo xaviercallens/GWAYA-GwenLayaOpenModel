@@ -96,3 +96,82 @@ Dated 2026-10-08. These were decided after seeing the first results and are labe
    - Concurrency: engine logs show the KV cache re-split for at most 54 concurrent requests (2B) and 11 (4B), not
      the requested 96 and 32. Chip-second costs are therefore throughput at those effective concurrencies; the 4B
      ran at lower concurrency than the 2B, which understates the cascade's cost penalty.
+
+## Addendum A10: the registered math gate, implemented after the E analysis (written before any program was generated)
+Dated 2026-10-09. Post hoc relative to A1-A9 and labelled so: the math-gate gap was found in the re-audit, after E
+had been analysed.
+
+- **Gate.** Registered design (GWENLAYA_PREREGISTRATION.md l.166): the tier that answered writes a short Python
+  program that computes the answer and prints it; the program runs in the bwrap sandbox (no network, no host files,
+  time and memory limits); the gate VERIFIES iff the program's last output line is equivalent to the answer's final
+  `\boxed{}` value (same equivalence as the scorer). The gold answer is never an input (tested). No boxed answer, no
+  program, crash, timeout, unparseable output, or a MISMATCH are all UNVERIFIED (a wrong program is not a refutation).
+- **Generation.** One greedy program per (tier, math task), prompt = the problem without its boxed-answer
+  instruction, system prompt in `gwaya/generators.py`, `max_new_tokens` 1024, same TPU, engine and settings as the
+  answers. Cache keys carry a `|pot` suffix and call index 1; records are marked `kind: pot` and are never scored as
+  answers.
+- **Cost.** The program is a second accelerator generation. Every arm that uses the gate (gate-only and the cascade) is
+  charged the program's attributed chip-seconds for each tier it consults; ungated arms are not. Cost is therefore
+  comparable to the code domains only if the same charge is applied; it is stated.
+- **Analyses (math only, plus the pooled cascade recomputed with the new math rows).** Gate coverage, precision
+  P(correct | VERIFIED), confident-wrong rate vs answer-everything, and the per-domain coverage-matched log-prob
+  baseline (same construction as A4). Cascade 2B -> gate -> 4B on math: accuracy, cost with program cost, escalation
+  share, cost per correct answer, and the oracle ceiling (unchanged). Math rows from the new replay replace the old
+  math rows in the overlay (originals untouched).
+- **What would count against the gate.** Low coverage (programs often fail), low precision (programs reproduce the same
+  mistake as the reasoning), or a cost that exceeds the benefit. Any of these is reported as found.
+- **Not a registered test.** This changes the status of no hypothesis.
+
+## Addendum A11: cross-fitted calibrated abstention (written before any such model was fitted)
+Dated 2026-10-09. Exploratory; **not** the registered GL arm or H1/H3 (no Laya, no separate split C). Because E has
+already been analysed, the freeze rule cannot hold for E; this analysis replaces a fitted-on-C calibrator with a fully
+pre-specified cross-fitted procedure that is run once.
+
+- **Unit and tiers.** Each of the 1,536 E tasks x tier, for the 4B (headline) and the 2B (secondary).
+- **Features** (stored outputs only; the gold answer and hidden tests are never inputs): gate verdict one-hot
+  {VERIFIED, FAILED, UNVERIFIED} (code: visible-test gate; math: the A10 program-of-thought gate); mean token
+  log-prob; minimum token log-prob; mean of the lowest 10% of token log-probs (at least one token); log(1 + completion
+  tokens); truncated flag (finish_reason == length); domain one-hot (3). Output = P(correct), correct = hidden check.
+- **Models** (all evaluated only on out-of-fold predictions): M0 gate verdict (answer iff VERIFIED, also used as a
+  binary score); M1 mean log-prob only; M2 logistic regression on every non-gate feature; M3 logistic regression on all
+  features. Logistic regression = scikit-learn `LogisticRegression(penalty="l2", C=1.0, max_iter=1000)` after
+  `StandardScaler` fitted on the training portion; no interactions; no tuning of C.
+- **Folds.** 5 folds by source problem: fold = int(sha256(cluster)[:8], 16) mod 5 (deterministic, no RNG).
+- **Discrimination and calibration** (per domain; a pooled value is only a convenience): AUROC, Brier, ECE (15
+  equal-mass bins), AURC of the out-of-fold P(correct); 95% CIs by the same cluster bootstrap as A1-A9
+  (10,000 resamples, numpy `default_rng(0)`). Paired differences M3-M0, M3-M1, M2-M1.
+- **Target-risk operating points.** Selective risk = P(wrong | answered). For alpha in {0.05, 0.10}: inside each
+  outer training portion, inner 4-fold cross-fitted predictions choose the threshold with the largest coverage whose
+  inner selective risk is <= alpha (require >= 30 answered; otherwise answer nothing); the model is then fitted on the
+  whole training portion and the threshold applied to the held-out fold. Report realised coverage and realised
+  selective risk (pooled over folds, per domain) with cluster-bootstrap CIs, for M1, M3 and for the gate alone (which
+  has no threshold). Compare realised risk with alpha: a method "meets the target" only if the upper CI bound <= alpha
+  is NOT required; we report whether the point estimate and the CI cover alpha, without a pass/fail claim.
+- **What would count against it.** M3 not beating M0 or M1 on AURC; realised risk above alpha; coverage collapsing on
+  Rust or math. All are reported as found. No hyperparameter, feature or fold choice will be changed after seeing results.
+
+## Addendum A12: a wider tier gap with Qwen3.5-9B (written before the 9B run completed; no 9B result seen)
+Dated 2026-10-09. Exploratory and post hoc relative to A1-A9; it restores the registered ladder's largest feasible tier
+(9B; the 27B did not fit the budget and is not attempted here).
+
+- **Generation.** Qwen3.5-9B, bf16, vLLM-TPU, one `v5litepod-4` slice (tensor parallel 4), greedy, same raw protocol,
+  prompts, stop sequences and log-probabilities as the 2B/4B; answers for all 1,536 E tasks and, for math, a
+  program-of-thought program per task (A10). A 6-task-per-domain smoke test (18 tasks) showed the model starts and
+  generates; its outputs are not analysed. Effective concurrency will be read from the engine log and reported.
+- **Cost unit.** Attributed seconds are the slice wall time split by token share **times the 4 chips in use**
+  (`--chips 4` in the importer), so chip-seconds are comparable with the single-chip 2B/4B. Dollar cost = chip-seconds x
+  $1.20 / 3600 (on-demand list price estimate). Different effective concurrency across tiers is stated, not corrected.
+- **Analyses.** (a) A1, A2 for the 9B. (b) A3/A4: gate-only on the 9B as the largest tier, per domain, with the A10 math
+  gate, and the per-domain-matched log-prob baseline. (c) Cascades with the executed gate and no router, replayed offline
+  from the cached generations: 2B -> 9B, 4B -> 9B, and the three-tier ladder 2B -> 4B -> 9B. For each: accuracy
+  (final candidate, answered or not), selective coverage and confident-wrong rate, escalation share, cost per task and
+  cost per correct answer (math charged for the programs of every tier consulted), cost ratio versus always-9B with and
+  without the first generation chunk (S2), and paired cluster-bootstrap CIs; exact McNemar for each cascade versus
+  always-9B, Holm over the three cascades. (d) The oracle-router ceiling over {2B, 4B, 9B} (cheapest correct tier),
+  as a ceiling only. (e) A11 repeated with the 9B as the tier.
+- **Reading rule fixed in advance.** A cascade "pays off" only if its cost ratio versus always-9B is below 1 in BOTH the
+  with-warm-up and without-warm-up readings AND the accuracy difference's CI does not exclude zero on the harmful side.
+  Anything else is reported as not paying off. We expect the answer to depend on the tier gap; no tuning follows.
+- **What would count against us / limits.** A gate-driven cascade that is still not cheaper than always-9B; a 9B that is
+  not much better than the 4B (little headroom); cost depending on effective concurrency (2B <= 54, 4B <= 11, 9B to be
+  read from the log); public benchmarks possibly seen in pretraining; single greedy sample.

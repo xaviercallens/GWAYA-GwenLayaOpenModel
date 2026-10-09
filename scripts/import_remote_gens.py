@@ -32,13 +32,17 @@ from scripts import run_study as rs  # noqa: E402
 from gwaya.generators import OllamaGenerator  # noqa: E402
 
 
-def cache_key(served: str, quant: str, domain: str, task_id: str, seed: int, temperature: float) -> str:
-    return f"{served}|{quant}|{domain}|{task_id}|{seed}|t{temperature}"
+def cache_key(served: str, quant: str, domain: str, task_id: str, seed: int, temperature: float,
+              kind: str | None = None) -> str:
+    base = f"{served}|{quant}|{domain}|{task_id}|{seed}|t{temperature}"
+    return f"{base}|{kind}" if kind else base
 
 
 def import_gens(tasks_path: Path, raw_path: Path, served: str, quant: str, out_dir: Path, *,
                 temperature: float = 0.0, max_tokens: dict[str, int] | None = None,
-                accelerator: str = "unspecified", seconds_from: Path | None = None) -> dict[str, Any]:
+                accelerator: str = "unspecified", seconds_from: Path | None = None,
+                kind: str | None = None, chips: int = 1) -> dict[str, Any]:
+    """kind="pot": program-of-thought generations for the math gate (call index 1, fenced python, own cache key)."""
     max_tokens = max_tokens or {"python": 1024, "rust": 1024, "math": 1024, "lean4": 1024}
     tasks = rs.load_tasks_jsonl(tasks_path)
     ordered = sorted(tasks, key=lambda t: (t.domain, t.task_id))
@@ -68,19 +72,21 @@ def import_gens(tasks_path: Path, raw_path: Path, served: str, quant: str, out_d
     added = skipped = 0
     for r in raw_rows:
         domain, task_id = r["domain"], r["task_id"]
-        seed = 1000 * (item_index[(domain, task_id)] + 1)
-        key = cache_key(served, quant, domain, task_id, seed, temperature)
+        seed = 1000 * (item_index[(domain, task_id)] + 1) + (1 if kind == "pot" else 0)
+        key = cache_key(served, quant, domain, task_id, seed, temperature, kind)
         if key in have:
             skipped += 1
             continue
         toks = r.get("prompt_tokens", 0) + r.get("completion_tokens", 0)
-        secs = chunk_wall[r["chunk"]] * toks / share_total[r["chunk"]] if share_total[r["chunk"]] else 0.0
-        keep = orig_secs.get((served, domain, task_id))
+        # chip-seconds: the slice's wall time split by token share, times the number of chips that were busy
+        secs = chips * chunk_wall[r["chunk"]] * toks / share_total[r["chunk"]] if share_total[r["chunk"]] else 0.0
+        keep = orig_secs.get((served, domain, task_id)) if kind != "pot" else None
         wall_s, eval_s, gpu_s = (keep["wall_s"], keep["eval_s"], keep["gpu_s"]) if keep else (round(secs, 6),) * 3
         log.append({
             "key": key, "model": served, "quant": quant, "domain": domain, "task_id": task_id, "seed": seed,
-            "call_index": 0, "temperature": temperature, "max_tokens": int(max_tokens.get(domain, 1024)),
-            "wall_s": wall_s, "text": gen.wrap_output(r.get("text", ""), domain),
+            "call_index": 1 if kind == "pot" else 0, "temperature": temperature,
+            **({"kind": "pot"} if kind == "pot" else {}), "max_tokens": int(max_tokens.get(domain, 1024)),
+            "wall_s": wall_s, "text": gen.wrap_output(r.get("text", ""), "math_pot" if kind == "pot" else domain),
             "prompt_tokens": int(r.get("prompt_tokens", 0)), "completion_tokens": int(r.get("completion_tokens", 0)),
             "eval_s": eval_s, "gpu_s": gpu_s, "mean_logprob": r.get("mean_logprob"),
             "done_reason": r.get("finish_reason", "stop"), "token_logprobs": r.get("token_logprobs"),
@@ -89,8 +95,9 @@ def import_gens(tasks_path: Path, raw_path: Path, served: str, quant: str, out_d
         have.add(key)
         added += 1
     missing = len(tasks) - len({(r["domain"], r["task_id"]) for r in raw_rows})
-    meta = {"served": served, "quant": quant, "temperature": temperature, "accelerator": accelerator,
-            "seconds_unit": "accelerator chip-seconds (chunk wall time split by token share), not GPU-seconds",
+    meta = {"served": served, "quant": quant, "temperature": temperature, "accelerator": accelerator, "kind": kind,
+            "chips": chips,
+            "seconds_unit": "accelerator chip-seconds (slice wall time split by token share x chips), not GPU-seconds",
             "added": added, "skipped_existing": skipped, "tasks_without_generation": missing,
             "source_raw": str(raw_path)}
     (out_dir / "import_meta.json").write_text(json.dumps(meta, indent=1))
@@ -106,10 +113,13 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--out", required=True, type=Path)
     ap.add_argument("--temperature", type=float, default=0.0)
     ap.add_argument("--accelerator", default="unspecified")
+    ap.add_argument("--chips", type=int, default=1, help="chips of the slice that generated the batch (v5litepod-4 = 4)")
+    ap.add_argument("--kind", choices=["pot"], help="program-of-thought generations for the math gate")
     ap.add_argument("--seconds-from", type=Path, help="original gens.jsonl whose attributed seconds are kept (subset re-imports)")
     args = ap.parse_args(argv)
     meta = import_gens(args.tasks, args.raw, args.served, args.quant, args.out,
-                       temperature=args.temperature, accelerator=args.accelerator, seconds_from=args.seconds_from)
+                       temperature=args.temperature, accelerator=args.accelerator, seconds_from=args.seconds_from,
+                       kind=args.kind, chips=args.chips)
     print(json.dumps(meta))
     return 0
 

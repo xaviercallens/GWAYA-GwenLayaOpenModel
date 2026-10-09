@@ -45,6 +45,14 @@ _MATH_SYSTEM_PROMPT = (
     "You are a careful mathematician. Reason briefly step by step, then give the final answer "
     "exactly once as \\boxed{...}. Do not write code."
 )
+# Program-of-thought for the math gate: the same model writes a short program that computes the answer.
+# It is a code domain (fenced python, ``` stop) with its own system prompt.
+_POT_DOMAIN = "math_pot"
+_POT_SYSTEM_PROMPT = (
+    "You are a careful mathematician who writes Python. Write one complete Python program that computes the "
+    "final answer to the problem and prints ONLY the final answer (an integer, a fraction such as 3/4, or a "
+    "simple closed-form expression). You may use the standard library and sympy. Do not explain."
+)
 _CODE_STOP = ["```", "<|im_end|>", "<|endoftext|>"]
 _PROSE_STOP = ["<|im_end|>", "<|endoftext|>"]
 
@@ -114,7 +122,8 @@ class OllamaGenerator:
             prefill = "<think>\n\n</think>\n\n" if re.match(r"qwen3", self.model, re.I) else ""
         else:
             tag = self.fence_tag(domain)
-            system = self.system_prompt or _SYSTEM_PROMPT.format(lang=tag)
+            system = self.system_prompt or (_POT_SYSTEM_PROMPT if (domain or self.domain) == _POT_DOMAIN
+                                            else _SYSTEM_PROMPT.format(lang=tag))
             prefill = f"```{tag}\n"
         return (
             f"<|im_start|>system\n{system}<|im_end|>\n"
