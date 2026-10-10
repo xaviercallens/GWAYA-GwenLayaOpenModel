@@ -160,3 +160,48 @@ class TestRealMathlib:
         o = Lean4CompilerOracle(project_dir=_PROJ.project_dir, timeout_s=0.5)
         r = o.verify_snippet(MINIF2F_HEADER + "theorem t : 1 = 1 := rfl")
         assert not r.success and "timed out" in r.error_message
+
+
+def test_check_lean4_wires_the_pinned_project_and_a_longer_timeout(monkeypatch, tmp_path):
+    from gwaya.domains import checkers
+    from gwaya.domains.task import Task
+    seen = {}
+
+    class FakeOracle:
+        def __init__(self, timeout_s, project_dir=None):
+            seen.update(timeout_s=timeout_s, project_dir=project_dir)
+
+        def verify_theorem(self, code, formal_statement, header=""):
+            return oracles.OracleResult(success=True, compiler="lean4")
+
+    monkeypatch.setattr(oracles, "Lean4CompilerOracle", FakeOracle)
+    monkeypatch.setattr(lean_project, "default_project_dir", lambda: tmp_path)
+    st = "theorem t : 1 = 1 := by"
+    checkers.check(Task("lean4", "t", "p", {"formal_statement": st}), f"```lean4\n{st}\n  rfl\n```")
+    assert seen == {"timeout_s": 120.0, "project_dir": tmp_path}
+    checkers.check(Task("lean4", "t", "p", {"formal_statement": st, "timeout_s": 300}), f"```lean4\n{st}\n  rfl\n```")
+    assert seen == {"timeout_s": 300.0, "project_dir": tmp_path}
+    monkeypatch.setattr(lean_project, "default_project_dir", lambda: None)
+    checkers.check(Task("lean4", "t", "p", {"formal_statement": st}), f"```lean4\n{st}\n  rfl\n```")
+    assert seen == {"timeout_s": 60.0, "project_dir": None}
+
+
+def test_check_lean4_prepends_the_task_header_when_the_answer_has_no_imports(monkeypatch):
+    from gwaya.domains import checkers
+    from gwaya.domains.task import Task
+    seen = {}
+
+    class FakeOracle:
+        def __init__(self, timeout_s, project_dir=None):
+            pass
+
+        def verify_theorem(self, code, formal_statement, header=""):
+            seen["code"] = code
+            return oracles.OracleResult(success=True, compiler="lean4")
+
+    monkeypatch.setattr(oracles, "Lean4CompilerOracle", FakeOracle)
+    payload = {"formal_statement": "theorem t : 1 = 1 :=", "header": "import Mathlib.Data.Real.Basic"}
+    assert checkers.check(Task("lean4", "t", "p", payload), "```lean4\ntheorem t : 1 = 1 := by\n  rfl\n```").status == "VERIFIED"
+    assert seen["code"].startswith("import Mathlib.Data.Real.Basic\n\ntheorem t")
+    checkers.check(Task("lean4", "t", "p", payload), "```lean4\nimport Mathlib\ntheorem t : 1 = 1 := by\n  rfl\n```")
+    assert seen["code"].startswith("import Mathlib\n")

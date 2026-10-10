@@ -1,0 +1,18 @@
+{
+ "n": 244,
+ "elaborating": 223,
+ "excluded_by_class": {
+  "commented_out_in_dataset": 17,
+  "does_not_elaborate_under_pinned_mathlib": 4
+ },
+ "mathlib": {
+  "lean_toolchain": "leanprover/lean4:v4.7.0",
+  "mathlib_tag": "v4.7.0",
+  "mathlib_commit": "a45ae63747140c1b2cbad9d46f518015c047047a",
+  "cache": "lake exe cache get",
+  "created": "2026-10-07"
+ },
+ "tasks_sha256": "be0603bcc6b274cbb6cb9f39663f1af9fef0a782f2922a2739953e0bc88dd6a7",
+ "generation_run": false,
+ "note": "A18 generation has not been run; no Lean result exists"
+}

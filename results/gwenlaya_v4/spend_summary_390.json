@@ -1,0 +1,25 @@
+{
+ "lines_total": 27,
+ "total_usd": 19.2801,
+ "lines_3_8": 25,
+ "total_3_8": 17.7581,
+ "lines_new": 2,
+ "total_new": 1.522,
+ "last_ts": "2026-10-10T07:59:02+02:00",
+ "last_item": "tpu_lean-small-073256",
+ "new_items": {
+  "tpu_lean-9b-073256": {
+   "ts": "2026-10-10T07:48:51+02:00",
+   "seconds": 783,
+   "usd": 1.044,
+   "accel": "v5litepod-4 on-demand"
+  },
+  "tpu_lean-small-073256": {
+   "ts": "2026-10-10T07:59:02+02:00",
+   "seconds": 1434,
+   "usd": 0.478,
+   "accel": "v5litepod-1 on-demand"
+  }
+ },
+ "note": "lines after 25 were added after 3.8.0 (A18 Lean generation, in progress; no Lean result is reported in 3.9.0)"
+}

@@ -426,7 +426,10 @@ class Lean4CompilerOracle:
     _AXIOMS_RE = re.compile(r"depends on axioms:\s*\[([^\]]*)\]")
     _ESCAPE_RE = re.compile(r"\b(sorry|admit|native_decide|axiom|unsafe|implemented_by|extern)\b")
     # Declarations without a name cannot be passed to `#print axioms`, so they are rejected (fail-closed).
-    _UNAUDITABLE_RE = re.compile(r"^\s*(?:@\[[^\]]*\]\s*)*(example\b|instance\s*[:\[{(])", re.MULTILINE)
+    # `instance (priority := p) name` is named, so only `instance :`/`[`/`{`/`(x : T)` binders right away count.
+    _UNAUDITABLE_RE = re.compile(
+        r"^\s*(?:@\[[^\]]*\]\s*)*(example\b|instance\s*(?:\(\s*priority\s*:=[^)]*\)\s*|(?!\(\s*priority\b))[:\[{(])",
+        re.MULTILINE)
     # Dangerous Lean constructs that could execute arbitrary code or IO
     _DANGEROUS_LEAN_RE = re.compile(
         r"(?:#eval|#reduce|run_cmd|run_elab|run_meta|"
@@ -438,9 +441,9 @@ class Lean4CompilerOracle:
     @classmethod
     def _lexical_flaws(cls, code: str) -> list[str]:
         """Defence-in-depth lexical scan (comments removed). The kernel axiom audit is authoritative."""
-        stripped = re.sub(r"/-.*?-/", " ", code, flags=re.DOTALL)
-        stripped = re.sub(r"--[^\n]*", " ", stripped)
-        flaws = set(cls._ESCAPE_RE.findall(stripped))
+        from gwaya.lean_gate import strip_lean
+        stripped, lex = strip_lean(code)  # Lean-aware: nested comments, string/char literals (a "/-" in a string)
+        flaws = set(cls._ESCAPE_RE.findall(stripped)) | set(lex)
 
         # Check for dangerous constructs that could execute arbitrary code
         if cls._DANGEROUS_LEAN_RE.search(stripped):
@@ -491,6 +494,19 @@ class Lean4CompilerOracle:
             latency_ms=round(latency_ms, 2),
             details={"returncode": res.returncode, "disallowed_axioms": bad_axioms},
         )
+
+    def verify_theorem(self, code: str, formal_statement: str, header: str = "") -> OracleResult:
+        """Hardened gate (gwaya/lean_gate.py): the task's exact statement, kernel re-checked in a trusted second
+        process, standard axioms only. Needs the pinned project; without it the result is UNVERIFIED."""
+        from gwaya.lean_gate import verify_theorem
+        v = verify_theorem(self.project, code, formal_statement, header, timeout_s=self.timeout_s,
+                           mem_mb=self.mem_mb)
+        details = {**v.evidence, "reason": v.reason, "gate": "trusted_v1"}
+        if v.status == "UNVERIFIED":
+            details["unverified"] = True
+        return OracleResult(success=v.status == "VERIFIED", compiler="lean4",
+                            error_message="" if v.status == "VERIFIED" else f"{v.reason}: {v.log[-400:]}".strip(),
+                            stderr=v.log, latency_ms=v.evidence.get("latency_ms", 0.0), details=details)
 
     def verify_snippet(self, code: str, allow_sorry: bool = False) -> OracleResult:
         """
@@ -550,6 +566,7 @@ class Lean4CompilerOracle:
                     compiler="lean4",
                     error_message=f"Lean 4 verification timed out after {self.timeout_s}s",
                     latency_ms=round(latency_ms, 2),
+                    details={"unverified": True, "reason": "timeout"},  # undecided, not refuted
                 )
 
             # For sandboxed execution, synthesize a CompletedProcess-like result

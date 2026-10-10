@@ -63,7 +63,7 @@ class TestEquivalence:
 
     def test_unparseable_is_undecided(self):
         assert answers_equivalent("banana", "apple")[0] is None
-        assert answers_equivalent("(1,2)", "(2,1)")[0] is None
+        assert answers_equivalent("(1,2)", "(2,1)")[0] is False  # tuples compare element-wise (D62)
         assert answers_equivalent("banana", "banana")[1] == "string_exact"
 
     def test_exact_string_match_ok(self):
@@ -173,10 +173,19 @@ class TestLean:
         t = Task("lean4", "t", "p", {"formal_statement": "theorem foo : 2 + 2 = 4"})
         assert check(t, "theorem foo : 2 + 2 = 4 := by sorry").status != "VERIFIED"
 
-    @pytest.mark.skipif(not shutil.which("lean") or not is_sandbox_available(), reason="lean/bwrap missing")
     def test_real_lean(self):
+        # the hardened gate needs the pinned project (trusted check); without it Lean tasks are UNVERIFIED
+        from gwaya.lean_project import discover
         t = Task("lean4", "t", "p", {"formal_statement": "theorem foo : 2 + 2 = 4"})
-        assert check(t, "theorem foo : 2 + 2 = 4 := rfl").status == "VERIFIED"
+        r = check(t, "theorem foo : 2 + 2 = 4 := rfl")
+        if discover() is not None and is_sandbox_available():
+            assert r.status == "VERIFIED", r.evidence
+        else:
+            assert r.status == "UNVERIFIED"
+
+    def test_missing_statement_is_unverified(self):
+        r = check(Task("lean4", "t", "p", {"header": "import Mathlib"}), "theorem easy : True := trivial")
+        assert r.status == "UNVERIFIED" and r.evidence["reason"] == "no_formal_statement"
 
     def test_checker_exception_is_unverified(self, monkeypatch):
         monkeypatch.setitem(ck._CHECKERS, "math", lambda t, r: 1 / 0)
@@ -226,6 +235,14 @@ class TestLoaders:
         t = loaders.row_to_task("cat-searcher/minif2f-lean4", {
             "name": "n", "header": "import Mathlib\n", "formal_statement": "theorem n : True"}, 0)
         assert t.domain == "lean4" and t.checker_payload["formal_statement"] == "theorem n : True"
+
+    def test_lean_row_drops_the_sorry_placeholder(self):
+        t = loaders.row_to_task("cat-searcher/minif2f-lean4", {
+            "id": "n", "header": "import Mathlib\n", "formal_statement": "theorem n\n  (x : ℕ) :\n  x = x := sorry"}, 0)
+        assert t.checker_payload["formal_statement"] == "theorem n\n  (x : ℕ) :\n  x = x :="
+        assert "x = x := by\n  sorry" in t.prompt and "import Mathlib" in t.prompt
+        t2 = loaders.row_to_task("internlm/Lean-Workbook", {"id": "w", "formal_statement": "theorem w : 1 = 1 := by sorry"}, 0)
+        assert t2.checker_payload["formal_statement"] == "theorem w : 1 = 1 :="
 
     def test_missing_schema_field_raises(self):
         with pytest.raises(KeyError):

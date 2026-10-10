@@ -2,7 +2,7 @@
 
 python -> PythonCompilerOracle.verify_with_test (isolated harness)
 rust   -> RustCompilerOracle.verify_with_test (executes the tests)
-lean4  -> Lean4CompilerOracle (kernel check + `#print axioms` audit; statement must be preserved)
+lean4  -> Lean4CompilerOracle.verify_theorem (gwaya/lean_gate.py: trusted type match, kernel replay, axioms)
 math   -> gwaya.domains.math_check (fail-closed extraction + equivalence)
 """
 from __future__ import annotations
@@ -12,9 +12,6 @@ from typing import Any, Callable
 
 from gwaya.domains.math_check import check_math
 from gwaya.domains.task import CheckResult, Task
-
-_LEAN_ENV_MARKERS = ("unknown package", "unknown module prefix", "no such file or directory",
-                     "object file", "unknown namespace 'mathlib'")
 
 
 def _code_from(response: str, lang: str) -> str:
@@ -89,7 +86,12 @@ def rust_test_body(tests: str) -> str:
 
 
 def check_rust(task: Task, response: str) -> CheckResult:
-    tests = task.checker_payload.get("tests")
+    from gwaya.domains.rust_tests import gate_tests_from_payload
+    try:
+        # verbatim unless the payload opts in with `visible_test_selection` (A15.3); the default is unchanged
+        tests = gate_tests_from_payload(task.checker_payload)
+    except ValueError as exc:
+        return CheckResult("UNVERIFIED", {"reason": f"visible_test_selection: {exc}"})
     if not tests:
         return CheckResult("UNVERIFIED", {"reason": "no_tests_in_payload"})
     tests = rust_test_body(tests)
@@ -107,27 +109,30 @@ def check_rust(task: Task, response: str) -> CheckResult:
     return out
 
 
-def _squash(s: str) -> str:
-    return re.sub(r"\s+", "", s)
-
-
 def check_lean4(task: Task, response: str) -> CheckResult:
-    """The submitted source must contain the task's formal statement verbatim (whitespace-
-    insensitive) so a model cannot pass by proving an easier theorem."""
-    stmt = task.checker_payload.get("formal_statement")
+    """Hardened Lean gate (gwaya/lean_gate.py, A18 amendment). VERIFIED only when a trusted second Lean process
+    finds the formal statement's theorem in the compiled answer, with the reference statement's type (exact or
+    kernel defeq) and standard axioms only. No formal statement -> UNVERIFIED; an invented import -> FAILED
+    (unknown_import); a missing/unbuilt project or a timeout -> UNVERIFIED."""
+    stmt = (task.checker_payload.get("formal_statement") or "").strip()
+    if not stmt:
+        return CheckResult("UNVERIFIED", {"reason": "no_formal_statement"})
     code = _code_from(response, "lean4")
     if not code.strip():
         return CheckResult("FAILED", {"reason": "empty_response"})
-    if stmt and _squash(stmt) not in _squash(code):
-        return CheckResult("FAILED", {"reason": "statement_not_preserved"})
+    from gwaya.lean_gate import has_imports, normalize_statement
+    header = task.checker_payload.get("header") or ""
+    if header and not has_imports(code):
+        code = f"{header}\n\n{code}"  # the task's fixed imports when the model wrote only the theorem
+    from gwaya.lean_project import default_project_dir
     from gwaya.oracles import Lean4CompilerOracle
-    res = Lean4CompilerOracle(timeout_s=float(task.checker_payload.get("timeout_s", 15.0))).verify_snippet(code)
-    out = _from_oracle(res, {"axiom_audit": "#print axioms; non-standard axioms and sorry rejected"})
-    low = (res.error_message + res.stderr + res.stdout).lower()
-    if out.status == "FAILED" and any(m in low for m in _LEAN_ENV_MARKERS):
-        # no pinned Mathlib project wired into the oracle yet: environment, not a refuted proof
-        out = CheckResult("UNVERIFIED", {**out.evidence, "reason": "lean_environment_missing_dependency"})
-    return out
+    # The pinned Mathlib project ($GWAYA_LEAN_MATHLIB_DIR or the standard location). Absent or unbuilt: UNVERIFIED.
+    project = task.checker_payload.get("lean_project_dir") or default_project_dir()
+    timeout = float(task.checker_payload.get("timeout_s", 120.0 if project else 60.0))
+    res = Lean4CompilerOracle(timeout_s=timeout, project_dir=project).verify_theorem(
+        code, normalize_statement(stmt), header)
+    return _from_oracle(res, {"reason": res.details.get("reason"), "timeout_s": timeout,
+                              "axiom_audit": "trusted process: kernel replay + collectAxioms + reference type match"})
 
 
 def check_math_task(task: Task, response: str) -> CheckResult:
@@ -142,9 +147,26 @@ _CHECKERS: dict[str, Callable[[Task, str], CheckResult]] = {
 }
 
 
+def _apply_strength(task: Task, res: CheckResult) -> CheckResult:
+    """Record how many visible tests stood behind the verdict and, if the task asks for it, fail closed below a minimum.
+
+    ``min_visible_tests`` in the payload is OFF by default (absent or 0): results are unchanged apart from the additive
+    ``visible_tests`` evidence key. See gwaya/domains/strength.py for what the count means.
+    """
+    from gwaya.domains.strength import visible_test_count
+    if task.domain not in ("python", "rust"):
+        return res
+    n = visible_test_count(task.domain, task.checker_payload.get("tests"))
+    need = int(task.checker_payload.get("min_visible_tests") or 0)
+    if res.status == "VERIFIED" and need and (n is None or n < need):
+        return CheckResult("UNVERIFIED", {**res.evidence, "reason": "insufficient_visible_tests",
+                                          "visible_tests": n, "required_visible_tests": need})
+    return CheckResult(res.status, {**res.evidence, "visible_tests": n})
+
+
 def check(task: Task, response: str) -> CheckResult:
     """Dispatch on task.domain. Any checker exception becomes UNVERIFIED (fail-closed)."""
     try:
-        return _CHECKERS[task.domain](task, response or "")
+        return _apply_strength(task, _CHECKERS[task.domain](task, response or ""))
     except Exception as exc:  # noqa: BLE001
         return CheckResult("UNVERIFIED", {"reason": "checker_error", "error": f"{type(exc).__name__}: {exc}"[:300]})

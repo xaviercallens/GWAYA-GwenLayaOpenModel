@@ -8,8 +8,9 @@ Pipeline per prompt (docs/GWENLAYA_PREREGISTRATION.md section 1):
   4. a post-generation scorer produces a raw score that a calibrator fitted on the disjoint
      calibration split C maps to p(correct);
   5. verdict, by precedence:
-       VERIFIED        every executed gate check passed (p is reported, never a substitute)
-       LIKELY_CORRECT  not verified, calibrated p >= tau_hi
+       VERIFIED        every executed gate check passed (p is reported, never a substitute) and the
+                       verdict policy below does not demote the pass
+       LIKELY_CORRECT  not verified, calibrated p >= tau_hi (never for lean4)
        LIKELY_WRONG    the gate refuted the candidate, or calibrated p <= tau_lo (answer withheld)
        ESCALATE        undecided and a higher tier exists but escalation is not permitted
                        (disabled or budget exhausted); the caller should escalate
@@ -20,6 +21,14 @@ are loaded or assumed here. Without a scorer plus a fitted calibration, p_correc
 only VERIFIED can be answered (fail-closed). Gate-visible checks only: the caller must not put
 scoring/hidden checks in ``checker_payload``. Math has no program-of-thought gate in this repo
 yet, so math without a reference answer is UNVERIFIED (the PoT gate is TBD).
+
+Verdict policy (recorded in evidence["policy"] on every output):
+  * weak gate (python/rust, OFF by default): with ``min_visible_tests`` configured for the domain, a
+    gate pass backed by fewer visible tests (or an unknown count) is not VERIFIED; it takes the same
+    calibrator path as an unverified gate. A weak pass never becomes LIKELY_WRONG on the gate alone.
+  * lean4 without a non-empty ``formal_statement`` is never VERIFIED: the checker cannot tell the
+    task's theorem from an easier one the model wrote (``theorem easy : True := trivial``).
+  * lean4 is never LIKELY_CORRECT: the frozen Laya never saw Lean, so only the kernel can vouch.
 """
 from __future__ import annotations
 
@@ -33,6 +42,9 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+GATE_STRENGTH_DOMAINS = ("python", "rust")
+MIN_VISIBLE_TESTS_ENV = "GWENLAYA_MIN_VISIBLE_TESTS"
 
 from gwaya.domains.checkers import check as domain_check
 from gwaya.domains.task import DOMAINS, CheckResult, Task
@@ -297,14 +309,62 @@ Scorer = Callable[[dict[str, Any]], float]             # features -> raw score i
 Checker = Callable[[Task, str], CheckResult]
 
 
+def _min_k(domain: str, value: Any) -> int:
+    if domain not in GATE_STRENGTH_DOMAINS:
+        raise ValueError(f"min_visible_tests: domain {domain!r} not in {GATE_STRENGTH_DOMAINS}")
+    if isinstance(value, bool) or not isinstance(value, int):
+        try:
+            value = int(str(value).strip())
+        except ValueError:
+            raise ValueError(f"min_visible_tests[{domain}]: {value!r} is not an integer") from None
+    if value < 0:
+        raise ValueError(f"min_visible_tests[{domain}]: {value} < 0")
+    return value
+
+
+def parse_min_visible_tests(spec: Mapping[str, Any] | str | None) -> dict[str, int]:
+    """Normalise the weak-gate policy to {domain: k_min >= 1}; 0 switches a domain off.
+
+    ``spec`` is a mapping, or the env form: an int for python and rust (``"3"``) or ``"python=3,rust=2"``.
+    None or an empty string means OFF. Anything malformed raises ValueError (never silently ignored)."""
+    if spec is None:
+        return {}
+    if isinstance(spec, str):
+        text = spec.strip()
+        if not text:
+            return {}
+        if "=" not in text:
+            k = _min_k("python", text)
+            out = {d: k for d in GATE_STRENGTH_DOMAINS}
+        else:
+            out = {}
+            for part in text.split(","):
+                key, sep, val = part.partition("=")
+                key = key.strip()
+                if not sep or not key or key in out:
+                    raise ValueError(f"{MIN_VISIBLE_TESTS_ENV}: malformed entry {part!r} in {spec!r}")
+                out[key] = _min_k(key, val)
+    else:
+        out = {str(d): _min_k(str(d), v) for d, v in spec.items()}
+    return {d: k for d, k in out.items() if k > 0}
+
+
 class GwenLaya:
     def __init__(self, tiers: Sequence[Tier], router: Router | None = None, scorer: Scorer | None = None,
                  calibrations: Mapping[str, CalibrationArtifact] | None = None,
                  tau_route: float | None = None, budget_s: float | None = None,
                  checker: Checker = domain_check,
-                 clock: Callable[[], float] = time.perf_counter) -> None:
+                 clock: Callable[[], float] = time.perf_counter,
+                 min_visible_tests: Mapping[str, int] | None = None) -> None:
+        """``min_visible_tests`` ({'python': k, 'rust': k}) turns on the weak-gate policy: a python/rust gate
+        pass backed by fewer than k visible tests (or an unknown count) is not VERIFIED (see the module
+        docstring). None reads $GWENLAYA_MIN_VISIBLE_TESTS (an int for both domains, or 'python=3,rust=2');
+        unset means OFF. It is OFF by default because no k has been chosen on held-out data: the depth dials
+        of A15.2/A17 were measured on E and must not set a default. Malformed values raise ValueError."""
         if not tiers:
             raise ValueError("at least one tier required")
+        self.min_visible_tests = parse_min_visible_tests(
+            min_visible_tests if min_visible_tests is not None else os.environ.get(MIN_VISIBLE_TESTS_ENV))
         self.tiers = list(tiers)
         self.router, self.scorer = router, scorer
         self.calibrations = dict(calibrations or {})
@@ -335,7 +395,8 @@ class GwenLaya:
             raise ValueError(f"unknown domain {domain!r}; expected one of {DOMAINS}")
         task = Task(domain, task_id, prompt, dict(checker_payload or {}))
         cal = self._cal(domain)
-        ev: dict[str, Any] = {"calibrated": cal is not None and self.scorer is not None, "trajectory": []}
+        ev: dict[str, Any] = {"calibrated": cal is not None and self.scorer is not None, "trajectory": [],
+                              "policy": self.policy()}
         cost_s = 0.0
         eligible = self._eligible(prompt, domain, cal, ev)
         if not eligible:
@@ -358,19 +419,15 @@ class GwenLaya:
                 res = self.checker(task, response)
                 step["gate"] = {"status": res.status, "evidence": res.evidence}
                 p = self._p(prompt, domain, tier, i, response, res, ev, step, cal)
-                if res.status == "VERIFIED":
+                if res.status == "VERIFIED" and not self._demote_pass(task, res, step):
                     return self._out(response, "VERIFIED", p, ev, tier.name, cost_s, domain, None)
                 if res.status == "FAILED":
                     outcome = "LIKELY_WRONG"
                     step["reason"] = "gate_refuted_candidate"
-                elif p is not None and cal is not None and p >= cal.tau_hi:
-                    return self._out(response, "LIKELY_CORRECT", p, ev, tier.name, cost_s, domain, None)
-                elif p is not None and cal is not None and p <= cal.tau_lo:
-                    outcome = "LIKELY_WRONG"
-                    step["reason"] = "p_at_or_below_tau_lo"
-                else:
-                    outcome = "UNDECIDED"
-                    step["reason"] = "gate_unverified_and_p_unavailable_or_between_thresholds"
+                else:  # gate UNVERIFIED, or a pass the policy demoted: the calibrator decides
+                    outcome = self._calibrated_outcome(domain, p, cal, step)
+                    if outcome == "LIKELY_CORRECT":
+                        return self._out(response, "LIKELY_CORRECT", p, ev, tier.name, cost_s, domain, None)
             if i + 1 < len(eligible):
                 if allow_escalation and (self.budget_s is None or cost_s < self.budget_s):
                     step["escalated_to"] = eligible[i + 1].name
@@ -381,6 +438,48 @@ class GwenLaya:
         final = ev["trajectory"][-1]
         verdict = "LIKELY_WRONG" if outcome == "LIKELY_WRONG" else "ABSTAIN"
         return self._out(None, verdict, final.get("p_correct"), ev, eligible[-1].name, cost_s, domain, None)
+
+    def policy(self) -> dict[str, Any]:
+        """The verdict policy in force, as written into evidence["policy"]."""
+        return {"min_visible_tests": dict(self.min_visible_tests),
+                "lean4": {"verified_requires_formal_statement": True, "likely_correct": False}}
+
+    def _demote_pass(self, task: Task, res: CheckResult, step: dict[str, Any]) -> bool:
+        """True when a gate pass must not be reported as VERIFIED (the step records why)."""
+        k_min = self.min_visible_tests.get(task.domain)
+        if k_min is not None:
+            n = res.evidence.get("visible_tests")
+            step["gate_strength"] = {"visible_tests": n, "min_required": k_min}
+            if isinstance(n, bool) or not isinstance(n, int) or n < k_min:
+                step["reason"] = "weak_gate"
+                return True
+        if task.domain == "lean4":
+            stmt = task.checker_payload.get("formal_statement")
+            if not (isinstance(stmt, str) and stmt.strip()):
+                step["reason"] = "lean_no_formal_statement"
+                return True
+        return False
+
+    @staticmethod
+    def _calibrated_outcome(domain: str, p: float | None, cal: CalibrationArtifact | None,
+                            step: dict[str, Any]) -> str:
+        """LIKELY_CORRECT / LIKELY_WRONG / UNDECIDED for a candidate the gate did not verify, or whose pass the
+        policy demoted (shared path). The decision goes to step["decision"]; step["reason"] keeps a demotion
+        reason when one is set. A demoted pass can only become LIKELY_WRONG through p <= tau_lo."""
+        if p is not None and cal is not None and p >= cal.tau_hi:
+            if domain != "lean4":
+                step["decision"] = "p_at_or_above_tau_hi"
+                return "LIKELY_CORRECT"
+            # the frozen Laya never saw Lean: an unchecked proof is never presented as likely correct
+            step["decision"] = step["reason"] = "lean_requires_kernel_verification"
+            return "UNDECIDED"
+        if p is not None and cal is not None and p <= cal.tau_lo:
+            decision, outcome = "p_at_or_below_tau_lo", "LIKELY_WRONG"
+        else:
+            decision, outcome = "gate_unverified_and_p_unavailable_or_between_thresholds", "UNDECIDED"
+        step["decision"] = decision
+        step.setdefault("reason", decision)
+        return outcome
 
     def _p(self, prompt: str, domain: str, tier: Tier, i: int, response: str, res: CheckResult,
            ev: dict[str, Any], step: dict[str, Any], cal: CalibrationArtifact | None) -> float | None:
@@ -410,11 +509,18 @@ class GwenLaya:
                 "answered": verdict in ANSWERED}
 
 
-def payload_for(domain: str, tests: str = "", answer: str = "", formal_statement: str = "") -> dict[str, Any]:
-    """Gate-visible checker payload from loose API fields (empty fields are omitted)."""
+def payload_for(domain: str, tests: str = "", answer: str = "", formal_statement: str = "",
+                min_visible_tests: int | None = None) -> dict[str, Any]:
+    """Gate-visible checker payload from loose API fields (empty fields are omitted).
+
+    ``min_visible_tests`` (python/rust only; opt-in, None omits it) is passed to checkers._apply_strength, which
+    fails closed (UNVERIFIED) when the visible tests are fewer or cannot be counted. Other domains raise ValueError."""
     key = {"python": ("tests", tests), "rust": ("tests", tests), "math": ("answer", answer),
            "lean4": ("formal_statement", formal_statement)}.get(domain)
-    return {key[0]: key[1]} if key and key[1].strip() else {}
+    out = {key[0]: key[1]} if key and key[1].strip() else {}
+    if min_visible_tests is not None:
+        out["min_visible_tests"] = _min_k(domain, min_visible_tests)
+    return out
 
 
 _SYSTEM: GwenLaya | None = None
