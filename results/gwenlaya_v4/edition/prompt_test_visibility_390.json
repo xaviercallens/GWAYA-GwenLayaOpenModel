@@ -1,0 +1,32 @@
+{
+ "source": "/mnt/data/home/xavkal/gwaya-data/night/results/tasks_E_primary.d25.jsonl",
+ "python": {
+  "n": 529,
+  "mbpp_n": 373,
+  "humaneval_n": 156,
+  "mbpp_prompt_contains_gate_assert_verbatim": 373,
+  "humaneval_prompt_contains_gate_assert_verbatim": 0,
+  "humaneval_prompt_has_doctest_examples": 71,
+  "note": "doctest examples = the prompt contains '>>>'; they are examples from the docstring, not necessarily the gate's or a hidden test's input"
+ },
+ "rust": {
+  "n": 507,
+  "mbpp_n": 352,
+  "humaneval_n": 155,
+  "prompt_contains_gate_assert_verbatim": 0,
+  "mbpp_prompt_has_doctest_examples": 0,
+  "humaneval_prompt_has_doctest_examples": 152,
+  "note": "Rust gate payloads are an assert_eq! inside fn main, never in the prompt verbatim; HumanEval-Rust prompts carry '>>>' doc-comment examples"
+ },
+ "a17_task_set": {
+  "n": 524,
+  "mbpp_n": 368,
+  "humaneval_n": 156,
+  "mbpp_prompt_contains_gate_assert_verbatim": 368,
+  "humaneval_prompt_has_doctest_examples": 71,
+  "mbpp_first_hidden_input_equals_prompt_assert_args": 344,
+  "mbpp_first_hidden_input_differs": 6,
+  "mbpp_not_parsed_by_this_check": 18,
+  "method": "prompt assert `assert f(args) == x` parsed with ast.literal_eval and compared with the literal first element of the hidden `inputs` list; other assert forms (e.g. math.isclose, set(...)) are 'not parsed'"
+ }
+}

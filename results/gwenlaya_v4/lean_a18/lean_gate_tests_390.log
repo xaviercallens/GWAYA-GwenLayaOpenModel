@@ -1,0 +1,53 @@
+# tests/test_lean_gate.py run by the author for revision 3.9.0 (HEAD becb57f); pytest -s -v --durations=0; plugin autoload disabled.
+# Part 1: all tests without GWAYA_DATA_ROOT (the 13 real-gate tests skip).
+2026-10-10T07:36:39+02:00
+ 07:36:39 up 16 days, 23:45,  1 user,  load average: 3.15, 2.71, 1.74
+======================== 81 passed, 13 skipped in 0.76s ========================
+2026-10-10T07:36:40+02:00
+ 07:36:40 up 16 days, 23:45,  1 user,  load average: 3.15, 2.71, 1.74
+# Part 2: the 13 real-gate tests with GWAYA_DATA_ROOT=/mnt/data/home/xavkal/gwaya-data (Lean v4.7.0 + Mathlib a45ae637, bwrap).
+2026-10-10T07:37:08+02:00
+nproc 8
+ 07:37:08 up 16 days, 23:46,  1 user,  load average: 3.16, 2.75, 1.78
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/xavkal/xdev/GWAYA-GwenLayaOpenModel
+configfile: pyproject.toml
+collecting ... collected 94 items / 81 deselected / 13 selected
+tests/test_lean_gate.py::TestRealGate::test_genuine_minif2f_proofs_verify[mathd_algebra_478-rw [h\u2081, h\u2082, h\u2083]\n  norm_num] mathd_algebra_478: VERIFIED 20.7s
+PASSED
+tests/test_lean_gate.py::TestRealGate::test_genuine_minif2f_proofs_verify[mathd_numbertheory_207-norm_num] mathd_numbertheory_207: VERIFIED 12.6s
+PASSED
+tests/test_lean_gate.py::TestRealGate::test_genuine_minif2f_proofs_verify[mathd_numbertheory_342-decide] mathd_numbertheory_342: VERIFIED 12.4s
+PASSED
+tests/test_lean_gate.py::TestRealGate::test_genuine_minif2f_proofs_verify[mathd_numbertheory_34-omega] mathd_numbertheory_34: VERIFIED 11.8s
+PASSED
+tests/test_lean_gate.py::TestRealGate::test_wrong_proof_fails PASSED
+tests/test_lean_gate.py::TestRealGate::test_invented_import_and_timeout PASSED
+tests/test_lean_gate.py::TestRealGate::test_trusted_check_alone_rejects_exploits[comment_smuggle-target_theorem_missing] PASSED
+tests/test_lean_gate.py::TestRealGate::test_trusted_check_alone_rejects_exploits[variable_false-statement_mismatch] PASSED
+tests/test_lean_gate.py::TestRealGate::test_trusted_check_alone_rejects_exploits[local_notation-statement_mismatch] PASSED
+tests/test_lean_gate.py::TestRealGate::test_trusted_check_alone_rejects_exploits[local_instance-statement_mismatch] PASSED
+tests/test_lean_gate.py::TestRealGate::test_trusted_check_alone_rejects_exploits[namespace_shadow-reference_not_elaborated] PASSED
+tests/test_lean_gate.py::TestRealGate::test_trusted_check_alone_rejects_exploits[namespace_shadow_toy-target_theorem_missing] PASSED
+tests/test_lean_gate.py::TestRealGate::test_trusted_check_alone_rejects_exploits[string_hidden_eval_exit0-lean_error] PASSED
+============================== slowest durations ===============================
+20.69s call     tests/test_lean_gate.py::TestRealGate::test_genuine_minif2f_proofs_verify[mathd_algebra_478-rw [h\u2081, h\u2082, h\u2083]\n  norm_num]
+12.62s call     tests/test_lean_gate.py::TestRealGate::test_genuine_minif2f_proofs_verify[mathd_numbertheory_207-norm_num]
+12.42s call     tests/test_lean_gate.py::TestRealGate::test_genuine_minif2f_proofs_verify[mathd_numbertheory_342-decide]
+11.78s call     tests/test_lean_gate.py::TestRealGate::test_genuine_minif2f_proofs_verify[mathd_numbertheory_34-omega]
+11.78s call     tests/test_lean_gate.py::TestRealGate::test_trusted_check_alone_rejects_exploits[local_instance-statement_mismatch]
+8.93s call     tests/test_lean_gate.py::TestRealGate::test_trusted_check_alone_rejects_exploits[local_notation-statement_mismatch]
+8.43s call     tests/test_lean_gate.py::TestRealGate::test_trusted_check_alone_rejects_exploits[variable_false-statement_mismatch]
+8.01s call     tests/test_lean_gate.py::TestRealGate::test_trusted_check_alone_rejects_exploits[comment_smuggle-target_theorem_missing]
+5.54s call     tests/test_lean_gate.py::TestRealGate::test_trusted_check_alone_rejects_exploits[namespace_shadow_toy-target_theorem_missing]
+4.34s call     tests/test_lean_gate.py::TestRealGate::test_trusted_check_alone_rejects_exploits[string_hidden_eval_exit0-lean_error]
+3.11s call     tests/test_lean_gate.py::TestRealGate::test_trusted_check_alone_rejects_exploits[namespace_shadow-reference_not_elaborated]
+2.91s call     tests/test_lean_gate.py::TestRealGate::test_wrong_proof_fails
+0.53s call     tests/test_lean_gate.py::TestRealGate::test_invented_import_and_timeout
+0.01s setup    tests/test_lean_gate.py::TestRealGate::test_genuine_minif2f_proofs_verify[mathd_algebra_478-rw [h\u2081, h\u2082, h\u2083]\n  norm_num]
+(25 durations < 0.005s hidden.  Use -vv to show these durations.)
+================ 13 passed, 81 deselected in 111.43s (0:01:51) =================
+2026-10-10T07:39:00+02:00
+ 07:39:00 up 16 days, 23:48,  1 user,  load average: 3.24, 2.88, 1.94
