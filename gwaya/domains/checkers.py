@@ -86,7 +86,12 @@ def rust_test_body(tests: str) -> str:
 
 
 def check_rust(task: Task, response: str) -> CheckResult:
-    tests = task.checker_payload.get("tests")
+    from gwaya.domains.rust_tests import gate_tests_from_payload
+    try:
+        # verbatim unless the payload opts in with `visible_test_selection` (A15.3); the default is unchanged
+        tests = gate_tests_from_payload(task.checker_payload)
+    except ValueError as exc:
+        return CheckResult("UNVERIFIED", {"reason": f"visible_test_selection: {exc}"})
     if not tests:
         return CheckResult("UNVERIFIED", {"reason": "no_tests_in_payload"})
     tests = rust_test_body(tests)
