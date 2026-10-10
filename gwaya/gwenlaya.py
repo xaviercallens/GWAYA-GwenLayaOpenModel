@@ -631,6 +631,60 @@ def system_from_env() -> GwenLaya:
     return _system_with_laya(tiers, cals, laya_dir, math_pot, quant_shift=backend == "llamacpp")
 
 
+LAYA_TRAINED_TIERS = ("qwen3.5-2b-bf16", "qwen3.5-4b-bf16", "qwen3.5-9b-bf16")  # the tier names the frozen heads know
+
+
+def runtime_config(env: Mapping[str, str] | None = None) -> dict[str, Any]:
+    """What ``system_from_env`` would build, read from env only: no model load, no network, no GPU.
+
+    Used by the MCP status tool so a user can see whether Laya, the log-prob tier and the math gate are actually
+    in effect. ``warnings`` lists configurations in which a component is wired but cannot act (for example Laya
+    enabled while no served tier name is one of the trained tiers)."""
+    e = os.environ if env is None else env
+    backend = (e.get("GWENLAYA_BACKEND", "ollama").strip().lower() or "ollama")
+    warnings: list[str] = []
+    if backend == "llamacpp":
+        tiers = [p.partition("=")[0].strip() for p in e.get("GWENLAYA_LLAMA_URLS", "").split(",") if p.strip()]
+        urls = {p.partition("=")[0].strip(): p.partition("=")[2].strip()
+                for p in e.get("GWENLAYA_LLAMA_URLS", "").split(",") if "=" in p}
+        if not tiers:
+            warnings.append("GWENLAYA_BACKEND=llamacpp but GWENLAYA_LLAMA_URLS is empty")
+    else:
+        tiers = [n.strip() for n in e.get("GWENLAYA_TIERS", "qwen2.5-coder:1.5b,qwen2.5-coder:3b,qwen2.5-coder:7b").split(",")
+                 if n.strip()]
+        urls = {}
+        if backend != "ollama":
+            warnings.append(f"unknown GWENLAYA_BACKEND {backend!r}")
+    laya_dir = e.get("GWENLAYA_LAYA_DIR") or None
+    tier_map = {}
+    for part in (e.get("GWENLAYA_LAYA_TIER_MAP") or "").split(","):
+        k, sep, v = part.partition("=")
+        if sep:
+            tier_map[k.strip()] = v.strip()
+    laya: dict[str, Any] = {"enabled": bool(laya_dir)}
+    if laya_dir:
+        mapped = [tier_map.get(t, t) for t in tiers]
+        laya.update(dir=laya_dir, device=e.get("GWENLAYA_LAYA_DEVICE", "cpu"),
+                    domains=[d.strip() for d in e.get("GWENLAYA_LAYA_DOMAINS", "python,math").split(",") if d.strip()],
+                    tau_route=float(e.get("GWENLAYA_LAYA_TAU_ROUTE", "0.5")),
+                    thresholds=e.get("GWENLAYA_LAYA_THRESHOLDS") or None, tier_map=tier_map,
+                    tiers_known_to_laya=[t for t, m in zip(tiers, mapped) if m in LAYA_TRAINED_TIERS])
+        if not laya["tiers_known_to_laya"]:
+            warnings.append("Laya is enabled but no served tier is one of the trained tiers "
+                            f"{list(LAYA_TRAINED_TIERS)}: routing falls back to the static ladder and the scorer abstains "
+                            "(set GWENLAYA_LAYA_TIER_MAP or serve tiers under the trained names)")
+        if backend != "llamacpp":
+            warnings.append("Laya is enabled on a backend that returns no log-probabilities: the calibrator's output "
+                            "cannot support LIKELY_CORRECT (signals_incomplete); use GWENLAYA_BACKEND=llamacpp")
+        if not laya["thresholds"]:
+            warnings.append("no GWENLAYA_LAYA_THRESHOLDS: Laya routes and reports p_correct but never decides "
+                            "LIKELY_CORRECT / LIKELY_WRONG")
+    return {"backend": backend, "tiers": tiers, "urls": urls, "served_quant": e.get("GWENLAYA_SERVED_QUANT", "unspecified"),
+            "math_pot": e.get("GWENLAYA_MATH_POT", "1") != "0",
+            "min_visible_tests": e.get(MIN_VISIBLE_TESTS_ENV) or None,
+            "calibration": e.get("GWENLAYA_CALIBRATION") or None, "laya": laya, "warnings": warnings}
+
+
 def _llama_tiers(spec: str) -> list[Tier]:
     """'name=url,name=url' -> llama.cpp tiers in the given order (cheapest first). Raises on an empty or bad spec."""
     from gwaya.llama_tier import llama_cpp_tier

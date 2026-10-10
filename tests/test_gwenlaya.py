@@ -204,3 +204,22 @@ def test_payload_for_and_system_env(monkeypatch):
     monkeypatch.delenv("GWENLAYA_CALIBRATION", raising=False)
     sysm = g.system_from_env()
     assert [t.name for t in sysm.tiers] == ["m1", "m2"]
+
+
+def test_runtime_config_reports_what_is_wired_and_why_laya_is_inert():
+    from gwaya.gwenlaya import runtime_config
+    base = runtime_config({})
+    assert base["backend"] == "ollama" and base["laya"] == {"enabled": False} and base["math_pot"] is True
+    assert base["warnings"] == [] and base["tiers"][0] == "qwen2.5-coder:1.5b"
+    inert = runtime_config({"GWENLAYA_LAYA_DIR": "/x"})
+    assert inert["laya"]["enabled"] and inert["laya"]["tiers_known_to_laya"] == []
+    assert any("no served tier is one of the trained tiers" in w for w in inert["warnings"])
+    assert any("no log-probabilities" in w for w in inert["warnings"])
+    ok = runtime_config({"GWENLAYA_LAYA_DIR": "/x", "GWENLAYA_BACKEND": "llamacpp", "GWENLAYA_MATH_POT": "0",
+                         "GWENLAYA_LLAMA_URLS": "qwen3.5-2b-bf16=http://127.0.0.1:8091,qwen3.5-4b-bf16=http://127.0.0.1:8092",
+                         "GWENLAYA_LAYA_THRESHOLDS": "/t.json"})
+    assert ok["laya"]["tiers_known_to_laya"] == ["qwen3.5-2b-bf16", "qwen3.5-4b-bf16"] and ok["math_pot"] is False
+    assert ok["warnings"] == [] and ok["urls"]["qwen3.5-4b-bf16"].endswith(":8092")
+    mapped = runtime_config({"GWENLAYA_LAYA_DIR": "/x", "GWENLAYA_BACKEND": "llamacpp", "GWENLAYA_LAYA_THRESHOLDS": "t",
+                             "GWENLAYA_LLAMA_URLS": "q2=http://h:1", "GWENLAYA_LAYA_TIER_MAP": "q2=qwen3.5-2b-bf16"})
+    assert mapped["laya"]["tiers_known_to_laya"] == ["q2"]
