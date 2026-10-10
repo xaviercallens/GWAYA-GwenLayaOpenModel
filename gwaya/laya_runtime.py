@@ -36,7 +36,8 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
-from gwaya.laya_features import GATE_VOCAB, N_FEATURES, SIGNAL_KEYS, gate_features, render_calibrator_text, render_router_text
+from gwaya.laya_features import (DEFAULT_LAYOUT, GATE_VOCAB, N_FEATURES, SIGNAL_KEYS, candidate_window, check_layout,
+                                 gate_features, render_calibrator_text, render_router_text)
 
 ROOT = Path(__file__).resolve().parents[1]
 FREEZE_FILE = ROOT / "docs" / "LAYA_FREEZE.txt"
@@ -122,8 +123,9 @@ class HeadModel:
     so tests can use a tiny random encoder; ``_load_head_model`` builds the real ones."""
 
     def __init__(self, tokenizer: Any, encoder: Callable[[Any, Any], Any], head: Any, max_len: int, n_feat: int,
-                 tiers: Sequence[str], device: str = "cpu") -> None:
+                 tiers: Sequence[str], device: str = "cpu", layout: str = DEFAULT_LAYOUT) -> None:
         self.tok, self.encoder, self.head = tokenizer, encoder, head
+        self.layout = check_layout(layout)  # calibrator text layout the weights were trained with (head_config.json)
         self.max_len, self.n_feat, self.tiers, self.device = int(max_len), int(n_feat), list(tiers), device
 
     def n_tokens(self, text: str) -> int:
@@ -168,18 +170,21 @@ def resolve_backbone(name: str) -> str:
 
 def _load_head_model(sub: Path, mode: str, device: str, backbone: str | None) -> HeadModel:
     """Real loader: ModernBERT + LoRA adapter (merged for speed) + head. Heavy imports are local."""
-    import torch
-    import transformers as tf
-    from safetensors.torch import load_file
-
     cfg = json.loads((sub / "head_config.json").read_text())
     if cfg.get("mode") != mode:
         raise LayaFreezeError(f"{sub}/head_config.json mode {cfg.get('mode')!r} != {mode!r}")
     if list(cfg["gate_vocab"]) != list(GATE_VOCAB) or list(cfg["signal_keys"]) != list(SIGNAL_KEYS):
         raise LayaFreezeError("head_config gate_vocab/signal_keys differ from gwaya.laya_features (input layout drift)")
+    layout = check_layout(cfg.get("layout"))  # absent key = the frozen v1 layout (prompt_first)
+    if mode == "router" and layout != DEFAULT_LAYOUT:
+        raise LayaFreezeError(f"{sub}/head_config.json: the router has no layout other than {DEFAULT_LAYOUT!r}, got {layout!r}")
     want_feat = 0 if mode == "router" else N_FEATURES
     if int(cfg["n_features"]) != want_feat:
         raise LayaFreezeError(f"head_config n_features {cfg['n_features']} != {want_feat}")
+    import torch
+    import transformers as tf
+    from safetensors.torch import load_file
+
     path = resolve_backbone(backbone or cfg["backbone"])
     tok = tf.AutoTokenizer.from_pretrained(path, local_files_only=True)
     enc = tf.AutoModel.from_pretrained(path, local_files_only=True)
@@ -193,7 +198,7 @@ def _load_head_model(sub: Path, mode: str, device: str, backbone: str | None) ->
     head.load_state_dict(load_file(str(sub / "heads.safetensors")))
     head.eval().to(device)
     return HeadModel(tok, lambda ids, m: enc(input_ids=ids, attention_mask=m).last_hidden_state, head,
-                     cfg["max_len"], want_feat, cfg["tiers"], device)
+                     cfg["max_len"], want_feat, cfg["tiers"], device, layout)
 
 
 class LayaRuntime:
@@ -286,18 +291,26 @@ class LayaRuntime:
         missing = [k for k in ("mean_logprob", "min_logprob") if k not in signals]
         row = {"domain": domain, "tier": lt, "signals": signals, "prompt": str(features.get("prompt", "")),
                "candidate": str(features.get("response", ""))}
-        text = render_calibrator_text(row)
+        layout = self.cal.layout
+        text = render_calibrator_text(row) if layout == DEFAULT_LAYOUT else render_calibrator_text(
+            row, layout, self.cal.tok, self.cal.max_len)  # the renderer matching the head config (never a mismatch)
         t0 = time.perf_counter()
         n = self.cal.n_tokens(text)
-        prefix_n = self.cal.n_tokens(render_calibrator_text({**row, "candidate": ""}))  # everything before the candidate
-        # content slots in the window: max_len - 2 (CLS, SEP); prefix content tokens: prefix_n - 2
-        visible = max(0, min(n - prefix_n, self.cal.max_len - prefix_n))
-        truncated = n > self.cal.max_len
+        if layout == DEFAULT_LAYOUT:
+            prefix_n = self.cal.n_tokens(render_calibrator_text({**row, "candidate": ""}))  # everything before the candidate
+            # content slots in the window: max_len - 2 (CLS, SEP); prefix content tokens: prefix_n - 2
+            visible = max(0, min(n - prefix_n, self.cal.max_len - prefix_n))
+            outside = bool(prefix_n >= self.cal.max_len)
+            truncated = n > self.cal.max_len
+        else:
+            w = candidate_window(row, layout, self.cal.tok, self.cal.max_len)
+            visible, outside = w["visible_tokens"], not w["any_visible"]
+            truncated = not w["fully_visible"]
         raw = self.cal.probs(text, gate_features(signals))[0]
         veto = (["truncated_candidate"] if truncated else []) + (["signals_incomplete"] if missing else [])
         features["laya"] = self._base_ev(
             applied=True, tier=lt, raw=raw, p_isotonic=self.isotonic_map(raw), n_tokens=n, max_len=self.cal.max_len,
-            truncated_candidate=truncated, candidate_fully_outside_window=bool(prefix_n >= self.cal.max_len),
+            truncated_candidate=truncated, candidate_fully_outside_window=outside, layout=layout,
             candidate_tokens_visible=visible, signals_incomplete=bool(missing), missing_signals=missing,
             likely_correct_vetoed=veto, latency_s=round(time.perf_counter() - t0, 3))
         return raw
