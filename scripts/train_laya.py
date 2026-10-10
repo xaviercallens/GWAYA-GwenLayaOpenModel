@@ -35,6 +35,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from gwaya.data_build import split_bucket  # noqa: E402
+# rendering + gate features live in gwaya/laya_features.py (shared with the runtime); re-exported here
+from gwaya.laya_features import (  # noqa: E402,F401
+    CAND_CHARS, GATE_VOCAB, N_FEATURES, SIGNAL_KEYS, gate_features, render_calibrator_text,
+    render_calibrator_text_only, render_router_text)
 
 # Encoder named in the data-lake rl_agent_config.json. Whether convaiinnovations/laya (a custom
 # LayaTypedDecisions model) loads through AutoModel was NOT verified; pass it via --backbone to try.
@@ -42,12 +46,8 @@ DEFAULT_BACKBONE = "answerdotai/ModernBERT-large"
 # ModernBERT fused attention/MLP linears (per its modeling code); validated against named_modules() at load.
 MODERNBERT_TARGETS = ("Wqkv", "Wo", "Wi")
 ROUTER_TRAIN_BUCKETS = (1, 2)
-GATE_VOCAB = ("verified", "failed", "unverified", "compile_error", "none")
-SIGNAL_KEYS = ("tests_passed_frac", "selftest_agreement", "mean_logprob", "min_logprob", "repair_rounds")
-N_FEATURES = len(GATE_VOCAB) + 1 + 2 * len(SIGNAL_KEYS)  # gate one-hot (+other), value+missing per signal
 SEED = 1234
 CPU_HOURS_LIMIT = 12.0  # prereg section 5: CPU if projected <= 12 h, else inside S5 on L4
-CAND_CHARS = 2000
 
 
 # ---- pure helpers ------------------------------------------------------------------------------
@@ -64,36 +64,6 @@ def is_val(r: dict[str, Any], pct: int = 10) -> bool:
     """Deterministic, problem-grouped hold-out inside the router-train slice."""
     h = hashlib.sha256(("val|" + "|".join(row_key(r))).encode()).hexdigest()
     return int(h, 16) % 100 < pct
-
-
-def gate_features(signals: dict[str, Any] | None) -> list[float]:
-    s = signals or {}
-    g = str(s.get("gate", "none")).lower()
-    onehot = [1.0 if g == v else 0.0 for v in GATE_VOCAB] + [1.0 if g not in GATE_VOCAB else 0.0]
-    vec = list(onehot)
-    for k in SIGNAL_KEYS:
-        v = s.get(k)
-        ok = isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)
-        scale = 0.1 if k == "repair_rounds" else (0.1 if k.endswith("logprob") else 1.0)
-        vec += [float(v) * scale if ok else 0.0, 0.0 if ok else 1.0]
-    return vec
-
-
-def render_router_text(r: dict[str, Any]) -> str:
-    return f"[domain] {r.get('domain', '?')}\n[prompt]\n{r['prompt']}"
-
-
-def render_calibrator_text(r: dict[str, Any]) -> str:
-    s = r.get("signals") or {}
-    sig = " ".join(f"{k}={s[k]}" for k in ("gate",) + SIGNAL_KEYS if k in s)
-    return (f"[domain] {r.get('domain', '?')} [tier] {r.get('tier', '?')}\n[signals] {sig}\n"
-            f"[prompt]\n{r['prompt']}\n[candidate]\n{str(r.get('candidate', ''))[:CAND_CHARS]}")
-
-
-def render_calibrator_text_only(r: dict[str, Any]) -> str:
-    """A16 ablation: no [signals] line (gate verdict, log-probs); only domain, tier, prompt and candidate."""
-    return (f"[domain] {r.get('domain', '?')} [tier] {r.get('tier', '?')}\n"
-            f"[prompt]\n{r['prompt']}\n[candidate]\n{str(r.get('candidate', ''))[:CAND_CHARS]}")
 
 
 def make_examples(rows: Sequence[dict[str, Any]], mode: str, tiers: Sequence[str], text_only: bool = False) -> list[dict[str, Any]]:
