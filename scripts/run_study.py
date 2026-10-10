@@ -250,23 +250,16 @@ class OpenAICompatBackend(Backend):
                                            "stop": gen.stop_sequences(domain), "logprobs": 1})
         wall = time.perf_counter() - t0  # client wall time: no server timing in the OpenAI schema
         cpu1 = proc_cpu_seconds(self.cpu_pid)
-        ch = (data.get("choices") or [{}])[0]
-        if "text" not in ch:
-            raise RuntimeError(f"OpenAI-compatible server returned no text: {str(data)[:200]}")
-        lpo = ch.get("logprobs") or {}
-        lps = [x for x in (lpo.get("token_logprobs") or []) if isinstance(x, (int, float))]
-        if not lps:  # llama.cpp server: logprobs.content[].logprob
-            lps = [c["logprob"] for c in (lpo.get("content") or [])
-                   if isinstance(c, dict) and isinstance(c.get("logprob"), (int, float))]
-        usage = data.get("usage") or {}
-        return {"text": gen.wrap_output(ch["text"], domain),
+        from gwaya.llama_tier import parse_completion  # pure parser shared with the runtime llama.cpp tier
+        ch_text, finish_reason, lps, usage = parse_completion(data)
+        return {"text": gen.wrap_output(ch_text, domain),
                 "prompt_tokens": int(usage.get("prompt_tokens", 0) or 0),
                 "completion_tokens": int(usage.get("completion_tokens", 0) or 0),
                 "eval_s": wall, "gpu_s": wall,
                 "mean_logprob": (sum(lps) / len(lps)) if lps else None,
                 "token_logprobs": lps,
                 "cpu_seconds": (round(cpu1 - cpu0, 4) if cpu0 is not None and cpu1 is not None else None),
-                "done_reason": str(ch.get("finish_reason") or "")}
+                "done_reason": finish_reason}
 
     def info(self):
         saved = self.url

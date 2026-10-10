@@ -53,14 +53,65 @@ A tier map says "treat this model as that trained tier"; it is an assumption the
   the window for 103 of 207 rows; in a 20-row sample of C, 9 rows were truncated (`parity.json`). VERIFIED is unaffected.
 - Missing signals: the calibrator was trained on rows that always had `mean_logprob` and `min_logprob`. A tier that cannot
   supply them (Ollama 0.1.44 returns none) sets `signals_incomplete=true` and LIKELY_CORRECT is vetoed. `Tier` has an
-  optional `generate_with_signals(prompt, domain) -> (text, {"mean_logprob", "min_logprob"})` used when present; no
-  llama.cpp client exists in the repo, so the default Ollama ladder never supplies them. With the default Ollama ladder
+  optional `generate_with_signals(prompt, domain) -> (text, {"mean_logprob", "min_logprob"})` used when present. The
+  llama.cpp tier (`gwaya/llama_tier.py`, below) supplies them; the default Ollama ladder never does. With the default Ollama ladder
   (`qwen2.5-coder:*`) tier names also do not match, so without `GWENLAYA_LAYA_TIER_MAP` Laya falls back to the static
   ladder and the scorer abstains (`router_tiers_unmatched`, `tier_not_in_laya_training`).
 - A vetoed or abstaining scorer can still contribute LIKELY_WRONG when p <= `tau_lo` (veto is for LIKELY_CORRECT only).
   That path is not validated for out-of-distribution inputs either; leave `tau_lo` at -inf to switch it off.
 - Log-probs from a different backend than the training generations (bf16 Qwen3.5) are a distribution shift that no
   evaluation covers.
+
+## Local serving with log-probs
+
+Ollama 0.1.44 returns no token log-probs, so with Ollama tiers `signals_incomplete` is always set and the calibrator can
+never support LIKELY_CORRECT. The study's CPU runs used llama.cpp's `llama-server`, which does return them;
+`gwaya/llama_tier.py` is a runtime tier for it.
+
+```
+scripts/gwenlaya_serve.sh start            # 2B on 127.0.0.1:8091, 4B on :8092 (or: start 2b); prints the exports below
+export GWENLAYA_BACKEND=llamacpp
+export GWENLAYA_LLAMA_URLS="qwen3.5-2b-bf16=http://127.0.0.1:8091,qwen3.5-4b-bf16=http://127.0.0.1:8092"  # cheapest first
+export GWENLAYA_SERVED_QUANT=q4_k_m        # label only, recorded in the evidence
+export GWENLAYA_LAYA_DIR=$GWAYA_DATA_ROOT/laya_data/laya_v1
+scripts/gwenlaya_serve.sh status | stop
+```
+
+- **Protocol** (mirrors the registered study serving, `scripts/run_study.py::OpenAICompatBackend`): `/v1/completions`
+  with the raw Qwen prompt of `OllamaGenerator.build_raw_prompt` (math prose with the empty think block, code fence
+  prefill, `math_pot` domain), its stop sequences, `temperature 0`, `seed 0`, 1024 new tokens, `logprobs: 1`; output is
+  wrapped by `OllamaGenerator.wrap_output`. The server runs with `--parallel 2 -c 8192 --jinja --reasoning-budget 0`
+  (thinking off) and `-t 3` (the study used `-t 4`, D14). `mean_logprob` is the mean and `min_logprob` the minimum of the
+  returned token log-probs, as in `scripts/data/build_laya_data.py`.
+- **Failures raise**: connection refused, timeout (default 1800 s), HTTP errors and malformed bodies become a
+  `generation_error` on the tier step. A server that returns no log-probs gives signals `{}`, so `signals_incomplete`
+  is set (never zeros).
+- **Names**: with `GWENLAYA_BACKEND=llamacpp` the names in `GWENLAYA_LLAMA_URLS` are used verbatim and `GWENLAYA_TIERS`
+  is ignored. Use the trained names (`qwen3.5-2b-bf16`, `qwen3.5-4b-bf16`) so no tier map is needed. Without the
+  switch nothing changes (Ollama, `GWENLAYA_TIERS`).
+- **Quantisation shift**: the served weights are Q4_K_M GGUF, the Laya was trained on bf16 generations from vLLM on TPU.
+  With the llama.cpp backend and Laya both on, every scorer evidence carries `quant_shift: true` and
+  `served_quant` (from `GWENLAYA_SERVED_QUANT`, `unspecified` if unset), also at `evidence["laya"]`. The tier names say
+  `-bf16` only because that is what the heads know. This is a label, not a correction: **the calibration is not claimed
+  to hold under this shift.** The study's own CPU generations (2B/4B Q4_K_M) are the data to measure it on.
+- **Ports**: `scripts/gwenlaya_serve.sh` refuses to start on a port that is already bound (another job's server is
+  never touched) and only signals the pids in its own pidfiles (`$GWAYA_DATA_ROOT/serve/`). Override with
+  `GWENLAYA_PORT_2B`, `GWENLAYA_PORT_4B`, `GWENLAYA_THREADS`. The smoke test used port 8093 because another job held 8091.
+- **Smoke test** (`scripts/gwenlaya_live_smoke.py`, result `results/gwenlaya_v4/laya_runtime/live_smoke.json`): 3 tasks
+  (python with 3 visible tests, python without tests, math without a gold answer) through the real frozen Laya and a 2B
+  Q4_K_M llama-server (`-t 3`, machine shared with another job, load average about 4-6 on 8 logical cores), exploratory
+  thresholds. Signals arrived (`signals_incomplete=false` in all 3), nothing was truncated, `quant_shift=true`.
+
+| task | verdict | p_correct | route s | generate s | gate s | calibrate s | wall s |
+|---|---|---|---|---|---|---|---|
+| python, 3 visible tests | VERIFIED (gate) | 1.00 | 1.1 | 8.1 | 0.6 | 2.4 | 12.2 |
+| python, no tests | LIKELY_WRONG | 0.43 | 1.5 | 9.6 | 0.0 | 2.9 | 14.0 |
+| math, PoT gate, no gold | LIKELY_CORRECT | 0.97 | 1.1 | 71.1 | 17.0 (15.0 PoT generation) | 8.1 | 97.3 |
+
+  **n = 3 is a smoke test, not an evaluation.** It shows the wiring runs end to end and gives order-of-magnitude
+  latencies on this machine (one-off Laya load 39 s). The "LIKELY_WRONG" on the palindrome task is one sample of the
+  exploratory in-sample python thresholds (`tau_lo` 0.69 > the p of 0.43), not evidence that the function is wrong, and
+  not a measured error rate.
 
 ## Measured (scripts/laya_runtime_parity.py, `results/gwenlaya_v4/laya_runtime/parity.json`)
 
@@ -73,5 +124,18 @@ call plus one calibrator call per tier tried, so a Laya-assisted answer adds rou
 ## Not validated
 
 No end-to-end evaluation of the routed-and-scored system on this runtime exists: not accuracy, not the cost of the
-cascade, not LIKELY_CORRECT precision under truncation or missing log-probs, not any local (Ollama/quantised) tier.
-The offline E' numbers describe the model fed TPU-run Qwen3.5 generations with full signals.
+cascade, not LIKELY_CORRECT precision under truncation or missing log-probs. The offline E' numbers describe the model
+fed TPU-run Qwen3.5 generations with full signals. Specifically:
+
+- **Quantisation shift**: the calibrator and router were trained on bf16 generations and signals; the llama.cpp tier
+  serves Q4_K_M. Log-prob scale, text and correctness all shift with quantisation. Nothing measured says the
+  calibration or the exploratory thresholds survive that; the evidence only labels it (`quant_shift`).
+- **The n = 3 smoke test** (above) checks plumbing and cost only. It has no accuracy, calibration or precision content.
+- **Calibrator latency**: about 2-3 s per call for short candidates and 8 s for a longer one in the smoke test, 7-9 s
+  at 512 tokens in the parity run, on a shared 8-thread CPU with 2 torch threads; the 9B tier and a free machine were
+  not timed. Router about 1-1.5 s per call.
+- **Tier latency**: only the 2B Q4_K_M server was run live. The 4B path (port 8092) is covered by unit tests with a
+  fake server, not by a live run here, and decodes at about 1.3 tok/s in the study, so a 1024-token answer can take
+  about 13 minutes (the default timeout is 1800 s). The 9B tier has no server script.
+- **Concurrency**: one request at a time per tier was used; no concurrent-load behaviour was checked.
+- Rust stays gate-only and lean4 refused, as above.
