@@ -1,0 +1,4547 @@
+{
+ "python": {
+  "sources": {
+   "LeetCodeDataset": {
+    "n_candidates_after_conversion": 228,
+    "conversion_drops": {},
+    "sanity_drops": {
+     "reference_fails_hidden": 20,
+     "reference_too_slow_for_a_stable_timeout": 2,
+     "gate_equals_hidden_suite": 1
+    },
+    "sanity_dropped": [
+     {
+      "task_id": "py/LeetCodeDataset/maximum-value-sum-by-placing-three-rooks-i",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/LeetCodeDataset/maximum-value-sum-by-placing-three-rooks-ii",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/LeetCodeDataset/maximum-number-of-moves-to-kill-all-pawns",
+      "reason": "reference_fails_hidden:FAILED:TIMEOUT: execution exceeded 30.0s"
+     },
+     {
+      "task_id": "py/LeetCodeDataset/find-x-sum-of-all-k-long-subarrays-i",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/LeetCodeDataset/find-x-sum-of-all-k-long-subarrays-ii",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/LeetCodeDataset/find-the-original-typed-string-ii",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/LeetCodeDataset/find-the-number-of-subsequences-with-equal-gcd",
+      "reason": "reference_fails_hidden:FAILED:TIMEOUT: execution exceeded 30.0s"
+     },
+     {
+      "task_id": "py/LeetCodeDataset/total-characters-in-string-after-transformations-ii",
+      "reason": "reference_too_slow_for_a_stable_timeout:10513ms"
+     },
+     {
+      "task_id": "py/LeetCodeDataset/zero-array-transformation-iii",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/LeetCodeDataset/minimum-array-sum",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/LeetCodeDataset/minimum-time-to-break-locks-i",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/LeetCodeDataset/digit-operations-to-make-two-integers-equal",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/LeetCodeDataset/count-the-number-of-arrays-with-k-matching-adjacent-elements",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/LeetCodeDataset/minimum-operations-to-make-subarray-elements-equal",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/LeetCodeDataset/longest-special-path",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/LeetCodeDataset/paint-house-iv",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/LeetCodeDataset/frequencies-of-shortest-supersequences",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/LeetCodeDataset/reschedule-meetings-for-maximum-free-time-ii",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/LeetCodeDataset/maximize-the-distance-between-points-on-a-square",
+      "reason": "reference_fails_hidden:FAILED:TEST_FAILED (1/2 passed, 1 failed)"
+     },
+     {
+      "task_id": "py/LeetCodeDataset/sum-of-k-subarrays-with-length-at-least-m",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/LeetCodeDataset/maximize-profit-from-task-assignment",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/LeetCodeDataset/longest-common-prefix-of-k-strings-after-removal",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/LeetCodeDataset/count-beautiful-numbers",
+      "reason": "reference_too_slow_for_a_stable_timeout:10861ms"
+     }
+    ],
+    "n_after_sanity": 205,
+    "decontam_drops": 0,
+    "n_after_decontam": 205,
+    "n_final": 205
+   },
+   "FullStackBench": {
+    "n_candidates_after_conversion": 359,
+    "conversion_drops": {
+     "needs_asset_files": 76,
+     "asserts_only_inside_functions": 238,
+     "test_needs_third_party": 133,
+     "no_insert_marker": 2,
+     "test_uses_unittest_or_pytest": 3,
+     "no_top_level_assert": 32,
+     "test_unparsable": 1
+    },
+    "sanity_drops": {
+     "no_reference_solution": 9,
+     "gate_equals_hidden_suite": 126,
+     "reference_fails_hidden": 49,
+     "hidden_test_shown_in_prompt": 28,
+     "stub_passes_gate": 1
+    },
+    "sanity_dropped": [
+     {
+      "task_id": "py/FullStackBench/48",
+      "reason": "no_reference_solution"
+     },
+     {
+      "task_id": "py/FullStackBench/49",
+      "reason": "no_reference_solution"
+     },
+     {
+      "task_id": "py/FullStackBench/50",
+      "reason": "no_reference_solution"
+     },
+     {
+      "task_id": "py/FullStackBench/57",
+      "reason": "no_reference_solution"
+     },
+     {
+      "task_id": "py/FullStackBench/69",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/70",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/71",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/72",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/73",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/74",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/75",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/76",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/77",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/78",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/79",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/80",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/81",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/82",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/83",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/84",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/85",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/86",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/87",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/88",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/89",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/90",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/91",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/92",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/93",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/94",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/95",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/96",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/97",
+      "reason": "no_reference_solution"
+     },
+     {
+      "task_id": "py/FullStackBench/98",
+      "reason": "no_reference_solution"
+     },
+     {
+      "task_id": "py/FullStackBench/110",
+      "reason": "no_reference_solution"
+     },
+     {
+      "task_id": "py/FullStackBench/120",
+      "reason": "no_reference_solution"
+     },
+     {
+      "task_id": "py/FullStackBench/126",
+      "reason": "no_reference_solution"
+     },
+     {
+      "task_id": "py/FullStackBench/155",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/165",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/168",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/170",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/187",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/190",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/192",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/193",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/205",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/308",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/309",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/FullStackBench/315",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/323",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/325",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/330",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/331",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/334",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/342",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/FullStackBench/348",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/357",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/370",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/373",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/375",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/379",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/382",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/387",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/393",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/396",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/397",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/398",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/399",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/400",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/450",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/451",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/452",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/453",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/FullStackBench/455",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/456",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'numpy'"
+     },
+     {
+      "task_id": "py/FullStackBench/458",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/461",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/462",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/465",
+      "reason": "reference_fails_hidden:FAILED:TEST_FAILED (0/2 passed, 2 failed)"
+     },
+     {
+      "task_id": "py/FullStackBench/468",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/471",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/472",
+      "reason": "reference_fails_hidden:FAILED:UNRESOLVED_IMPORT: module(s) ['shapely'] not installed or relative"
+     },
+     {
+      "task_id": "py/FullStackBench/473",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/476",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/FullStackBench/478",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/479",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/FullStackBench/481",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/482",
+      "reason": "reference_fails_hidden:FAILED:UNRESOLVED_IMPORT: module(s) ['shapely'] not installed or relative"
+     },
+     {
+      "task_id": "py/FullStackBench/483",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/485",
+      "reason": "reference_fails_hidden:FAILED:UNRESOLVED_IMPORT: module(s) ['shapely'] not installed or relative"
+     },
+     {
+      "task_id": "py/FullStackBench/488",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/490",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/494",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/495",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/497",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/498",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/507",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/514",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'numpy'"
+     },
+     {
+      "task_id": "py/FullStackBench/515",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/FullStackBench/516",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/520",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/521",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/524",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/535",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/539",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/540",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/541",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/543",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/544",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/546",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/547",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/548",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/549",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/FullStackBench/550",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/551",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/552",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/557",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/564",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/571",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/573",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/660",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/669",
+      "reason": "reference_fails_hidden:FAILED:TEST_FAILED (1/3 passed, 2 failed)"
+     },
+     {
+      "task_id": "py/FullStackBench/670",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/673",
+      "reason": "reference_fails_hidden:FAILED:UNRESOLVED_IMPORT: module(s) ['shapely'] not installed or relative"
+     },
+     {
+      "task_id": "py/FullStackBench/676",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/677",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/678",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/679",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/681",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/686",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/688",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/691",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/749",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/750",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'numpy'"
+     },
+     {
+      "task_id": "py/FullStackBench/754",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/755",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/FullStackBench/758",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/FullStackBench/761",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/FullStackBench/763",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'numpy'"
+     },
+     {
+      "task_id": "py/FullStackBench/765",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'numpy'"
+     },
+     {
+      "task_id": "py/FullStackBench/766",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/767",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/FullStackBench/769",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/FullStackBench/771",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/FullStackBench/774",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'numpy'"
+     },
+     {
+      "task_id": "py/FullStackBench/834",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/841",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/842",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/845",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/852",
+      "reason": "reference_fails_hidden:FAILED:UNRESOLVED_IMPORT: module(s) ['shapely'] not installed or relative"
+     },
+     {
+      "task_id": "py/FullStackBench/853",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/854",
+      "reason": "reference_fails_hidden:FAILED:UNRESOLVED_IMPORT: module(s) ['pulp'] not installed or relative"
+     },
+     {
+      "task_id": "py/FullStackBench/855",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/859",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/FullStackBench/865",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/866",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/867",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/871",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/872",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/FullStackBench/873",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/874",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/877",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/879",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/881",
+      "reason": "stub_passes_gate"
+     },
+     {
+      "task_id": "py/FullStackBench/882",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/884",
+      "reason": "reference_fails_hidden:FAILED:UNRESOLVED_IMPORT: module(s) ['Crypto'] not installed or relative"
+     },
+     {
+      "task_id": "py/FullStackBench/885",
+      "reason": "reference_fails_hidden:FAILED:UNRESOLVED_IMPORT: module(s) ['Crypto'] not installed or relative"
+     },
+     {
+      "task_id": "py/FullStackBench/886",
+      "reason": "reference_fails_hidden:FAILED:UNRESOLVED_IMPORT: module(s) ['Crypto'] not installed or relative"
+     },
+     {
+      "task_id": "py/FullStackBench/887",
+      "reason": "reference_fails_hidden:FAILED:UNRESOLVED_IMPORT: module(s) ['Crypto'] not installed or relative"
+     },
+     {
+      "task_id": "py/FullStackBench/891",
+      "reason": "reference_fails_hidden:FAILED:TEST_FAILED (0/2 passed, 2 failed)"
+     },
+     {
+      "task_id": "py/FullStackBench/901",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/904",
+      "reason": "reference_fails_hidden:FAILED:UNRESOLVED_IMPORT: module(s) ['Crypto'] not installed or relative"
+     },
+     {
+      "task_id": "py/FullStackBench/905",
+      "reason": "reference_fails_hidden:FAILED:UNRESOLVED_IMPORT: module(s) ['Crypto'] not installed or relative"
+     },
+     {
+      "task_id": "py/FullStackBench/909",
+      "reason": "reference_fails_hidden:FAILED:UNRESOLVED_IMPORT: module(s) ['Crypto'] not installed or relative"
+     },
+     {
+      "task_id": "py/FullStackBench/911",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/1030",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/1032",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/1033",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/1034",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/FullStackBench/1036",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/FullStackBench/1037",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/FullStackBench/1038",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/1039",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/1040",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/1041",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/1042",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/1043",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/1044",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/1045",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/1046",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/1047",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/1084",
+      "reason": "reference_fails_hidden:FAILED:UNRESOLVED_IMPORT: module(s) ['shapely'] not installed or relative"
+     },
+     {
+      "task_id": "py/FullStackBench/1086",
+      "reason": "reference_fails_hidden:FAILED:UNRESOLVED_IMPORT: module(s) ['shapely'] not installed or relative"
+     },
+     {
+      "task_id": "py/FullStackBench/1087",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/1090",
+      "reason": "reference_fails_hidden:FAILED:UNRESOLVED_IMPORT: module(s) ['shapely'] not installed or relative"
+     },
+     {
+      "task_id": "py/FullStackBench/1091",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/1093",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/1094",
+      "reason": "reference_fails_hidden:FAILED:UNRESOLVED_IMPORT: module(s) ['shapely'] not installed or relative"
+     },
+     {
+      "task_id": "py/FullStackBench/1096",
+      "reason": "reference_fails_hidden:FAILED:UNRESOLVED_IMPORT: module(s) ['shapely'] not installed or relative"
+     },
+     {
+      "task_id": "py/FullStackBench/1097",
+      "reason": "gate_equals_hidden_suite"
+     },
+     {
+      "task_id": "py/FullStackBench/1237",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/FullStackBench/1242",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'numpy'"
+     },
+     {
+      "task_id": "py/FullStackBench/1261",
+      "reason": "reference_fails_hidden:FAILED:TEST_FAILED (1/4 passed, 3 failed)"
+     },
+     {
+      "task_id": "py/FullStackBench/1268",
+      "reason": "reference_fails_hidden:FAILED:TEST_FAILED (4/5 passed, 1 failed)"
+     },
+     {
+      "task_id": "py/FullStackBench/1284",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/1285",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/1287",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/1295",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/1298",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/1301",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/1306",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/1308",
+      "reason": "hidden_test_shown_in_prompt"
+     },
+     {
+      "task_id": "py/FullStackBench/1310",
+      "reason": "hidden_test_shown_in_prompt"
+     }
+    ],
+    "n_after_sanity": 146,
+    "decontam_drops": 34,
+    "n_after_decontam": 112,
+    "n_final": 112
+   },
+   "BigCodeBench": {
+    "n_candidates_after_conversion": 364,
+    "conversion_drops": {
+     "needs_third_party": 776
+    },
+    "sanity_drops": {
+     "reference_fails_hidden": 80,
+     "stub_passes_gate": 7,
+     "reference_too_slow_for_a_stable_timeout": 2
+    },
+    "sanity_dropped": [
+     {
+      "task_id": "py/BigCodeBench/0",
+      "reason": "reference_fails_hidden:FAILED:TIMEOUT: execution exceeded 30.0s"
+     },
+     {
+      "task_id": "py/BigCodeBench/3",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/6",
+      "reason": "stub_passes_gate"
+     },
+     {
+      "task_id": "py/BigCodeBench/10",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/11",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/23",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/30",
+      "reason": "reference_fails_hidden:FAILED:TEST_FAILED (0/1 passed, 1 failed)"
+     },
+     {
+      "task_id": "py/BigCodeBench/33",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/90",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/122",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/159",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'numpy'"
+     },
+     {
+      "task_id": "py/BigCodeBench/172",
+      "reason": "stub_passes_gate"
+     },
+     {
+      "task_id": "py/BigCodeBench/176",
+      "reason": "reference_fails_hidden:FAILED:TEST_FAILED (0/1 passed, 1 failed)"
+     },
+     {
+      "task_id": "py/BigCodeBench/195",
+      "reason": "reference_fails_hidden:FAILED:TIMEOUT: execution exceeded 30.0s"
+     },
+     {
+      "task_id": "py/BigCodeBench/201",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'pandas'"
+     },
+     {
+      "task_id": "py/BigCodeBench/205",
+      "reason": "reference_fails_hidden:FAILED:TEST_FAILED (0/1 passed, 1 failed)"
+     },
+     {
+      "task_id": "py/BigCodeBench/219",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/220",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/250",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/253",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/257",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/270",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'faker'"
+     },
+     {
+      "task_id": "py/BigCodeBench/272",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'requests_mock'"
+     },
+     {
+      "task_id": "py/BigCodeBench/275",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/286",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'faker'"
+     },
+     {
+      "task_id": "py/BigCodeBench/287",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'faker'"
+     },
+     {
+      "task_id": "py/BigCodeBench/295",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'faker'"
+     },
+     {
+      "task_id": "py/BigCodeBench/313",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'faker'"
+     },
+     {
+      "task_id": "py/BigCodeBench/314",
+      "reason": "reference_fails_hidden:FAILED:TEST_FAILED (0/1 passed, 1 failed)"
+     },
+     {
+      "task_id": "py/BigCodeBench/363",
+      "reason": "reference_fails_hidden:FAILED:TEST_FAILED (0/1 passed, 1 failed)"
+     },
+     {
+      "task_id": "py/BigCodeBench/394",
+      "reason": "reference_fails_hidden:FAILED:TEST_FAILED (0/1 passed, 1 failed)"
+     },
+     {
+      "task_id": "py/BigCodeBench/437",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'pandas'"
+     },
+     {
+      "task_id": "py/BigCodeBench/465",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/533",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/535",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/541",
+      "reason": "reference_fails_hidden:FAILED:TEST_FAILED (0/1 passed, 1 failed)"
+     },
+     {
+      "task_id": "py/BigCodeBench/554",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/556",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/562",
+      "reason": "reference_fails_hidden:FAILED:TEST_FAILED (0/1 passed, 1 failed)"
+     },
+     {
+      "task_id": "py/BigCodeBench/565",
+      "reason": "stub_passes_gate"
+     },
+     {
+      "task_id": "py/BigCodeBench/609",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'pandas'"
+     },
+     {
+      "task_id": "py/BigCodeBench/629",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'pandas'"
+     },
+     {
+      "task_id": "py/BigCodeBench/631",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'pandas'"
+     },
+     {
+      "task_id": "py/BigCodeBench/696",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/707",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/719",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'pyfakefs'"
+     },
+     {
+      "task_id": "py/BigCodeBench/725",
+      "reason": "stub_passes_gate"
+     },
+     {
+      "task_id": "py/BigCodeBench/730",
+      "reason": "reference_fails_hidden:FAILED:TEST_FAILED (0/1 passed, 1 failed)"
+     },
+     {
+      "task_id": "py/BigCodeBench/735",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/737",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/757",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/763",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/764",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'faker'"
+     },
+     {
+      "task_id": "py/BigCodeBench/778",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'faker'"
+     },
+     {
+      "task_id": "py/BigCodeBench/779",
+      "reason": "reference_fails_hidden:FAILED:TEST_FAILED (0/1 passed, 1 failed)"
+     },
+     {
+      "task_id": "py/BigCodeBench/787",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/793",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/794",
+      "reason": "stub_passes_gate"
+     },
+     {
+      "task_id": "py/BigCodeBench/801",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/802",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/819",
+      "reason": "reference_too_slow_for_a_stable_timeout:10681ms"
+     },
+     {
+      "task_id": "py/BigCodeBench/821",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'faker'"
+     },
+     {
+      "task_id": "py/BigCodeBench/823",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/825",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/826",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'faker'"
+     },
+     {
+      "task_id": "py/BigCodeBench/830",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'faker'"
+     },
+     {
+      "task_id": "py/BigCodeBench/831",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'faker'"
+     },
+     {
+      "task_id": "py/BigCodeBench/832",
+      "reason": "reference_fails_hidden:FAILED:TEST_FAILED (0/1 passed, 1 failed)"
+     },
+     {
+      "task_id": "py/BigCodeBench/839",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'faker'"
+     },
+     {
+      "task_id": "py/BigCodeBench/842",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'faker'"
+     },
+     {
+      "task_id": "py/BigCodeBench/848",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'faker'"
+     },
+     {
+      "task_id": "py/BigCodeBench/856",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/858",
+      "reason": "stub_passes_gate"
+     },
+     {
+      "task_id": "py/BigCodeBench/863",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/871",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/872",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/873",
+      "reason": "reference_fails_hidden:FAILED:SETUP_FAILED: test spec has invalid setup code: ModuleNotFoundError: No module named 'faker'"
+     },
+     {
+      "task_id": "py/BigCodeBench/899",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/947",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/1005",
+      "reason": "reference_fails_hidden:FAILED:TEST_FAILED (0/1 passed, 1 failed)"
+     },
+     {
+      "task_id": "py/BigCodeBench/1038",
+      "reason": "reference_fails_hidden:FAILED:TEST_FAILED (0/1 passed, 1 failed)"
+     },
+     {
+      "task_id": "py/BigCodeBench/1040",
+      "reason": "reference_fails_hidden:FAILED:TEST_FAILED (0/1 passed, 1 failed)"
+     },
+     {
+      "task_id": "py/BigCodeBench/1089",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     },
+     {
+      "task_id": "py/BigCodeBench/1101",
+      "reason": "reference_fails_hidden:FAILED:TEST_FAILED (0/1 passed, 1 failed)"
+     },
+     {
+      "task_id": "py/BigCodeBench/1103",
+      "reason": "reference_fails_hidden:FAILED:TEST_FAILED (0/1 passed, 1 failed)"
+     },
+     {
+      "task_id": "py/BigCodeBench/1104",
+      "reason": "reference_fails_hidden:FAILED:TEST_FAILED (0/1 passed, 1 failed)"
+     },
+     {
+      "task_id": "py/BigCodeBench/1105",
+      "reason": "reference_too_slow_for_a_stable_timeout:12402ms"
+     },
+     {
+      "task_id": "py/BigCodeBench/1132",
+      "reason": "stub_passes_gate"
+     },
+     {
+      "task_id": "py/BigCodeBench/1138",
+      "reason": "reference_fails_hidden:FAILED:IMPORT_FAILED: candidate could not be imported"
+     }
+    ],
+    "n_after_sanity": 275,
+    "decontam_drops": 0,
+    "n_after_decontam": 275,
+    "n_final": 90
+   }
+  },
+  "decontam_dropped": [
+   {
+    "task_id": "py/FullStackBench/47",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/51",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/52",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/53",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/54",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/55",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/56",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/58",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/59",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/60",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/61",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/62",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/63",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/64",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/65",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/66",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/67",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/68",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/105",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/107",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/112",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/114",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/115",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/118",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/121",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/122",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/124",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/125",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/127",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/131",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/132",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/141",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/526",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   },
+   {
+    "task_id": "py/FullStackBench/840",
+    "source": "ByteDance/FullStackBench:en",
+    "methods": [
+     "dedup:py_ast"
+    ],
+    "against": [
+     "F(other source)"
+    ],
+    "example": "dedup:py_ast->F:newfacade/LeetCodeDataset:test::py/LeetCodeDataset/maximum-coin-collection"
+   }
+  ],
+  "ngram_filter": {
+   "ngram_hits_total": 164,
+   "ngram_hits_ignored_uninformative": 164
+  }
+ },
+ "math": {
+  "MATH_test": {
+   "n_test": 5000,
+   "excluded_in_MATH500": 500,
+   "no_boxed_answer": 0,
+   "n_candidates": 4500
+  },
+  "competition_candidates": {
+   "MathArena/aime_2025": 30,
+   "MathArena/aime_2026": 30,
+   "MathArena/hmmt_feb_2025": 30,
+   "MathArena/hmmt_feb_2026": 33,
+   "MathArena/hmmt_nov_2025": 30,
+   "MathArena/brumo_2025": 30
+  },
+  "competition_skipped": {
+   "MathArena/cmimc_2025": "40 problems left out to bound generation cost (can be added later)",
+   "MathArena/smt_2025": "53 problems left out to bound generation cost (can be added later)"
+  },
+  "MATH-test": {
+   "n_after_sanity": 4500,
+   "n_after_decontam": 4298,
+   "decontam_drops": 202,
+   "n_final": 200
+  },
+  "GSM8K": {
+   "n_after_sanity": 1319,
+   "n_after_decontam": 1319,
+   "decontam_drops": 0,
+   "n_final": 130
+  },
+  "competition": {
+   "n_after_sanity": 183,
+   "n_after_decontam": 171,
+   "decontam_drops": 12,
+   "n_final": 171
+  },
+  "sanity_dropped": [],
+  "ngram_filter": {
+   "ngram_hits_total": 690,
+   "ngram_hits_ignored_uninformative": 82
+  },
+  "decontam_dropped": [
+   {
+    "task_id": "ma/MATHtest/algebra/12",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "ngram13->P_all::ma/train/algebra/731"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/50",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/algebra/780"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/65",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_template"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_calib"
+    ],
+    "example": "math_template->P_all::ma/train/algebra/477"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/80",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_template"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "math_template->E::ma/test/algebra/2570.json"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/95",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/counting_and_probability/367"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/106",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/algebra/780"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/121",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/algebra/780"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/171",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/algebra/1072.json"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/178",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "ngram13->laya:laya_eprime::train/algebra/1720"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/180",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/algebra/116"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/198",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/algebra/45"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/203",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_template"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "math_template->laya:laya_train::train/algebra/587"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/230",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/algebra/501"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/233",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_eprime",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_eprime::train/algebra/781"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/314",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_calib"
+    ],
+    "example": "ngram13->P_all::ma/train/algebra/840"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/362",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/algebra/54"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/375",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/algebra/191"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/378",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/algebra/1061"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/386",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "ngram13->laya:laya_eprime::train/algebra/1562"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/455",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_template",
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "math_template->laya:laya_train::train/algebra/467"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/469",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/algebra/191"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/538",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->E::ma/test/algebra/351.json"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/595",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/algebra/191"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/606",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_calib"
+    ],
+    "example": "ngram13->P_all::ma/train/algebra/840"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/638",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_template"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "math_template->laya:laya_eprime::train/algebra/56"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/652",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_nums",
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "math_nums->E::ma/test/intermediate_algebra/1566.json"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/656",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->E::ma/test/algebra/187.json"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/665",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/algebra/853.json"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/680",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "ngram13->laya:laya_eprime::train/algebra/1623"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/690",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_template"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_calib"
+    ],
+    "example": "math_template->P_all::ma/train/algebra/461"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/719",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "ngram13->laya:laya_eprime::train/algebra/48"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/723",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/algebra/780"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/730",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_template",
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "math_template->P_all::ma/train/algebra/1354"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/770",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_nums"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "math_nums->E::ma/test/algebra/2058.json"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/781",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "ngram13->P_all::ma/train/prealgebra/516"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/812",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/algebra/1415"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/826",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_template",
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "math_template->laya:laya_eprime::train/algebra/1688"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/835",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "ngram13->laya:laya_eprime::train/algebra/1720"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/892",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "ngram13->laya:laya_eprime::train/algebra/1276"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/894",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_nums"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "math_nums->P_all::ma/train/algebra/799"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/934",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_template",
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "math_template->P_all::ma/train/algebra/10"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/958",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/algebra/780"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/970",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_template"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "math_template->laya:laya_train::test/algebra/1282.json"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/1004",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_template"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "math_template->laya:laya_eprime::train/algebra/717"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/1027",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "ngram13->P_all::ma/train/algebra/1241"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/1105",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->E::ma/test/algebra/2023.json"
+   },
+   {
+    "task_id": "ma/MATHtest/algebra/1161",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/algebra/780"
+   },
+   {
+    "task_id": "ma/MATHtest/counting_and_probability/2",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_nums",
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "math_nums->P_all::ma/train/counting_and_probability/214"
+   },
+   {
+    "task_id": "ma/MATHtest/counting_and_probability/6",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "ngram13->laya:laya_eprime::train/counting_and_probability/500"
+   },
+   {
+    "task_id": "ma/MATHtest/counting_and_probability/13",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_nums",
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "math_nums->P_all::ma/train/counting_and_probability/543"
+   },
+   {
+    "task_id": "ma/MATHtest/counting_and_probability/19",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/counting_and_probability/543"
+   },
+   {
+    "task_id": "ma/MATHtest/counting_and_probability/20",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/counting_and_probability/543"
+   },
+   {
+    "task_id": "ma/MATHtest/counting_and_probability/30",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_template",
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "math_template->laya:laya_train::train/counting_and_probability/676"
+   },
+   {
+    "task_id": "ma/MATHtest/counting_and_probability/47",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "jaccard"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_calib",
+     "laya:laya_train"
+    ],
+    "example": "jaccard:prompt+tests->laya:laya_train::test/counting_and_probability/1060.json"
+   },
+   {
+    "task_id": "ma/MATHtest/counting_and_probability/50",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/counting_and_probability/286"
+   },
+   {
+    "task_id": "ma/MATHtest/counting_and_probability/68",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "jaccard"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_calib",
+     "laya:laya_train"
+    ],
+    "example": "jaccard:prompt+tests->laya:laya_train::test/counting_and_probability/1060.json"
+   },
+   {
+    "task_id": "ma/MATHtest/counting_and_probability/104",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_template",
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "math_template->P_all::ma/train/counting_and_probability/216"
+   },
+   {
+    "task_id": "ma/MATHtest/counting_and_probability/195",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "ngram13->P_all::ma/train/counting_and_probability/211"
+   },
+   {
+    "task_id": "ma/MATHtest/counting_and_probability/198",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "jaccard"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_calib",
+     "laya:laya_train"
+    ],
+    "example": "jaccard:prompt+tests->laya:laya_train::test/counting_and_probability/1060.json"
+   },
+   {
+    "task_id": "ma/MATHtest/counting_and_probability/233",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/counting_and_probability/134.json"
+   },
+   {
+    "task_id": "ma/MATHtest/counting_and_probability/234",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_nums",
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "math_nums->E::ma/test/counting_and_probability/1014.json"
+   },
+   {
+    "task_id": "ma/MATHtest/counting_and_probability/268",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "jaccard"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_calib",
+     "laya:laya_train"
+    ],
+    "example": "jaccard:prompt+tests->laya:laya_train::test/counting_and_probability/1060.json"
+   },
+   {
+    "task_id": "ma/MATHtest/counting_and_probability/275",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "jaccard"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_calib",
+     "laya:laya_train"
+    ],
+    "example": "jaccard:prompt+tests->laya:laya_train::test/counting_and_probability/1060.json"
+   },
+   {
+    "task_id": "ma/MATHtest/counting_and_probability/287",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "jaccard"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_calib",
+     "laya:laya_train"
+    ],
+    "example": "jaccard:prompt+tests->laya:laya_train::test/counting_and_probability/1060.json"
+   },
+   {
+    "task_id": "ma/MATHtest/counting_and_probability/317",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->E::ma/test/counting_and_probability/159.json"
+   },
+   {
+    "task_id": "ma/MATHtest/counting_and_probability/333",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "jaccard"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_calib",
+     "laya:laya_train"
+    ],
+    "example": "jaccard:prompt+tests->laya:laya_train::test/counting_and_probability/1060.json"
+   },
+   {
+    "task_id": "ma/MATHtest/counting_and_probability/341",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "ngram13->laya:laya_eprime::train/prealgebra/1131"
+   },
+   {
+    "task_id": "ma/MATHtest/counting_and_probability/355",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/counting_and_probability/591"
+   },
+   {
+    "task_id": "ma/MATHtest/counting_and_probability/379",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "jaccard"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_calib",
+     "laya:laya_train"
+    ],
+    "example": "jaccard:prompt+tests->laya:laya_train::test/counting_and_probability/1060.json"
+   },
+   {
+    "task_id": "ma/MATHtest/counting_and_probability/460",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "jaccard"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_calib",
+     "laya:laya_train"
+    ],
+    "example": "jaccard:prompt+tests->laya:laya_train::test/counting_and_probability/1060.json"
+   },
+   {
+    "task_id": "ma/MATHtest/geometry/6",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/geometry/65.json"
+   },
+   {
+    "task_id": "ma/MATHtest/geometry/14",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_template",
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "math_template->P_all::ma/train/geometry/638"
+   },
+   {
+    "task_id": "ma/MATHtest/geometry/26",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_calib"
+    ],
+    "example": "ngram13->laya:laya_calib::train/precalculus/692"
+   },
+   {
+    "task_id": "ma/MATHtest/geometry/77",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "ngram13->laya:laya_eprime::train/geometry/746"
+   },
+   {
+    "task_id": "ma/MATHtest/geometry/84",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_template",
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_calib"
+    ],
+    "example": "math_template->laya:laya_calib::train/geometry/654"
+   },
+   {
+    "task_id": "ma/MATHtest/geometry/90",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_nums"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "math_nums->E::ma/test/geometry/1108.json"
+   },
+   {
+    "task_id": "ma/MATHtest/geometry/94",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/geometry/50"
+   },
+   {
+    "task_id": "ma/MATHtest/geometry/107",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->E::ma/test/geometry/172.json"
+   },
+   {
+    "task_id": "ma/MATHtest/geometry/174",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_calib"
+    ],
+    "example": "ngram13->P_all::ma/train/geometry/809"
+   },
+   {
+    "task_id": "ma/MATHtest/geometry/177",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/geometry/224"
+   },
+   {
+    "task_id": "ma/MATHtest/geometry/203",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/geometry/467"
+   },
+   {
+    "task_id": "ma/MATHtest/geometry/269",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/geometry/139"
+   },
+   {
+    "task_id": "ma/MATHtest/geometry/282",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/geometry/224"
+   },
+   {
+    "task_id": "ma/MATHtest/geometry/303",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/geometry/753"
+   },
+   {
+    "task_id": "ma/MATHtest/geometry/328",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/geometry/428"
+   },
+   {
+    "task_id": "ma/MATHtest/geometry/361",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->E::ma/test/geometry/172.json"
+   },
+   {
+    "task_id": "ma/MATHtest/geometry/373",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/geometry/467"
+   },
+   {
+    "task_id": "ma/MATHtest/geometry/424",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/prealgebra/531"
+   },
+   {
+    "task_id": "ma/MATHtest/geometry/434",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/prealgebra/531"
+   },
+   {
+    "task_id": "ma/MATHtest/geometry/454",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/algebra/780"
+   },
+   {
+    "task_id": "ma/MATHtest/geometry/472",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/prealgebra/1003.json"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/17",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_eprime::train/intermediate_algebra/39"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/72",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_calib",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_calib::train/intermediate_algebra/229"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/109",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/intermediate_algebra/558"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/120",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_eprime::train/intermediate_algebra/795"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/160",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/intermediate_algebra/64"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/174",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/intermediate_algebra/194"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/226",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_eprime::train/intermediate_algebra/39"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/301",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_nums"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "math_nums->P_all::ma/train/algebra/538"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/325",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_eprime::train/intermediate_algebra/39"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/335",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->E::ma/test/intermediate_algebra/1166.json"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/371",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "ngram13->laya:laya_eprime::train/intermediate_algebra/795"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/400",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->E::ma/test/intermediate_algebra/1300.json"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/402",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_calib",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_calib::train/intermediate_algebra/229"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/421",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_eprime",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_eprime::train/intermediate_algebra/703"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/427",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "jaccard",
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_eprime",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_eprime::train/intermediate_algebra/703"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/437",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "ngram13->laya:laya_eprime::train/intermediate_algebra/46"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/452",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/intermediate_algebra/439"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/468",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->E::ma/test/intermediate_algebra/1126.json"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/498",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_eprime::train/intermediate_algebra/39"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/501",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_nums",
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "math_nums->E::ma/test/intermediate_algebra/102.json"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/539",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/intermediate_algebra/896"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/547",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->E::ma/test/algebra/975.json"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/596",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_eprime",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_eprime::train/intermediate_algebra/703"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/597",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_nums",
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "math_nums->E::ma/test/intermediate_algebra/860.json"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/611",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/intermediate_algebra/860.json"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/629",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_nums"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "math_nums->E::ma/test/intermediate_algebra/1510.json"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/671",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "ngram13->P_all::ma/train/intermediate_algebra/424"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/673",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/precalculus/691"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/678",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_calib"
+    ],
+    "example": "ngram13->laya:laya_calib::train/intermediate_algebra/234"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/691",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_template",
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "math_template->P_all::ma/train/intermediate_algebra/809"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/692",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/intermediate_algebra/121.json"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/704",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_template",
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_calib"
+    ],
+    "example": "math_template->laya:laya_calib::train/intermediate_algebra/560"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/744",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/intermediate_algebra/202"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/750",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/intermediate_algebra/860.json"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/771",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/intermediate_algebra/776"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/790",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "ngram13->P_all::ma/train/intermediate_algebra/547"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/793",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/intermediate_algebra/121.json"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/801",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/intermediate_algebra/790"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/805",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_nums"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_calib"
+    ],
+    "example": "math_nums->P_all::ma/train/intermediate_algebra/234"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/881",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/intermediate_algebra/64"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/898",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/intermediate_algebra/22"
+   },
+   {
+    "task_id": "ma/MATHtest/intermediate_algebra/900",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/intermediate_algebra/217"
+   },
+   {
+    "task_id": "ma/MATHtest/number_theory/123",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_template"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "math_template->P_all::ma/train/number_theory/843"
+   },
+   {
+    "task_id": "ma/MATHtest/number_theory/314",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/number_theory/533.json"
+   },
+   {
+    "task_id": "ma/MATHtest/number_theory/351",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/number_theory/679.json"
+   },
+   {
+    "task_id": "ma/MATHtest/number_theory/379",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_template"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "math_template->laya:laya_eprime::train/number_theory/279"
+   },
+   {
+    "task_id": "ma/MATHtest/number_theory/400",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->E::ma/test/number_theory/838.json"
+   },
+   {
+    "task_id": "ma/MATHtest/number_theory/411",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_template",
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "math_template->laya:laya_train::test/number_theory/255.json"
+   },
+   {
+    "task_id": "ma/MATHtest/number_theory/469",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->E::ma/test/number_theory/838.json"
+   },
+   {
+    "task_id": "ma/MATHtest/number_theory/508",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_template"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "math_template->P_all::ma/train/number_theory/867"
+   },
+   {
+    "task_id": "ma/MATHtest/number_theory/535",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/number_theory/255.json"
+   },
+   {
+    "task_id": "ma/MATHtest/prealgebra/30",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/number_theory/584"
+   },
+   {
+    "task_id": "ma/MATHtest/prealgebra/49",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_template",
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "math_template->P_all::ma/train/prealgebra/789"
+   },
+   {
+    "task_id": "ma/MATHtest/prealgebra/50",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->E::ma/test/prealgebra/1742.json"
+   },
+   {
+    "task_id": "ma/MATHtest/prealgebra/83",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/prealgebra/1297.json"
+   },
+   {
+    "task_id": "ma/MATHtest/prealgebra/112",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/prealgebra/1003.json"
+   },
+   {
+    "task_id": "ma/MATHtest/prealgebra/152",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/number_theory/255.json"
+   },
+   {
+    "task_id": "ma/MATHtest/prealgebra/217",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "ngram13->laya:laya_eprime::train/prealgebra/1159"
+   },
+   {
+    "task_id": "ma/MATHtest/prealgebra/345",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/prealgebra/1297.json"
+   },
+   {
+    "task_id": "ma/MATHtest/prealgebra/417",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/prealgebra/916"
+   },
+   {
+    "task_id": "ma/MATHtest/prealgebra/426",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_template"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime",
+     "laya:laya_train"
+    ],
+    "example": "math_template->P_all::ma/train/prealgebra/654"
+   },
+   {
+    "task_id": "ma/MATHtest/prealgebra/429",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->E::ma/test/prealgebra/1044.json"
+   },
+   {
+    "task_id": "ma/MATHtest/prealgebra/513",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/counting_and_probability/170"
+   },
+   {
+    "task_id": "ma/MATHtest/prealgebra/515",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/prealgebra/1297.json"
+   },
+   {
+    "task_id": "ma/MATHtest/prealgebra/546",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/prealgebra/789"
+   },
+   {
+    "task_id": "ma/MATHtest/prealgebra/563",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "jaccard",
+     "math_template",
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "math_template->P_all::ma/train/prealgebra/789"
+   },
+   {
+    "task_id": "ma/MATHtest/prealgebra/666",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/prealgebra/1640.json"
+   },
+   {
+    "task_id": "ma/MATHtest/prealgebra/705",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/counting_and_probability/591"
+   },
+   {
+    "task_id": "ma/MATHtest/prealgebra/752",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "ngram13->P_all::ma/train/prealgebra/243"
+   },
+   {
+    "task_id": "ma/MATHtest/prealgebra/846",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->E::ma/test/prealgebra/1742.json"
+   },
+   {
+    "task_id": "ma/MATHtest/prealgebra/851",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_calib",
+     "laya:laya_eprime"
+    ],
+    "example": "ngram13->laya:laya_calib::train/prealgebra/456"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/14",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/precalculus/437"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/16",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/precalculus/710"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/68",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_eprime",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/precalculus/393"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/76",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_nums",
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "math_nums->E::ma/test/geometry/178.json"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/111",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/precalculus/691"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/174",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_eprime",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/precalculus/278"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/213",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/precalculus/659.json"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/222",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->E::ma/test/precalculus/1199.json"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/229",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->E::ma/test/precalculus/1199.json"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/247",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "ngram13->P_all::ma/train/precalculus/322"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/248",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_calib"
+    ],
+    "example": "ngram13->P_all::ma/train/precalculus/75"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/265",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_eprime",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/precalculus/278"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/294",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_eprime",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/precalculus/278"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/309",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "ngram13->P_all::ma/train/precalculus/190"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/312",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "jaccard",
+     "math_nums",
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "math_nums->P_all::ma/train/precalculus/46"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/329",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_calib"
+    ],
+    "example": "ngram13->P_all::ma/train/precalculus/75"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/353",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->E::ma/test/precalculus/1199.json"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/356",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/precalculus/659.json"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/359",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/precalculus/645"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/377",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/precalculus/539"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/378",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_eprime",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/precalculus/278"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/383",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/precalculus/650"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/393",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_nums",
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "math_nums->P_all::ma/train/geometry/470"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/411",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_eprime",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/precalculus/393"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/413",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/precalculus/650"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/418",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/precalculus/659.json"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/420",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/precalculus/779.json"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/429",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "math_nums",
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "math_nums->E::ma/test/precalculus/881.json"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/434",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/precalculus/659.json"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/444",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/precalculus/779.json"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/448",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/precalculus/553"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/453",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "jaccard",
+     "math_nums",
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "math_nums->P_all::ma/train/precalculus/625"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/458",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/precalculus/541.json"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/464",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_calib",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_calib::train/precalculus/692"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/466",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/precalculus/411"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/479",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::test/precalculus/541.json"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/504",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->E::ma/test/precalculus/881.json"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/508",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->E::ma/test/precalculus/807.json"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/523",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/precalculus/539"
+   },
+   {
+    "task_id": "ma/MATHtest/precalculus/531",
+    "source": "EleutherAI/hendrycks_math:test",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_eprime"
+    ],
+    "example": "ngram13->laya:laya_eprime::train/precalculus/15"
+   },
+   {
+    "task_id": "ma/comp/aime2025/7",
+    "source": "MathArena/aime_2025",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/geometry/519"
+   },
+   {
+    "task_id": "ma/comp/aime2025/8",
+    "source": "MathArena/aime_2025",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/geometry/561"
+   },
+   {
+    "task_id": "ma/comp/aime2025/12",
+    "source": "MathArena/aime_2025",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/geometry/823"
+   },
+   {
+    "task_id": "ma/comp/aime2025/19",
+    "source": "MathArena/aime_2025",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/geometry/460"
+   },
+   {
+    "task_id": "ma/comp/aime2025/21",
+    "source": "MathArena/aime_2025",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/geometry/460"
+   },
+   {
+    "task_id": "ma/comp/aime2025/22",
+    "source": "MathArena/aime_2025",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/geometry/460"
+   },
+   {
+    "task_id": "ma/comp/aime2025/28",
+    "source": "MathArena/aime_2025",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/geometry/463"
+   },
+   {
+    "task_id": "ma/comp/aime2026/5",
+    "source": "MathArena/aime_2026",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/geometry/561"
+   },
+   {
+    "task_id": "ma/comp/aime2026/9",
+    "source": "MathArena/aime_2026",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/geometry/519"
+   },
+   {
+    "task_id": "ma/comp/aime2026/12",
+    "source": "MathArena/aime_2026",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/geometry/519"
+   },
+   {
+    "task_id": "ma/comp/aime2026/14",
+    "source": "MathArena/aime_2026",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->P_all::ma/train/geometry/548"
+   },
+   {
+    "task_id": "ma/comp/aime2026/27",
+    "source": "MathArena/aime_2026",
+    "methods": [
+     "ngram13"
+    ],
+    "against": [
+     "E",
+     "P_all",
+     "laya:laya_train"
+    ],
+    "example": "ngram13->laya:laya_train::train/geometry/460"
+   }
+  ],
+  "math_test_final_by_subject": {
+   "algebra": 47,
+   "counting_and_probability": 19,
+   "geometry": 19,
+   "intermediate_algebra": 35,
+   "number_theory": 23,
+   "prealgebra": 37,
+   "precalculus": 20
+  }
+ },
+ "lean": {
+  "ngram_filter": {
+   "ngram_hits_total": 3,
+   "ngram_hits_ignored_uninformative": 3
+  },
+  "n_split": 244,
+  "n_elaborating": 229,
+  "excluded_not_elaborating": [
+   {
+    "task_id": "cat-searcher/minif2f-lean4/aime_1984_p5",
+    "reason": "does not elaborate under the pinned Mathlib: /work/candidate.lean:17:37: error: unknown constant 'Real.logb' /work/candidate.lean:17:53: error: unknown constant 'Real.logb' /work/candidate.lean:18:10: erro"
+   },
+   {
+    "task_id": "cat-searcher/minif2f-lean4/mathd_algebra_547",
+    "reason": "statement is commented out in the source dataset (marked '-- Error:' upstream); nothing to prove"
+   },
+   {
+    "task_id": "cat-searcher/minif2f-lean4/aime_1994_p4",
+    "reason": "statement is commented out in the source dataset (marked '-- Error:' upstream); nothing to prove"
+   },
+   {
+    "task_id": "cat-searcher/minif2f-lean4/imo_1978_p5",
+    "reason": "does not elaborate under the pinned Mathlib: /work/candidate.lean:23:62: error: failed to synthesize instance   HDiv ℕ ℕ ℝ /work/candidate.lean:26:14: error: unknown constant 'imo_1978_p5'"
+   },
+   {
+    "task_id": "cat-searcher/minif2f-lean4/amc12b_2021_p21",
+    "reason": "statement is commented out in the source dataset (marked '-- Error:' upstream); nothing to prove"
+   },
+   {
+    "task_id": "cat-searcher/minif2f-lean4/mathd_algebra_96",
+    "reason": "statement is commented out in the source dataset (marked '-- Error:' upstream); nothing to prove"
+   },
+   {
+    "task_id": "cat-searcher/minif2f-lean4/mathd_algebra_59",
+    "reason": "statement is commented out in the source dataset (marked '-- Error:' upstream); nothing to prove"
+   },
+   {
+    "task_id": "cat-searcher/minif2f-lean4/amc12b_2003_p17",
+    "reason": "statement is commented out in the source dataset (marked '-- Error:' upstream); nothing to prove"
+   },
+   {
+    "task_id": "cat-searcher/minif2f-lean4/aime_1983_p9",
+    "reason": "statement is commented out in the source dataset (marked '-- Error:' upstream); nothing to prove"
+   },
+   {
+    "task_id": "cat-searcher/minif2f-lean4/mathd_algebra_282",
+    "reason": "statement is commented out in the source dataset (marked '-- Error:' upstream); nothing to prove"
+   },
+   {
+    "task_id": "cat-searcher/minif2f-lean4/aime_1988_p3",
+    "reason": "statement is commented out in the source dataset (marked '-- Error:' upstream); nothing to prove"
+   },
+   {
+    "task_id": "cat-searcher/minif2f-lean4/amc12a_2016_p2",
+    "reason": "statement is commented out in the source dataset (marked '-- Error:' upstream); nothing to prove"
+   },
+   {
+    "task_id": "cat-searcher/minif2f-lean4/amc12a_2010_p11",
+    "reason": "statement is commented out in the source dataset (marked '-- Error:' upstream); nothing to prove"
+   },
+   {
+    "task_id": "cat-searcher/minif2f-lean4/amc12a_2003_p24",
+    "reason": "statement is commented out in the source dataset (marked '-- Error:' upstream); nothing to prove"
+   },
+   {
+    "task_id": "cat-searcher/minif2f-lean4/mathd_algebra_247",
+    "reason": "statement is commented out in the source dataset (marked '-- Error:' upstream); nothing to prove"
+   }
+  ],
+  "decontam_dropped": [],
+  "n_final": 229,
+  "mathlib": {
+   "lean_toolchain": "leanprover/lean4:v4.7.0",
+   "mathlib_tag": "v4.7.0",
+   "mathlib_commit": "a45ae63747140c1b2cbad9d46f518015c047047a",
+   "cache": "lake exe cache get",
+   "created": "2026-10-07"
+  },
+  "lean_tasks_sha256_raw": "d3ce82272609ee3591ae3266106c583981b30e11d79b521f94882691e545455a"
+ }
+}
