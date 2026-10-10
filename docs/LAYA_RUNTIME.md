@@ -173,3 +173,38 @@ fed TPU-run Qwen3.5 generations with full signals. Specifically:
   about 13 minutes (the default timeout is 1800 s). The 9B tier has no server script.
 - **Concurrency**: one request at a time per tier was used; no concurrent-load behaviour was checked.
 - Rust stays gate-only and lean4 refused, as above.
+
+## Replay of the registered E' policy through the runtime
+
+Plan: `docs/ANALYSIS_PLAN_E_TPU.md` Addendum A20 (committed before the replay was run). Script:
+`scripts/replay_system_eprime.py`; result: `results/gwenlaya_v4/laya_runtime/system_replay_eprime.json`. No model runs: replay
+tiers return the stored E' greedy answers (and stored mean/min log-prob), a replay router returns the stored frozen-router
+probabilities, a replay scorer returns the stored frozen-calibrator raw score (the runtime applies the registered isotonic map
+itself, through `LayaRuntime.calibration_artifacts`), a replay checker returns the stored gate verdict of (task, tier), and an
+injected clock charges the stored accelerator-seconds (answer plus, for math, program seconds). `GwenLaya.answer` runs with
+`route_policy="start_at"`, `tau_route = 0.5`, no thresholds, and its per-task outcome is compared with
+`scripts/analyze_laya.py::run_policy` on the same stored arrays.
+
+Result (E', 828 tasks = 659 math + 169 Python, tiers 2B/4B/9B bf16):
+
+| item | runtime replay | registered (`run_policy`, recomputed from the same inputs) |
+|---|---|---|
+| per-task start tier, final tier, gate-verdict path, cost, answered flag agree | 828 / 828 for each | |
+| cost vs always-9B, with warm-up chunk | 0.7879 | 0.7879 (`laya_eprime_v2.json`: 0.788) |
+| cost vs always-9B, first chunk of each run zeroed | 0.8946 | 0.8946 (`router_nowarm.json`: 0.895) |
+| accuracy change vs always-9B (final candidate counted, registered quantity) | +0.97 points | +0.97 points |
+
+Both always-9B arms (a one-tier `GwenLaya` and the stored cost + program seconds) agree per task. Every feature the runtime
+built for the scorer (prompt, response, gate status, mean/min log-prob) equals the stored calibrator row (0 mismatches over
+1,048 scorer calls). The same replay on R' (Rust, 69 tasks, enabled by injection although the default keeps Rust gate-only)
+also agrees on every task (cost ratio 0.987, accuracy change 0 points).
+
+What the replay does NOT show, and one difference of definition. The registered accuracy counts the correctness of the final
+candidate even where no gate verified (70 of the E' final candidates that are correct have no verified gate). The runtime does not
+return such an answer: the verdict is `ABSTAIN` or `LIKELY_WRONG` and the answer is withheld (fail-closed; with the default
+`tau_hi = +inf` Laya alone never promotes it). The runtime's own output on E' therefore answers 547 / 828 tasks (all
+`VERIFIED`), 46 + 235 are withheld, and its answered accuracy (withheld counted as not correct) is 62.1 % against 58.1 % for
+the 9B-only arm under the same rule (+3.99 points). That is a different quantity from the registered +0.97 points (final-candidate
+accuracy, where always-9B always answers) and both are reported in the JSON; neither is a new claim about Laya. The replay checks
+orchestration only: the router, calibrator and gates are the stored ones, so it says nothing about the model weights loading
+correctly (that is `scripts/laya_runtime_parity.py`), about live tiers, or about quantised tiers (A19).
