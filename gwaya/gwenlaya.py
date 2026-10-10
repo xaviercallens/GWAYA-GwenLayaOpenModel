@@ -19,8 +19,9 @@ Pipeline per prompt (docs/GWENLAYA_PREREGISTRATION.md section 1):
 Honesty notes. Laya itself (router / post head) is injected as plain callables; no Laya weights
 are loaded or assumed here. Without a scorer plus a fitted calibration, p_correct is None and
 only VERIFIED can be answered (fail-closed). Gate-visible checks only: the caller must not put
-scoring/hidden checks in ``checker_payload``. Math has no program-of-thought gate in this repo
-yet, so math without a reference answer is UNVERIFIED (the PoT gate is TBD).
+scoring/hidden checks in ``checker_payload``. Math without a reference answer is gated by the registered
+program-of-thought gate (gwaya/math_pot_runtime.py; VERIFIED = two derivations by the same model agree, not a
+proof; measured precision in that module's docstring); ``math_pot=False`` restores UNVERIFIED no_reference_answer.
 
 Verdict policy (recorded in evidence["policy"] on every output):
   * weak gate (python/rust, OFF by default): with ``min_visible_tests`` configured for the domain, a
@@ -355,7 +356,7 @@ class GwenLaya:
                  tau_route: float | None = None, budget_s: float | None = None,
                  checker: Checker = domain_check,
                  clock: Callable[[], float] = time.perf_counter,
-                 min_visible_tests: Mapping[str, int] | None = None) -> None:
+                 min_visible_tests: Mapping[str, int] | None = None, math_pot: bool = True) -> None:
         """``min_visible_tests`` ({'python': k, 'rust': k}) turns on the weak-gate policy: a python/rust gate
         pass backed by fewer than k visible tests (or an unknown count) is not VERIFIED (see the module
         docstring). None reads $GWENLAYA_MIN_VISIBLE_TESTS (an int for both domains, or 'python=3,rust=2');
@@ -371,6 +372,7 @@ class GwenLaya:
         self.tau_route = tau_route
         self.budget_s = budget_s
         self.checker, self.clock = checker, clock
+        self.math_pot = math_pot
 
     def _cal(self, domain: str) -> CalibrationArtifact | None:
         return self.calibrations.get(domain) or self.calibrations.get("*")
@@ -416,7 +418,8 @@ class GwenLaya:
             if "generation_error" in step:
                 outcome = "UNDECIDED"
             else:
-                res = self.checker(task, response)
+                res = self._gate(task, response, tier, step)
+                cost_s += step.get("pot", {}).get("gen_s", 0.0)  # the PoT program is a second generation
                 step["gate"] = {"status": res.status, "evidence": res.evidence}
                 p = self._p(prompt, domain, tier, i, response, res, ev, step, cal)
                 if res.status == "VERIFIED" and not self._demote_pass(task, res, step):
@@ -438,6 +441,14 @@ class GwenLaya:
         final = ev["trajectory"][-1]
         verdict = "LIKELY_WRONG" if outcome == "LIKELY_WRONG" else "ABSTAIN"
         return self._out(None, verdict, final.get("p_correct"), ev, eligible[-1].name, cost_s, domain, None)
+
+    def _gate(self, task: Task, response: str, tier: Tier, step: dict[str, Any]) -> CheckResult:
+        """Math without a gold answer: PoT re-execution by the same tier (lazy; fails closed); else the checker."""
+        from gwaya import math_pot_runtime as pot
+        if not (self.math_pot and self.checker is domain_check and pot.applies(task)):  # injected checker wins
+            return self.checker(task, response)
+        res, step["pot"] = pot.check_math_pot(task, response, tier.generate, clock=self.clock)
+        return res
 
     def policy(self) -> dict[str, Any]:
         """The verdict policy in force, as written into evidence["policy"]."""
@@ -544,9 +555,11 @@ def system_from_env() -> GwenLaya:
     GWENLAYA_TIERS: comma-separated Ollama tags, cheapest first (default: the locally installed
     qwen2.5-coder:1.5b,3b,7b; the preregistered Qwen3.5 ladder is not pulled yet).
     GWENLAYA_CALIBRATION: path to a JSON written by save_calibrations. No Laya router/scorer is
-    wired by default, so without them only VERIFIED answers are returned."""
+    wired by default, so without them only VERIFIED answers are returned.
+    GWENLAYA_MATH_POT=0 switches off the program-of-thought math gate (default on)."""
     names = [n.strip() for n in os.environ.get(
         "GWENLAYA_TIERS", "qwen2.5-coder:1.5b,qwen2.5-coder:3b,qwen2.5-coder:7b").split(",") if n.strip()]
     cal_path = os.environ.get("GWENLAYA_CALIBRATION")
     cals = load_calibrations(cal_path) if cal_path and Path(cal_path).is_file() else {}
-    return GwenLaya([ollama_tier(n) for n in names], calibrations=cals)
+    return GwenLaya([ollama_tier(n) for n in names], calibrations=cals,
+                     math_pot=os.environ.get("GWENLAYA_MATH_POT", "1") != "0")
