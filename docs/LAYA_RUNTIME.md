@@ -93,7 +93,7 @@ scripts/gwenlaya_serve.sh status | stop
   With the llama.cpp backend and Laya both on, every scorer evidence carries `quant_shift: true` and
   `served_quant` (from `GWENLAYA_SERVED_QUANT`, `unspecified` if unset), also at `evidence["laya"]`. The tier names say
   `-bf16` only because that is what the heads know. This is a label, not a correction: **the calibration is not claimed
-  to hold under this shift.** The study's own CPU generations (2B/4B Q4_K_M) are the data to measure it on.
+  to hold under this shift.** A descriptive size of the shift on 2B is in "Measured quantisation shift" below.
 - **Ports**: `scripts/gwenlaya_serve.sh` refuses to start on a port that is already bound (another job's server is
   never touched) and only signals the pids in its own pidfiles (`$GWAYA_DATA_ROOT/serve/`). Override with
   `GWENLAYA_PORT_2B`, `GWENLAYA_PORT_4B`, `GWENLAYA_THREADS`. The smoke test used port 8093 because another job held 8091.
@@ -121,6 +121,38 @@ on CPU with the LoRA merged. Latency per call, i7-4930MX, 3 threads, machine sha
 2.0-2.8 s mean (first call about 9-12 s), calibrator about 7-9 s mean (up to 512 tokens). One answer costs one router
 call plus one calibrator call per tier tried, so a Laya-assisted answer adds roughly 10 s per tier on this CPU.
 
+## Measured quantisation shift (scripts/laya_quant_shift_probe.py, `results/gwenlaya_v4/laya_runtime/quant_shift_probe.json`)
+
+Plan: `docs/ANALYSIS_PLAN_E_TPU.md` Addendum A19, committed before the run. **Descriptive and exploratory; no performance
+claim.** The 80 night tasks are in E, which the frozen Laya trained on, so absolute p values here are in-sample; the
+probe is only the paired DIFFERENCE between two serving precisions on identical tasks. Pairs: the stored bf16 training
+row of the 2B tier (vLLM-TPU, signals as trained) versus the night Qwen3.5-2B Q4_K_M generation (llama.cpp b11476, CPU,
+greedy), matched by task (prompts byte-identical in 80 of 80). Laya ran through the runtime path (fp32, CPU, sha256
+verified). Differences are Q4_K_M minus bf16; 95 percent cluster-bootstrap intervals (10,000, seed 0, cluster = task).
+
+| domain | n pairs | mean paired diff in p (95% CI) | mean abs diff in p | Spearman of p (95% CI) | gate verdict differs | truncated candidate bf16 / Q4 | identical answer text |
+|---|---|---|---|---|---|---|---|
+| python (primary) | 28 | +0.096 (-0.020, +0.230) | 0.162 | 0.64 (0.28, 0.90) | 5 of 28 (18%) | 2 / 1 of 28 | 9 of 28 |
+| rust (descriptive; Laya is gate-only for Rust) | 26 | -0.024 (-0.174, +0.126) | 0.177 | 0.65 (0.22, 0.91) | 5 of 26 (19%) | 0 / 0 | 4 of 26 |
+| math (protocol-confounded, not a quantisation contrast) | 26 | -0.182 (-0.286, -0.081) | 0.239 | 0.79 (0.58, 0.90) | not comparable | 20 / 10 of 26 | 0 of 26 |
+
+- What the numbers say: on python, for the same task the calibrated p differs by 0.16 on average (up to 0.91), and the
+  rank correlation between the two precisions is moderate (0.64). The gate verdict itself changed for 5 of 28 answers
+  (4 failed to verified, 1 verified to failed), which moves p a lot because the gate is a calibrator input. On the 9
+  python pairs whose answer text is identical, the mean absolute difference in p is 0.03, i.e. the log-prob signal
+  difference alone is small; most of the shift comes from the answers being different. Mean log-prob differs by only
+  -0.008 (Q4 minus bf16) on python. The router sees only the prompt, so it cannot differ between precisions (7 of 28
+  python prompts would start at 2B at tau 0.5).
+- Math: the night math generations were produced with the code-only prompt path (python programs, none boxed; the
+  fix-and-regenerate run produced no rows), and the bf16 side's gate is the program-of-thought gate, so math pairs
+  differ in protocol and gate, not just precision. They are shown only so nobody reads them as a quantisation effect.
+- Caveats: n is small (28 python pairs), one greedy sample per side, in-sample tasks. The two sides also differ in the
+  whole stack (vLLM-TPU bf16 versus llama.cpp CPU; log-probs may be defined and rounded differently, the stored bf16
+  min_logprob has three decimals), so this is the shift of the local serving stack against the training stack, not of the
+  4-bit weights alone. Only the 2B tier has a Q4_K_M generation; run3 (bf16 TPU, 2B and 4B) has no log-probs, so Laya
+  was not run on it. Nothing here shows the calibration holds or fails under quantisation; it shows p is not stable to
+  roughly 0.15 on a per-answer basis between the two stacks and that the intervals on the mean shift include zero.
+
 ## Not validated
 
 No end-to-end evaluation of the routed-and-scored system on this runtime exists: not accuracy, not the cost of the
@@ -129,7 +161,9 @@ fed TPU-run Qwen3.5 generations with full signals. Specifically:
 
 - **Quantisation shift**: the calibrator and router were trained on bf16 generations and signals; the llama.cpp tier
   serves Q4_K_M. Log-prob scale, text and correctness all shift with quantisation. Nothing measured says the
-  calibration or the exploratory thresholds survive that; the evidence only labels it (`quant_shift`).
+  calibration or the exploratory thresholds survive that; the evidence labels it (`quant_shift`) and a small
+  descriptive probe (below, 28 python pairs, in-sample, 2B only) shows p moving by about 0.16 on average between
+  bf16 and Q4_K_M answers to the same tasks. No 4B or 9B measurement exists.
 - **The n = 3 smoke test** (above) checks plumbing and cost only. It has no accuracy, calibration or precision content.
 - **Calibrator latency**: about 2-3 s per call for short candidates and 8 s for a longer one in the smoke test, 7-9 s
   at 512 tokens in the parity run, on a shared 8-thread CPU with 2 torch threads; the 9B tier and a free machine were
