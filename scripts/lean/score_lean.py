@@ -62,15 +62,16 @@ def score_rows(rows: list[dict], tasks: dict[str, Task], workers: int, cache: di
     def run(key):
         tid, text = key
         res = check(tasks[tid], answer_text(text))
-        return key, res.status, res.evidence.get("reason") or (str(res.evidence.get("error", ""))[:200] or None)
+        return (key, res.status, res.evidence.get("reason") or (str(res.evidence.get("error", ""))[:200] or None),
+                res.evidence.get("match"))
     with ThreadPoolExecutor(workers) as ex:
-        for key, status, reason in ex.map(run, list(todo)):
-            cache[key] = (status, reason)
+        for key, status, reason, match in ex.map(run, list(todo)):
+            cache[key] = (status, reason, match)
     for r in rows:
         if r.get("finish_reason") == "prompt_too_long":
-            r["status"], r["reason"] = "UNVERIFIED", "prompt_too_long"
+            r["status"], r["reason"], r["match"] = "UNVERIFIED", "prompt_too_long", None
         else:
-            r["status"], r["reason"] = cache[(r["task_id"], r.get("text", ""))]
+            r["status"], r["reason"], r["match"] = cache[(r["task_id"], r.get("text", ""))]
 
 
 def boot_ci(values: list[float], reps: int = 10_000, seed: int = 0) -> dict:
@@ -92,6 +93,7 @@ def summarize(tiers: list[str], greedy: dict, sampled: dict, ids: list[str], chi
             s.setdefault(r["task_id"], []).append(r)
         if not g and not s:
             continue
+        all_rows = list(g.values()) + [x for v in s.values() for x in v]
         pg = {i: g.get(i, {}).get("status") == "VERIFIED" for i in ids}
         ps = {i: any(r["status"] == "VERIFIED" for r in s.get(i, [])) for i in ids}
         proved_g[t] = pg
@@ -107,13 +109,14 @@ def summarize(tiers: list[str], greedy: dict, sampled: dict, ids: list[str], chi
                                "lean_project_missing", "reference_not_elaborated") \
                     else ("forbidden_construct" if "Unsound" in k else "lean_error")
                 reasons[k] = reasons.get(k, 0) + 1
-        all_rows = list(g.values()) + [x for v in s.values() for x in v]
         out["tiers"][t] = {
             "greedy_rows": len(g), "sample_rows": sum(len(v) for v in s.values()),
             "draws_per_task": sorted({len(v) for v in s.values()}),
             "greedy_proof_rate": boot_ci([float(pg[i]) for i in ids]) if g else None,
             "any_of_k_proof_rate": boot_ci([float(ps[i]) for i in ids]) if s else None,
             "greedy_proved": sorted(i for i in ids if pg[i]), "sampled_proved_n": sum(ps.values()),
+            "verified_match": {m: sum(1 for r in all_rows if r["status"] == "VERIFIED" and (r.get("match") or "unknown") == m)
+                               for m in ("exact", "defeq", "unknown")},
             "union_proved_n": sum(pg[i] or ps[i] for i in ids),
             "not_verified_reasons": reasons,
             "greedy_tokens": sum(r.get("completion_tokens", 0) for r in g.values()),
@@ -149,14 +152,25 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--tiers", default="qwen3.5-2b-bf16,qwen3.5-4b-bf16,qwen3.5-9b-bf16")
     ap.add_argument("--chips", default="qwen3.5-9b-bf16=4", help="chips per tier for cost (default 1)")
     ap.add_argument("--workers", type=int, default=6)
+    ap.add_argument("--timeout-s", type=float, default=None, help="per-stage Lean timeout (payload timeout_s); default 120")
+    ap.add_argument("--prev", help="a previous --out dir: rows resolved there with any reason except timeout are reused, "
+                                   "so only the timed-out checks are re-run")
     args = ap.parse_args(argv)
     tasks = {r["task_id"]: Task(r["domain"], r["task_id"], r["prompt"], r["checker_payload"]) for r in read_jsonl(Path(args.tasks))}
+    if args.timeout_s:
+        for t in tasks.values():
+            t.checker_payload["timeout_s"] = args.timeout_s
     ids = sorted(tasks)
     tiers = args.tiers.split(",")
     chips = {k: int(v) for k, v in (x.split("=") for x in args.chips.split(",") if x)}
     raw, out = Path(args.raw), Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     greedy, sampled, cache = {}, {}, {}
+    if args.prev:  # reuse every verdict that was not a timeout
+        for f in Path(args.prev).glob("scored_raw_*.jsonl"):
+            for r in read_jsonl(f):
+                if r.get("reason") != "timeout" and "status" in r:
+                    cache[(r["task_id"], r.get("text", ""))] = (r["status"], r.get("reason"), r.get("match"))
     for t in tiers:
         for kind, store, name in (("answer", greedy, f"raw_{t}.jsonl"), ("sample", sampled, f"raw_sample_{t}.jsonl")):
             rows = [r for r in dedupe(read_jsonl(raw / name)) if r["task_id"] in tasks]
