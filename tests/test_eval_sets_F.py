@@ -67,6 +67,9 @@ def test_fsb_row_filters():
         == "not_python_python"
     assert F.fsb_row({**base, "test": {"asset": None, "code": "assert f(1)==1"}})[1] == "no_insert_marker"
     assert F.fsb_row({**base, "test": {"asset": None, "code": "#<INSERT>\nprint(f(1))\n"}})[1] == "no_top_level_assert"
+    # asserts only inside a function that is called later: a truncated gate would be a bare definition
+    wrapped = {**base, "test": {"asset": None, "code": "#<INSERT>\ndef check(g):\n    assert g(1) == 1\n\ncheck(f)\n"}}
+    assert F.fsb_row(wrapped)[1] == "asserts_only_inside_functions"
 
 
 def test_bcb_row_converts_unittest_and_gate_keeps_first_method():
@@ -122,6 +125,28 @@ def test_sanity_python_end_to_end_on_synthetic_leetcode_row():
     # a wrong reference is rejected
     bad = dict(r, _reference=r["_reference"].replace("a + b", "a - b"))
     assert F.sanity_python(bad)[0].startswith("reference_fails_hidden")
+
+
+def test_hidden_assert_shown_in_prompt_is_detected():
+    prompt = "Fix it.\nTraceback:\n    assert(solve() == 7)\nAssertionError\n"
+    assert F.hidden_asserts_in_prompt(prompt, "assert(solve() == 7)\n") == 1
+    assert F.hidden_asserts_in_prompt("Write solve().", "assert(solve() == 7)\n") == 0
+    row = {"task_id": "py/x/1", "prompt": prompt, "checker_payload": {"tests": "assert(solve() == 7)\n"},
+           "_reference": "def solve():\n    return 7\n"}
+    assert F.sanity_python(row)[0] == "hidden_test_shown_in_prompt"
+
+
+def test_hidden_must_extend_gate():
+    one = {"checker_payload": {"tests": "assert f(1) == 1\n"}, "gate_payload": {"tests": "assert f(1) == 1\n"}}
+    two = {"checker_payload": {"tests": "assert f(1) == 1\nassert f(2) == 2\n"},
+           "gate_payload": {"tests": "assert f(1) == 1\n"}}
+    assert not F.hidden_extends_gate(one) and F.hidden_extends_gate(two)
+    ut_h = "import unittest\nclass T(unittest.TestCase):\n    def test_a(self): pass\n    def test_b(self): pass\n"
+    ut_g = "import unittest\nclass T(unittest.TestCase):\n    def test_a(self): pass\n"
+    assert F.hidden_extends_gate({"_unittest": True, "checker_payload": {"tests": ut_h},
+                                  "gate_payload": {"tests": ut_g}})
+    assert not F.hidden_extends_gate({"_unittest": True, "checker_payload": {"tests": ut_g},
+                                      "gate_payload": {"tests": ut_g}})
 
 
 def test_informative_gram_rejects_alphabet_and_literal_runs():

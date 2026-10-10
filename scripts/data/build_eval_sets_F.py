@@ -29,6 +29,7 @@ import json
 import os
 import random
 import re
+import shutil
 import sys
 from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
@@ -279,8 +280,14 @@ def fsb_row(r: dict[str, Any]) -> tuple[dict[str, Any] | None, str]:
         return None, "test_needs_third_party:" + ",".join(sorted(mods - ALLOWED_TEST_MODULES))[:40]
     if "unittest" in mods or "pytest" in mods:
         return None, "test_uses_unittest_or_pytest"
-    idx = next((i for i, s in enumerate(tree.body) if _has_assert(s)), None)
+    # the gate runs the setup and the FIRST executed assertion; asserts that live only inside a function the test
+    # calls later (`def check(...): assert ...` + `check(f)`) would make the truncated gate a bare definition that
+    # passes for anything, so such tests are not converted
+    defs = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+    idx = next((i for i, s in enumerate(tree.body) if _has_assert(s) and not isinstance(s, defs)), None)
     if idx is None:
+        if any(_has_assert(s) for s in tree.body):
+            return None, "asserts_only_inside_functions"
         return None, "no_top_level_assert"
     gate_tree = ast.Module(body=tree.body[: idx + 1], type_ignores=[])
     ref = (r.get("canonical_solution") or "")
@@ -358,6 +365,34 @@ def bcb_row(r: dict[str, Any], idx: int) -> tuple[dict[str, Any] | None, str]:
             "stratum": "python/BigCodeBench", "_reference": ref, "_unittest": True}, ""
 
 
+def count_test_methods(src: str) -> int:
+    """`test*` methods of the TestCase classes in a (unittest-style) suite."""
+    return sum(1 for n in ast.walk(ast.parse(src))
+               if isinstance(n, ast.FunctionDef) and n.name.startswith("test"))
+
+
+def hidden_extends_gate(row: dict) -> bool:
+    """True iff the hidden suite holds something the gate's visible test does not (more assertions, or more test
+    methods for the unittest-converted tasks). Otherwise the gate would verify exactly what is scored."""
+    h, g = row["checker_payload"]["tests"], row["gate_payload"]["tests"]
+    if row.get("_unittest"):
+        return count_test_methods(h) > count_test_methods(g)
+    return count_assertions(h) > count_assertions(g)
+
+
+def hidden_asserts_in_prompt(prompt: str, tests: str) -> int:
+    """Hidden assertion lines (>= 12 chars, whitespace-squashed) that the prompt shows verbatim. A positive count
+    means the prompt itself reveals part of the hidden suite (e.g. FullStackBench's 'fix the failing code' variants,
+    which paste the failing assert), so the task is not a fair held-out test."""
+    p = _squash(prompt)
+    n = 0
+    for line in tests.splitlines():
+        t = _squash(line.strip())
+        if t.startswith("assert") and len(t) >= 12 and t in p:
+            n += 1
+    return n
+
+
 # ---------------------------------------------------------------------------------------------------------------
 # python sanity: reference passes hidden+gate, trivial stub (reference signatures, empty bodies) fails hidden
 
@@ -385,6 +420,10 @@ def _verdict(row: dict, payload_key: str, code: str) -> tuple[str, float | None,
 def sanity_python(row: dict) -> tuple[str | None, dict[str, Any]]:
     ref = row.get("_reference") or ""
     info: dict[str, Any] = {}
+    if hidden_asserts_in_prompt(row["prompt"], row["checker_payload"]["tests"]):
+        return "hidden_test_shown_in_prompt", info
+    if not hidden_extends_gate(row):
+        return "gate_equals_hidden_suite", info
     if not ref.strip() or "exit(0)" in ref:
         # FullStackBench hides the reference of its LeetCode-style tasks (`exit(0)`): borrow a verified one from
         # LeetCodeDataset-train (same method name); the hidden tests themselves must accept it.
@@ -409,10 +448,15 @@ def sanity_python(row: dict) -> tuple[str | None, dict[str, Any]]:
     st, _, err = _verdict(row, "gate_payload", ref)
     if st != "VERIFIED":
         return f"reference_fails_gate:{st}:{err}", info
-    st, _, _ = _verdict(row, "checker_payload", stub_of(ref))
+    stub = stub_of(ref)
+    st, _, _ = _verdict(row, "checker_payload", stub)
     info["stub_status"] = st
     if st == "VERIFIED":
         return "stub_passes_hidden", info
+    st, _, _ = _verdict(row, "gate_payload", stub)
+    info["stub_gate_status"] = st
+    if st == "VERIFIED":
+        return "stub_passes_gate", info   # a gate that cannot fail is not a gate
     return None, info
 
 
@@ -584,12 +628,25 @@ def decontaminate_rows(dec, rows: list[dict], dedup: bool = True,
         elif r["domain"] == "lean4":
             item.fields[:] = [("statement", r["checker_payload"]["formal_statement"])]
         hits = dec.check(item)
-        if ignored is not None:
-            ignored["ngram_hits_total"] += sum(h.method.startswith("ngram") for h in hits)
-        junk = [h for h in hits if h.method.startswith("ngram") and not informative_gram(h.detail)]
-        if junk and ignored is not None:
-            ignored["ngram_hits_ignored_uninformative"] += len(junk)
-        hits = [h for h in hits if h not in junk]
+        # an n-gram hit against item k stands only if at least one gram they share is informative; evaluated over
+        # ALL shared grams (Hit.detail is just the first one and depends on the interpreter's hash seed)
+        gram_hits = [h for h in hits if h.method.startswith("ngram")]
+        if gram_hits:
+            from gwaya import decontaminate as dc
+            f = dc.features(item, dec.cfg)
+            frozen = getattr(dec.index, "_frozen_df", None) or set()
+            informative: dict[str, bool] = {}
+            for g in sorted(f.grams):
+                if g in frozen:
+                    continue
+                ok = informative_gram(f.gram_text.get(g, ""))
+                for k in dc._get(dec.index.grams, g):
+                    informative[k] = informative.get(k, False) or ok
+            junk = [h for h in gram_hits if not informative.get(h.other, True)]
+            if ignored is not None:
+                ignored["ngram_hits_total"] += len(gram_hits)
+                ignored["ngram_hits_ignored_uninformative"] += len(junk)
+            hits = [h for h in hits if h not in junk]
         why = None
         if hits:
             why = {"methods": sorted({h.method.split(":")[0] for h in hits}),
@@ -770,8 +827,12 @@ def build_python(src: dict, dec, workers: int, fsb_n: int, bcb_n: int, seed: int
         vis = unittest_gate_visible(r["prompt"], g) if r.get("_unittest") else gate_visible_in_prompt(r["prompt"], g)
         r["gate_visible_in_prompt"] = vis["visible"]
         r["gate_visible_detail"] = {"n_items": vis["n_items"], "n_shown": vis["n_shown"]}
-        r["n_hidden_tests"] = count_assertions(r["checker_payload"]["tests"])
-        r["n_gate_assertions"] = count_assertions(g)
+        if r.get("_unittest"):   # BigCodeBench: the unit is the test method
+            r["n_hidden_tests"] = count_test_methods(r["checker_payload"]["tests"])
+            r["n_gate_assertions"] = count_test_methods(g)
+        else:                    # assertion-style suites: individual assertions
+            r["n_hidden_tests"] = count_assertions(r["checker_payload"]["tests"])
+            r["n_gate_assertions"] = count_assertions(g)
     rep["decontam_dropped"] = all_drops
     rep["ngram_filter"] = dict(ign)
     return sorted(out, key=lambda r: r["task_id"]), rep
@@ -867,6 +928,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--only", choices=["python", "math", "lean"], nargs="*", default=["python", "math", "lean"])
     a = ap.parse_args(argv)
     root = a.data_root
+    os.environ.setdefault("HF_HOME", str(root / "hf-home"))  # before huggingface_hub / datasets are imported
     lean_dir = a.lean_dir or (root / "eval_sets_F_raw" / "lean")
     a.out.mkdir(parents=True, exist_ok=True)
     paths = existing_sets(root, a.lean_a18)
@@ -902,6 +964,7 @@ def main(argv: list[str] | None = None) -> int:
     if "lean" in a.only:
         rows, rep = build_lean(lean_dir, dec)
         out_rows["lean"], report["lean"] = rows, rep
+        shutil.copyfile(lean_dir / "lean_sanity.json", a.out / "lean_sanity_F.json")
     for dom, rows in out_rows.items():
         ids = [r["task_id"] for r in rows]
         assert len(ids) == len(set(ids)), f"duplicate task ids in {dom}"
@@ -915,11 +978,24 @@ def main(argv: list[str] | None = None) -> int:
             for r in rows:
                 vis[r["source"]][str(r["gate_visible_in_prompt"])] += 1
             manifest["counts"][dom]["gate_visible_in_prompt_by_source"] = {k: dict(v) for k, v in sorted(vis.items())}
-            manifest["counts"][dom]["hidden_tests_per_task"] = {
-                "min": min(r["n_hidden_tests"] for r in rows), "max": max(r["n_hidden_tests"] for r in rows),
-                "mean": round(sum(r["n_hidden_tests"] for r in rows) / len(rows), 1)}
+            per_src: dict[str, list[int]] = defaultdict(list)
+            for r in rows:
+                per_src[r["source"]].append(r["n_hidden_tests"])
+            manifest["counts"][dom]["hidden_tests_per_task_by_source"] = {
+                k: {"min": min(v), "max": max(v), "mean": round(sum(v) / len(v), 1),
+                    "unit": "test methods" if k.startswith("bigcode") else "assertions"}
+                for k, v in sorted(per_src.items())}
+            manifest["counts"][dom]["gate_tests_per_task"] = "the first assertion statement (LeetCodeDataset, FullStackBench) " \
+                "or the first test method (BigCodeBench); the hidden suite is strictly larger for every kept task"
             manifest["counts"][dom]["stub_fails_hidden"] = all(
                 (r.get("_sanity") or {}).get("stub_status") not in (None, "VERIFIED") for r in rows)
+            manifest["counts"][dom]["stub_fails_gate"] = all(
+                (r.get("_sanity") or {}).get("stub_gate_status") not in (None, "VERIFIED") for r in rows)
+    if "lean" in out_rows:
+        manifest["files"]["lean_sanity_F.json"] = {
+            "note": "raw output of scripts/lean/build_minif2f_tasks.py --split validation (every statement elaborated "
+                    "with sorry under the pinned Mathlib; excluded items with the Lean error)",
+            "sha256": sha256_file(a.out / "lean_sanity_F.json")}
     # compact reports into the manifest; full drop lists in a separate file
     full = {d: rep for d, rep in report.items()}
     for d, rep in report.items():
