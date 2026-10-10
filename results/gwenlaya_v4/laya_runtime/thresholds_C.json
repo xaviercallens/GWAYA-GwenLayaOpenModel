@@ -1,0 +1,52 @@
+{
+ "thresholds": {
+  "python": {
+   "tau_hi": 0.7959183673469388,
+   "tau_lo": 0.6888888888888889
+  },
+  "math": {
+   "tau_hi": 0.5,
+   "tau_lo": 0.15789473684210525
+  }
+ },
+ "detail": {
+  "python": {
+   "tau_hi": 0.7959183673469388,
+   "tau_lo": 0.6888888888888889,
+   "n_C": 195,
+   "E_prime_descriptive": {
+    "n": 507,
+    "base_accuracy": 0.5088757396449705,
+    "likely_correct_n": 252,
+    "likely_correct_error": 0.09126984126984128,
+    "likely_wrong_n": 252,
+    "likely_wrong_precision": 0.8888888888888888
+   }
+  },
+  "math": {
+   "tau_hi": 0.5,
+   "tau_lo": 0.15789473684210525,
+   "n_C": 654,
+   "E_prime_descriptive": {
+    "n": 1977,
+    "base_accuracy": 0.6707132018209409,
+    "likely_correct_n": 1340,
+    "likely_correct_error": 0.10298507462686568,
+    "likely_wrong_n": 308,
+    "likely_wrong_precision": 0.9253246753246753
+   }
+  }
+ },
+ "meta": {
+  "status": "EXPLORATORY, in-sample on C (isotonic fitted on C); no Laya threshold was registered",
+  "alpha": 0.1,
+  "lo_precision": 0.9,
+  "recipe": "gwaya.gwenlaya.choose_tau_hi / choose_tau_lo",
+  "inputs": [
+   "preds_C_calibrator.jsonl",
+   "preds_Eprime_calibrator.jsonl",
+   "docs/laya_isotonic_C.json"
+  ],
+  "caveat": "E' numbers assume the full-signal setting (log-probs present, candidate not truncated)"
+ }
+}
