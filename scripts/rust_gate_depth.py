@@ -23,55 +23,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 
-def _scan(src: str, start: int, stop_at_close: bool) -> list[tuple[int, int]]:
-    """Top-level statement spans (split at `;` outside (), [], {} and literals) of src[start:]."""
-    spans, depth, i, s0, n = [], 0, start, start, len(src)
-    while i < n:
-        c = src[i]
-        if src.startswith("//", i):
-            i = src.find("\n", i)
-            i = n if i < 0 else i
-            continue
-        if src.startswith("/*", i):
-            i = src.find("*/", i)
-            i = n if i < 0 else i + 2
-            continue
-        if c == '"':
-            i += 1
-            while i < n and src[i] != '"':
-                i += 2 if src[i] == "\\" else 1
-        elif c == "'":
-            m = re.match(r"'(?:\\.[^']*|[^\\'])'", src[i:])
-            if m:
-                i += m.end() - 1
-        elif c in "([{":
-            depth += 1
-        elif c in ")]}":
-            if depth == 0 and stop_at_close:
-                break
-            depth -= 1
-        elif c == ";" and depth == 0:
-            spans.append((s0, i + 1))
-            s0 = i + 1
-        i += 1
-    return spans
-
-
-def split_main(tests: str) -> tuple[str, list[str], list[str], str]:
-    """-> (text before main's body, preamble statements, assertion statements, text after the body)."""
-    m = re.search(r"fn\s+main\s*\(\s*\)\s*\{", tests)
-    if not m:
-        raise ValueError("no_main")
-    spans = _scan(tests, m.end(), stop_at_close=True)
-    if not spans:
-        raise ValueError("no_statements")
-    pre, asserts = [], []
-    for a, b in spans:
-        stmt = tests[a:b]
-        body = re.sub(r"\A(?:\s|//[^\n]*\n|/\*.*?\*/)*", "", stmt, flags=re.S)  # leading whitespace/comments
-        (asserts if re.match(r"assert(?:_eq|_ne)?!", body) else pre).append(stmt)
-    end_body = spans[-1][1]
-    return tests[:m.end()], pre, asserts, tests[end_body:]
+from gwaya.domains.rust_tests import _scan, split_main  # noqa: E402,F401  (moved there for A15.3; unchanged)
 
 
 def build_gate(tests: str, k: int) -> str:
