@@ -59,10 +59,11 @@ def done_keys(path: Path, need: int = 1) -> set[tuple[str, str]]:
 
 
 def sample_params(kind: str, samples: int, temperature: float, top_p: float, seed: int) -> dict:
-    """Greedy for answer/pot; for sample, n independent draws (the registered Lean protocol: k=8, T=0.8, top_p 0.95)."""
+    """Greedy for answer/pot; for sample, n independent draws (the registered Lean protocol: k=8, T=0.8, top_p 0.95).
+    vLLM-TPU (JAX) rejects a per-request seed, so `seed` is applied to the engine instead (LLM(seed=...)), not here."""
     if kind != "sample":
         return {"temperature": 0.0}
-    return {"n": samples, "temperature": temperature, "top_p": top_p, "seed": seed}
+    return {"n": samples, "temperature": temperature, "top_p": top_p}
 
 
 class NoLogprobsError(RuntimeError):
@@ -133,7 +134,7 @@ def main(argv: list[str] | None = None) -> int:
     from vllm import LLM, SamplingParams
 
     t0 = time.time()
-    kwargs = dict(model=args.model, max_model_len=args.max_model_len, max_num_seqs=args.max_seqs,
+    kwargs = dict(model=args.model, max_model_len=args.max_model_len, max_num_seqs=args.max_seqs, seed=args.seed,
                   max_num_batched_tokens=args.max_batched_tokens, tensor_parallel_size=args.tensor_parallel)
     if "Qwen3.5" in args.model or "Qwen3.8" in args.model:  # multimodal repos: text only
         kwargs["limit_mm_per_prompt"] = {"image": 0, "video": 0}

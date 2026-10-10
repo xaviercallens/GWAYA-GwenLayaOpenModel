@@ -149,5 +149,5 @@ def test_gen_batch_sample_mode_resumes_only_complete_tasks(tmp_path):
     rows.append({"domain": "lean4", "task_id": "c", "finish_reason": "prompt_too_long"})
     p.write_text("".join(json.dumps(r) + "\n" for r in rows))
     assert gb.done_keys(p, need=3) == {("lean4", "a"), ("lean4", "c")}
-    assert gb.sample_params("sample", 8, 0.8, 0.95, 0) == {"n": 8, "temperature": 0.8, "top_p": 0.95, "seed": 0}
+    assert gb.sample_params("sample", 8, 0.8, 0.95, 0) == {"n": 8, "temperature": 0.8, "top_p": 0.95}
     assert gb.sample_params("answer", 8, 0.8, 0.95, 0) == {"temperature": 0.0}
