@@ -1,0 +1,304 @@
+{
+ "addendum": "A21",
+ "date": "2026-10-10",
+ "seed": 20261010,
+ "script": "scripts/data/build_eval_sets_F.py",
+ "purpose": "fresh out-of-sample sets for the frozen Laya (docs/LAYA_FREEZE.txt); no model has generated for F",
+ "reference_sets_screened_against": {
+  "E": {
+   "path": "/mnt/data/home/xavkal/gwaya-data/night/results/tasks_E_primary.d25.jsonl",
+   "n_records": 1536,
+   "sha256": "2143110c78a3a9f57599dce77021cf4571fc57cf2584017f16ebdd08d5acba66"
+  },
+  "P_all": {
+   "path": "/mnt/data/home/xavkal/gwaya-data/laya_data/tasks_P_all.jsonl",
+   "n_records": 2656,
+   "sha256": "b379d1193d1bcce68f60efe999f3bb4af13634f7ab0871846dd37bacfc00469e"
+  },
+  "Rust_fresh": {
+   "path": "/mnt/data/home/xavkal/gwaya-data/laya_data/tasks_Rust_fresh.jsonl",
+   "n_records": 69,
+   "sha256": "4d6d03e5a03c409b64c129b37689dbb2091cfd8d9929b47bb9c300e1aa3f3bf3"
+  },
+  "A18_minif2f_test": {
+   "path": "/home/xavkal/xdev/GWAYA-GwenLayaOpenModel/.claude/worktrees/agent-a261411ebec1b591e/results/gwenlaya_v4/lean_a18/tasks_lean.jsonl",
+   "n_records": 223,
+   "sha256": "be0603bcc6b274cbb6cb9f39663f1af9fef0a782f2922a2739953e0bc88dd6a7"
+  }
+ },
+ "laya_router_rows_screened": {
+  "laya:laya_calib": 283,
+  "laya:laya_eprime": 828,
+  "laya:laya_rfresh": 69,
+  "laya:laya_train": 3081
+ },
+ "decontamination_methods": "gwaya.decontaminate.Decontaminator (exact, py_ast, ngram13, jaccard>=0.8, math_norm/template/nums, test_io, id, lean_stmt) + cross-source dedup; any hit removes",
+ "allowed_test_modules": "python stdlib + numpy (test code); references may need whatever the sandbox python has",
+ "files": {
+  "tasks_F_python.jsonl": {
+   "rows": 407,
+   "sha256": "49546c3bd612d5b4cf2eb1b72fc73b7822bf67f831efd954a5d3060bc417e68e"
+  },
+  "tasks_F_math.jsonl": {
+   "rows": 501,
+   "sha256": "8277bc52e3a0f06ae809744db76bd85c83b88eca5fa75d99c0fde3073230de70"
+  },
+  "tasks_F_lean.jsonl": {
+   "rows": 229,
+   "sha256": "27ca4024f2b4bbb61986f6d4ef655c47ffc57dd9607b2e01278bf278872d097d"
+  },
+  "lean_sanity_F.json": {
+   "note": "raw output of scripts/lean/build_minif2f_tasks.py --split validation (every statement elaborated with sorry under the pinned Mathlib; excluded items with the Lean error)",
+   "sha256": "519354357aaee52914c0f2a252a3d9e8969f2794cb5e201495b4ff728784c14d"
+  }
+ },
+ "counts": {
+  "python": {
+   "n": 407,
+   "per_source": {
+    "bigcode/bigcodebench:v0.1.4": 90,
+    "ByteDance/FullStackBench:en": 112,
+    "newfacade/LeetCodeDataset:test": 205
+   },
+   "per_stratum": {
+    "python/BigCodeBench": 90,
+    "python/FullStackBench": 112,
+    "python/LeetCodeDataset": 205
+   },
+   "gate_visible_in_prompt_by_source": {
+    "ByteDance/FullStackBench:en": {
+     "False": 79,
+     "True": 27,
+     "None": 6
+    },
+    "bigcode/bigcodebench:v0.1.4": {
+     "False": 64,
+     "True": 18,
+     "None": 8
+    },
+    "newfacade/LeetCodeDataset:test": {
+     "False": 161,
+     "True": 44
+    }
+   },
+   "hidden_tests_per_task_by_source": {
+    "ByteDance/FullStackBench:en": {
+     "min": 2,
+     "max": 8,
+     "mean": 3.4,
+     "unit": "assertions"
+    },
+    "bigcode/bigcodebench:v0.1.4": {
+     "min": 4,
+     "max": 12,
+     "mean": 5.6,
+     "unit": "test methods"
+    },
+    "newfacade/LeetCodeDataset:test": {
+     "min": 2,
+     "max": 266,
+     "mean": 98.0,
+     "unit": "assertions"
+    }
+   },
+   "gate_tests_per_task": "the first assertion statement (LeetCodeDataset, FullStackBench) or the first test method (BigCodeBench); the hidden suite is strictly larger for every kept task",
+   "stub_fails_hidden": true,
+   "stub_fails_gate": true
+  },
+  "math": {
+   "n": 501,
+   "per_source": {
+    "EleutherAI/hendrycks_math:test": 200,
+    "MathArena/aime_2025": 23,
+    "MathArena/aime_2026": 25,
+    "MathArena/brumo_2025": 30,
+    "MathArena/hmmt_feb_2025": 30,
+    "MathArena/hmmt_feb_2026": 33,
+    "MathArena/hmmt_nov_2025": 30,
+    "openai/gsm8k:test": 130
+   },
+   "per_stratum": {
+    "math/MATH-test": 200,
+    "math/competition": 171,
+    "math/GSM8K": 130
+   }
+  },
+  "lean": {
+   "n": 229,
+   "per_source": {
+    "cat-searcher/minif2f-lean4:validation": 229
+   },
+   "per_stratum": {
+    "lean4/miniF2F-valid": 229
+   }
+  }
+ },
+ "reports": {
+  "python": {
+   "sources": {
+    "LeetCodeDataset": {
+     "n_candidates_after_conversion": 228,
+     "conversion_drops": {},
+     "sanity_drops": {
+      "reference_fails_hidden": 20,
+      "reference_too_slow_for_a_stable_timeout": 2,
+      "gate_equals_hidden_suite": 1
+     },
+     "sanity_dropped": "23 items; see decontamination_report_F.json",
+     "n_after_sanity": 205,
+     "decontam_drops": 0,
+     "n_after_decontam": 205,
+     "n_final": 205
+    },
+    "FullStackBench": {
+     "n_candidates_after_conversion": 359,
+     "conversion_drops": {
+      "needs_asset_files": 76,
+      "asserts_only_inside_functions": 238,
+      "test_needs_third_party": 133,
+      "no_insert_marker": 2,
+      "test_uses_unittest_or_pytest": 3,
+      "no_top_level_assert": 32,
+      "test_unparsable": 1
+     },
+     "sanity_drops": {
+      "no_reference_solution": 9,
+      "gate_equals_hidden_suite": 126,
+      "reference_fails_hidden": 49,
+      "hidden_test_shown_in_prompt": 28,
+      "stub_passes_gate": 1
+     },
+     "sanity_dropped": "213 items; see decontamination_report_F.json",
+     "n_after_sanity": 146,
+     "decontam_drops": 34,
+     "n_after_decontam": 112,
+     "n_final": 112
+    },
+    "BigCodeBench": {
+     "n_candidates_after_conversion": 364,
+     "conversion_drops": {
+      "needs_third_party": 776
+     },
+     "sanity_drops": {
+      "reference_fails_hidden": 80,
+      "stub_passes_gate": 7,
+      "reference_too_slow_for_a_stable_timeout": 2
+     },
+     "sanity_dropped": "89 items; see decontamination_report_F.json",
+     "n_after_sanity": 275,
+     "decontam_drops": 0,
+     "n_after_decontam": 275,
+     "n_final": 90
+    }
+   },
+   "decontam_dropped": "34 items; see decontamination_report_F.json",
+   "ngram_filter": {
+    "ngram_hits_total": 164,
+    "ngram_hits_ignored_uninformative": 164
+   }
+  },
+  "math": {
+   "MATH_test": {
+    "n_test": 5000,
+    "excluded_in_MATH500": 500,
+    "no_boxed_answer": 0,
+    "n_candidates": 4500
+   },
+   "competition_candidates": {
+    "MathArena/aime_2025": 30,
+    "MathArena/aime_2026": 30,
+    "MathArena/hmmt_feb_2025": 30,
+    "MathArena/hmmt_feb_2026": 33,
+    "MathArena/hmmt_nov_2025": 30,
+    "MathArena/brumo_2025": 30
+   },
+   "competition_skipped": {
+    "MathArena/cmimc_2025": "40 problems left out to bound generation cost (can be added later)",
+    "MathArena/smt_2025": "53 problems left out to bound generation cost (can be added later)"
+   },
+   "MATH-test": {
+    "n_after_sanity": 4500,
+    "n_after_decontam": 4298,
+    "decontam_drops": 202,
+    "n_final": 200
+   },
+   "GSM8K": {
+    "n_after_sanity": 1319,
+    "n_after_decontam": 1319,
+    "decontam_drops": 0,
+    "n_final": 130
+   },
+   "competition": {
+    "n_after_sanity": 183,
+    "n_after_decontam": 171,
+    "decontam_drops": 12,
+    "n_final": 171
+   },
+   "sanity_dropped": "0 items; see decontamination_report_F.json",
+   "ngram_filter": {
+    "ngram_hits_total": 690,
+    "ngram_hits_ignored_uninformative": 82
+   },
+   "decontam_dropped": "214 items; see decontamination_report_F.json",
+   "math_test_final_by_subject": {
+    "algebra": 47,
+    "counting_and_probability": 19,
+    "geometry": 19,
+    "intermediate_algebra": 35,
+    "number_theory": 23,
+    "prealgebra": 37,
+    "precalculus": 20
+   }
+  },
+  "lean": {
+   "ngram_filter": {
+    "ngram_hits_total": 3,
+    "ngram_hits_ignored_uninformative": 3
+   },
+   "n_split": 244,
+   "n_elaborating": 229,
+   "excluded_not_elaborating": "15 items; see decontamination_report_F.json",
+   "decontam_dropped": "0 items; see decontamination_report_F.json",
+   "n_final": 229,
+   "mathlib": {
+    "lean_toolchain": "leanprover/lean4:v4.7.0",
+    "mathlib_tag": "v4.7.0",
+    "mathlib_commit": "a45ae63747140c1b2cbad9d46f518015c047047a",
+    "cache": "lake exe cache get",
+    "created": "2026-10-07"
+   },
+   "lean_tasks_sha256_raw": "d3ce82272609ee3591ae3266106c583981b30e11d79b521f94882691e545455a"
+  }
+ },
+ "source_revisions": {
+  "newfacade/LeetCodeDataset": "215604aeed660029df7de2fea5a4d7b6ed476a08",
+  "ByteDance/FullStackBench": "11e2e64dbcd66d3680e5025cb9ad8b3c2275080f",
+  "bigcode/bigcodebench": "b74c0d0bf70d2c0bc459be537895cca163007f1a",
+  "MathArena/aime_2025": "c94da77eb22bbd6439e62a323bec18493a421302",
+  "MathArena/aime_2026": "d2de22f3c656b4f56cf8981212186377d1e23bc3",
+  "MathArena/hmmt_feb_2025": "6fdc4277120810ff75aa22d2d5489b91f7a262a1",
+  "MathArena/hmmt_feb_2026": "02fba4f74d8e68e73e66a02d540fd979c05c274c",
+  "MathArena/hmmt_nov_2025": "118dbfb45c4c9467c672268ed55166642897aa46",
+  "MathArena/brumo_2025": "6de9bc0987f5710c6376ee980e1483dbeb55cfda",
+  "MathArena/cmimc_2025": "8f27517ce4ad1d05e023c0e7eca4344754ba2a04",
+  "MathArena/smt_2025": "d8e99d83f1583842f46d4953cd960eea5d887e45"
+ },
+ "source_files_sha256": {
+  "LeetCodeDataset-test.jsonl": "aec951945feb555b4c72783519452a7a0437ca8c6e5624a83d0ae888718fa4ed",
+  "LeetCodeDataset-train.jsonl": "ef7d64d34b092859607c1010bdd23540860a8cfff2ed7aeb0fe82e0ad524919b",
+  "FullStackBench/en/test.parquet": "f0bd3d34747fb25fc138d25d9ab9625770f3609bd7aac437311106bcb2c43a77",
+  "bigcodebench/v0.1.4.parquet": "d9a4965821c9507ebdfb551c288656b2d5fe553234f5183044333ca8a4018267",
+  "MathArena/aime_2025": "9f9066ff48ad2e31f9bf1b1ac6d5e80693195f987985f2859f89dd25ffa51c2d",
+  "MathArena/aime_2026": "d91db799651b4cc1f0734f52792a695c9cc60dac342524b3d8e5b2ff31c3e957",
+  "MathArena/hmmt_feb_2025": "ccca64d248b89dc0765e40b893fe4ebeab242226a4336027d95d256886a3d5f2",
+  "MathArena/hmmt_feb_2026": "e5fcff6b1c2262841c0c37bf6d7b42529f284528d5f0d5c45c52e8bf0654a916",
+  "MathArena/hmmt_nov_2025": "87ef3faaae0367b51bfa966d948106a507f39058a197e311f74fa5a65c8fe552",
+  "MathArena/brumo_2025": "ef510deea34c5b6d165c06d020acede1c1031eb91d90336cb4d615d9e55ba391",
+  "MathArena/cmimc_2025": "7f290e5564265e57b0fe91c72bde2f1a06ca147148b7787084c54a0354abfcce",
+  "MathArena/smt_2025": "0818b4eeadefda3fc1f2866dc04a13840c7b359d3f40e5bbcaa4805828be87b0"
+ },
+ "source_problems": [
+  "hub revision lookup failed: OfflineModeIsEnabled"
+ ],
+ "total_tasks": 1137
+}
