@@ -545,7 +545,8 @@ class GwenLaya:
                 step["laya"] = laya_ev
                 ev.setdefault("laya", {}).update({"scorer": laya_ev, "truncated_candidate": bool(laya_ev.get("truncated_candidate")),
                                                   "signals_incomplete": bool(laya_ev.get("signals_incomplete")),
-                                                  "model_sha": laya_ev.get("model_sha")})
+                                                  "model_sha": laya_ev.get("model_sha"),
+                                                  **{k: laya_ev[k] for k in ("quant_shift", "served_quant") if k in laya_ev}})
                 if laya_ev.get("likely_correct_vetoed"):
                     step["likely_correct_vetoed"] = list(laya_ev["likely_correct_vetoed"])
             if raw_out is None:  # scorer not applicable (domain/tier it never saw): no p, gate-only policy
@@ -608,34 +609,68 @@ def system_from_env() -> GwenLaya:
     qwen2.5-coder:1.5b,3b,7b; the preregistered Qwen3.5 ladder is not pulled yet).
     GWENLAYA_CALIBRATION: path to a JSON written by save_calibrations. No Laya router/scorer is
     wired unless GWENLAYA_LAYA_DIR is set (gwaya.laya_runtime), so otherwise only VERIFIED answers are returned.
-    GWENLAYA_MATH_POT=0 switches off the program-of-thought math gate (default on)."""
-    names = [n.strip() for n in os.environ.get(
-        "GWENLAYA_TIERS", "qwen2.5-coder:1.5b,qwen2.5-coder:3b,qwen2.5-coder:7b").split(",") if n.strip()]
+    GWENLAYA_MATH_POT=0 switches off the program-of-thought math gate (default on).
+    GWENLAYA_BACKEND=llamacpp serves the tiers from running llama-servers (gwaya.llama_tier, returns log-probs) listed in
+    GWENLAYA_LLAMA_URLS='name=url,name=url' (cheapest first; names are used verbatim and GWENLAYA_TIERS is ignored).
+    Default backend 'ollama' is unchanged."""
+    backend = os.environ.get("GWENLAYA_BACKEND", "ollama").strip().lower() or "ollama"
     cal_path = os.environ.get("GWENLAYA_CALIBRATION")
     cals = load_calibrations(cal_path) if cal_path and Path(cal_path).is_file() else {}
-    tiers = [ollama_tier(n) for n in names]
+    if backend == "llamacpp":
+        tiers = _llama_tiers(os.environ.get("GWENLAYA_LLAMA_URLS", ""))
+    elif backend == "ollama":
+        names = [n.strip() for n in os.environ.get(
+            "GWENLAYA_TIERS", "qwen2.5-coder:1.5b,qwen2.5-coder:3b,qwen2.5-coder:7b").split(",") if n.strip()]
+        tiers = [ollama_tier(n) for n in names]
+    else:
+        raise ValueError(f"GWENLAYA_BACKEND must be 'ollama' or 'llamacpp', got {backend!r}")
     math_pot = os.environ.get("GWENLAYA_MATH_POT", "1") != "0"
     laya_dir = os.environ.get("GWENLAYA_LAYA_DIR")
     if not laya_dir:  # exactly the pre-Laya behaviour
         return GwenLaya(tiers, calibrations=cals, math_pot=math_pot)
-    return _system_with_laya(tiers, cals, laya_dir, math_pot)
+    return _system_with_laya(tiers, cals, laya_dir, math_pot, quant_shift=backend == "llamacpp")
+
+
+def _llama_tiers(spec: str) -> list[Tier]:
+    """'name=url,name=url' -> llama.cpp tiers in the given order (cheapest first). Raises on an empty or bad spec."""
+    from gwaya.llama_tier import llama_cpp_tier
+    tiers: list[Tier] = []
+    for part in (p.strip() for p in spec.split(",") if p.strip()):
+        name, sep, url = part.partition("=")
+        if not (sep and name.strip() and url.strip().startswith("http")):
+            raise ValueError(f"GWENLAYA_LLAMA_URLS entry {part!r} is not name=http://host:port")
+        tiers.append(llama_cpp_tier(name.strip(), url.strip()))
+    if not tiers:
+        raise ValueError("GWENLAYA_BACKEND=llamacpp needs GWENLAYA_LLAMA_URLS='name=http://127.0.0.1:8091,...'")
+    return tiers
 
 
 def _system_with_laya(tiers: list[Tier], cals: dict[str, CalibrationArtifact], laya_dir: str,
-                      math_pot: bool = True) -> GwenLaya:
+                      math_pot: bool = True, quant_shift: bool = False) -> GwenLaya:
     """Wire the frozen Laya (gwaya.laya_runtime) as router and scorer. Env:
     GWENLAYA_LAYA_DIR (router/ and calibrator/ inside), GWENLAYA_LAYA_DEVICE (default cpu),
     GWENLAYA_LAYA_DOMAINS (default 'python,math'; rust is at chance on fresh data, lean4 is refused),
     GWENLAYA_LAYA_TAU_ROUTE (default 0.5, the tau chosen on C for the registered A13b router policy),
     GWENLAYA_LAYA_THRESHOLDS (optional JSON {domain: {tau_hi, tau_lo}}; without it Laya never yields LIKELY_CORRECT/WRONG),
     GWENLAYA_LAYA_TIER_MAP ('runtime_tier=trained_tier,...'; no map means names must match the trained tiers),
-    GWENLAYA_LAYA_THREADS. A bad directory or a sha256 mismatch raises (no silent fallback)."""
+    GWENLAYA_LAYA_THREADS. A bad directory or a sha256 mismatch raises (no silent fallback).
+    ``quant_shift`` (llama.cpp tiers: quantised GGUF served, Laya trained on bf16 generations) marks every Laya scorer
+    evidence ``quant_shift: true`` with ``served_quant`` = $GWENLAYA_SERVED_QUANT; it is a label, not a correction."""
     from gwaya.laya_runtime import LayaRuntime, load_thresholds, parse_tier_map
     rt = LayaRuntime.load(laya_dir, os.environ.get("GWENLAYA_LAYA_DEVICE", "cpu"),
                           tier_map=parse_tier_map(os.environ.get("GWENLAYA_LAYA_TIER_MAP")),
                           threads=int(os.environ.get("GWENLAYA_LAYA_THREADS", "0")) or None)
     th_path = os.environ.get("GWENLAYA_LAYA_THRESHOLDS")
     laya_cals = rt.calibration_artifacts(load_thresholds(th_path) if th_path else None)
-    return GwenLaya(tiers, router=rt.router, scorer=rt.scorer, calibrations={**cals, **laya_cals},
+    score = rt.scorer
+    if quant_shift:
+        served = os.environ.get("GWENLAYA_SERVED_QUANT", "unspecified")
+
+        def score(features: dict[str, Any]) -> float | None:  # labelled wrapper around rt.scorer
+            out = rt.scorer(features)
+            if isinstance(features.get("laya"), dict):
+                features["laya"].update(quant_shift=True, served_quant=served)
+            return out
+    return GwenLaya(tiers, router=rt.router, scorer=score, calibrations={**cals, **laya_cals},
                     tau_route=float(os.environ.get("GWENLAYA_LAYA_TAU_ROUTE", "0.5")), route_policy="start_at",
                     math_pot=math_pot)
