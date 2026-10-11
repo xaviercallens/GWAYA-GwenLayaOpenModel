@@ -1,0 +1,24 @@
+{
+ "steps": 1566,
+ "wall_seconds": 1175.8,
+ "final_train_loss_last10_mean": 0.2011,
+ "val_metrics": {
+  "n": 903,
+  "p_correct": {
+   "n": 903,
+   "auroc": 0.9191506490892624,
+   "ece15": 0.06798255809913838,
+   "brier": 0.11431044320056409
+  }
+ },
+ "predicted": {
+  "calib": 849,
+  "eprime": 2484,
+  "rfresh": 207
+ },
+ "versions": {
+  "torch": "2.8.0+cu128",
+  "transformers": "5.19.0",
+  "peft": "0.21.2"
+ }
+}
