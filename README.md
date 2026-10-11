@@ -91,6 +91,18 @@ What has been measured (full 1,536-task E set, one greedy sample, one TPU v5e ch
 - All of this is on public benchmarks the models have probably seen. Every number is traceable to a committed file;
   an independent claim audit of the paper is in [`docs/CLAIM_AUDIT.md`](docs/CLAIM_AUDIT.md).
 
+**Status of the paper, revision 3.10.0 (11 October 2026).** The bullets above are the 3.4.0 baselines; the paper
+([`papers/gwenlaya_v4.pdf`](papers/gwenlaya_v4.pdf)) has since added a trained Laya, fresh evaluation sets and Lean 4 results.
+All of it is deviated or exploratory and every number is read from a committed file (claim map for this revision:
+[`docs/CLAIM_AUDIT_3100.md`](docs/CLAIM_AUDIT_3100.md); the audit of the previous one is
+[`docs/CLAIM_AUDIT_390.md`](docs/CLAIM_AUDIT_390.md); deviations D1-D77 in [`docs/DEVIATIONS.md`](docs/DEVIATIONS.md)).
+In 3.10.0 the frozen Laya was run unchanged on fresh Python and math sets F (908 tasks): H1 (calibrated score vs raw
+log-prob, AURC) is supported, H3 (vs the gate alone at the gate's coverage) is not, and Laya is not distinguishable from a
+logistic regression on the same features. First Lean 4 results are descriptive (greedy proof rate on miniF2F 0.10 to 0.33
+by tier, hardened gate with known limits). The Laya runtime and a llama.cpp tier exist as opt-in system changes and have
+**not** been validated end to end (no Q4_K_M calibration, accuracy or threshold evaluation). Python and math are the
+primary domains, Lean 4 secondary, Rust gate-only.
+
 ## 🛠️ Architecture: The GWAYA Fail-Closed Gate
 
 For any candidate $c$ in language $\ell \in \{\text{python}, \text{rust}, \text{lean4}\}$, the gate accepts if and only if:
