@@ -15,6 +15,8 @@
 ## 📌 Links to Official Releases & Reports
 
 - **Zenodo Permanent Archival (v3.1.1):** [https://doi.org/10.5281/zenodo.23123923](https://doi.org/10.5281/zenodo.23123923)
+- **GwenLaya v4 paper, revision 3.10.0 (Zenodo):** [https://doi.org/10.5281/zenodo.23300156](https://doi.org/10.5281/zenodo.23300156) (concept DOI of the record family: 10.5281/zenodo.23121787)
+- **Serverless TPU endpoint (OpenAI format):** tooling and user guide in [`docs/TPU_ENDPOINT.md`](docs/TPU_ENDPOINT.md). **Not deployed or measured yet**; the cold start (minutes, a TPU VM is created on demand) is an estimate.
 - **Hugging Face Verified Artifacts & Raw Telemetry:** [callensxavier/gwaya-v3-verified-report](https://huggingface.co/datasets/callensxavier/gwaya-v3-verified-report)
 - **Verified Research Report (PDF):** [`papers/gwaya_v3_verified_report.pdf`](papers/gwaya_v3_verified_report.pdf) (7-page comprehensive audited report)
 - **Pre-Registration & Audit Trail:** [`results/PREREGISTRATION.md`](results/PREREGISTRATION.md)
