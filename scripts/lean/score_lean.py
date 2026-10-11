@@ -63,7 +63,7 @@ def score_rows(rows: list[dict], tasks: dict[str, Task], workers: int, cache: di
         tid, text = key
         res = check(tasks[tid], answer_text(text))
         return (key, res.status, res.evidence.get("reason") or (str(res.evidence.get("error", ""))[:200] or None),
-                res.evidence.get("match"))
+                (res.evidence.get("details") or {}).get("match") or res.evidence.get("match"))
     with ThreadPoolExecutor(workers) as ex:
         for key, status, reason, match in ex.map(run, list(todo)):
             cache[key] = (status, reason, match)
@@ -153,6 +153,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--chips", default="qwen3.5-9b-bf16=4", help="chips per tier for cost (default 1)")
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--timeout-s", type=float, default=None, help="per-stage Lean timeout (payload timeout_s); default 120")
+    ap.add_argument("--recheck-verified", action="store_true",
+                    help="with --prev: reuse every previous verdict that was NOT VERIFIED (timeouts included, the previous "
+                         "pass used the same timeout) and re-run only the VERIFIED rows, to record the match type")
     ap.add_argument("--prev", help="a previous --out dir: rows resolved there with any reason except timeout are reused, "
                                    "so only the timed-out checks are re-run")
     args = ap.parse_args(argv)
@@ -169,7 +172,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.prev:  # reuse every verdict that was not a timeout
         for f in Path(args.prev).glob("scored_raw_*.jsonl"):
             for r in read_jsonl(f):
-                if r.get("reason") != "timeout" and "status" in r:
+                keep = (r.get("status") != "VERIFIED") if args.recheck_verified else (r.get("reason") != "timeout")
+                if keep and "status" in r:
                     cache[(r["task_id"], r.get("text", ""))] = (r["status"], r.get("reason"), r.get("match"))
     for t in tiers:
         for kind, store, name in (("answer", greedy, f"raw_{t}.jsonl"), ("sample", sampled, f"raw_sample_{t}.jsonl")):

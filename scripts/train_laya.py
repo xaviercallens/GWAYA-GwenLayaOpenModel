@@ -35,6 +35,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from gwaya.data_build import split_bucket  # noqa: E402
+# rendering + gate features live in gwaya/laya_features.py (shared with the runtime); re-exported here
+from gwaya.laya_features import (  # noqa: E402,F401
+    CAND_CHARS, DEFAULT_LAYOUT, GATE_VOCAB, LAYOUTS, N_FEATURES, SIGNAL_KEYS, check_layout, gate_features,
+    render_calibrator_text, render_calibrator_text_only, render_router_text)
 
 # Encoder named in the data-lake rl_agent_config.json. Whether convaiinnovations/laya (a custom
 # LayaTypedDecisions model) loads through AutoModel was NOT verified; pass it via --backbone to try.
@@ -42,12 +46,8 @@ DEFAULT_BACKBONE = "answerdotai/ModernBERT-large"
 # ModernBERT fused attention/MLP linears (per its modeling code); validated against named_modules() at load.
 MODERNBERT_TARGETS = ("Wqkv", "Wo", "Wi")
 ROUTER_TRAIN_BUCKETS = (1, 2)
-GATE_VOCAB = ("verified", "failed", "unverified", "compile_error", "none")
-SIGNAL_KEYS = ("tests_passed_frac", "selftest_agreement", "mean_logprob", "min_logprob", "repair_rounds")
-N_FEATURES = len(GATE_VOCAB) + 1 + 2 * len(SIGNAL_KEYS)  # gate one-hot (+other), value+missing per signal
 SEED = 1234
 CPU_HOURS_LIMIT = 12.0  # prereg section 5: CPU if projected <= 12 h, else inside S5 on L4
-CAND_CHARS = 2000
 
 
 # ---- pure helpers ------------------------------------------------------------------------------
@@ -66,38 +66,12 @@ def is_val(r: dict[str, Any], pct: int = 10) -> bool:
     return int(h, 16) % 100 < pct
 
 
-def gate_features(signals: dict[str, Any] | None) -> list[float]:
-    s = signals or {}
-    g = str(s.get("gate", "none")).lower()
-    onehot = [1.0 if g == v else 0.0 for v in GATE_VOCAB] + [1.0 if g not in GATE_VOCAB else 0.0]
-    vec = list(onehot)
-    for k in SIGNAL_KEYS:
-        v = s.get(k)
-        ok = isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)
-        scale = 0.1 if k == "repair_rounds" else (0.1 if k.endswith("logprob") else 1.0)
-        vec += [float(v) * scale if ok else 0.0, 0.0 if ok else 1.0]
-    return vec
+def make_examples(rows: Sequence[dict[str, Any]], mode: str, tiers: Sequence[str], text_only: bool = False,
+                  layout: str = DEFAULT_LAYOUT, tokenizer: Any = None, max_len: int = 512) -> list[dict[str, Any]]:
+    """-> [{key, text, feats, labels, mask}]; router has len(tiers) labels (masked), calibrator has one.
 
-
-def render_router_text(r: dict[str, Any]) -> str:
-    return f"[domain] {r.get('domain', '?')}\n[prompt]\n{r['prompt']}"
-
-
-def render_calibrator_text(r: dict[str, Any]) -> str:
-    s = r.get("signals") or {}
-    sig = " ".join(f"{k}={s[k]}" for k in ("gate",) + SIGNAL_KEYS if k in s)
-    return (f"[domain] {r.get('domain', '?')} [tier] {r.get('tier', '?')}\n[signals] {sig}\n"
-            f"[prompt]\n{r['prompt']}\n[candidate]\n{str(r.get('candidate', ''))[:CAND_CHARS]}")
-
-
-def render_calibrator_text_only(r: dict[str, Any]) -> str:
-    """A16 ablation: no [signals] line (gate verdict, log-probs); only domain, tier, prompt and candidate."""
-    return (f"[domain] {r.get('domain', '?')} [tier] {r.get('tier', '?')}\n"
-            f"[prompt]\n{r['prompt']}\n[candidate]\n{str(r.get('candidate', ''))[:CAND_CHARS]}")
-
-
-def make_examples(rows: Sequence[dict[str, Any]], mode: str, tiers: Sequence[str], text_only: bool = False) -> list[dict[str, Any]]:
-    """-> [{key, text, feats, labels, mask}]; router has len(tiers) labels (masked), calibrator has one."""
+    ``layout`` only changes the calibrator text (A22); the router never sees a candidate."""
+    layout = check_layout(layout)
     out = []
     for r in rows:
         if mode == "router":
@@ -109,7 +83,8 @@ def make_examples(rows: Sequence[dict[str, Any]], mode: str, tiers: Sequence[str
         else:
             if "correct" not in r:
                 continue
-            ex = dict(text=(render_calibrator_text_only(r) if text_only else render_calibrator_text(r)),
+            render = render_calibrator_text_only if text_only else render_calibrator_text
+            ex = dict(text=(render(r) if layout == DEFAULT_LAYOUT else render(r, layout, tokenizer, max_len)),
                       feats=([] if text_only else gate_features(r.get("signals"))),
                       labels=[float(bool(r["correct"]))], mask=[1.0])
         ex["key"] = row_key(r)
@@ -218,6 +193,12 @@ def train(args: argparse.Namespace, tr: list[dict], va: list[dict], tiers: Seque
     peft = _need("peft")
     st = _need("safetensors.torch")
     torch.manual_seed(SEED)
+    if args.load_dir:  # the scoring layout must be the one the weights were trained with
+        cfg_path = Path(args.load_dir) / "head_config.json"
+        if cfg_path.is_file():
+            trained = check_layout(json.loads(cfg_path.read_text()).get("layout"))
+            if trained != check_layout(args.layout):
+                raise SystemExit(f"--layout {args.layout} != layout {trained} in {cfg_path} (refusing a mismatched layout)")
     xm = None
     if args.device == "xla":  # TPU via torch_xla: fixed shapes (pad to max_len) so the graph compiles once
         xm = _need("torch_xla.core.xla_model")
@@ -313,7 +294,7 @@ def train(args: argparse.Namespace, tr: list[dict], va: list[dict], tiers: Seque
     result["val_metrics"] = metrics_for(args.mode, tiers, probs, va) if va else "TBD (no validation rows)"
     for spec in args.predict or []:  # NAME=PATH: raw scores for other row files (calibration split, evaluation set)
         name, _, path = spec.partition("=")
-        ex = make_examples(read_jsonl(path), args.mode, tiers, args.text_only)
+        ex = make_examples(read_jsonl(path), args.mode, tiers, args.text_only, args.layout, tok, args.max_len)
         pr = predict(ex)
         with open(out / f"preds_{name}.jsonl", "w") as f:
             for e, p_ in zip(ex, pr):
@@ -326,6 +307,7 @@ def train(args: argparse.Namespace, tr: list[dict], va: list[dict], tiers: Seque
         "mode": args.mode, "tiers": list(tiers), "backbone": args.backbone, "lora_r": args.r, "lora_targets": targets,
         "hidden_size": hidden, "n_features": n_feat, "gate_vocab": list(GATE_VOCAB), "signal_keys": list(SIGNAL_KEYS),
         "max_len": args.max_len, "shuffled_labels": args.shuffle_labels, "text_only": bool(args.text_only),
+        "layout": check_layout(args.layout),
         "calibration": "none fitted here (stage C6 fits temperature/isotonic on the C split)"}, indent=1))
     result["versions"] = {m: getattr(importlib.import_module(m), "__version__", "?") for m in ("torch", "transformers", "peft")}
     (out / "run_manifest.json").write_text(json.dumps(result, indent=1, default=str))
@@ -350,6 +332,9 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--device", default="auto", help="auto | cpu | cuda | xla (TPU, needs torch_xla)")
     ap.add_argument("--load-dir", default=None, help="predict-only: load adapter/ + heads.safetensors from a previous --out-dir")
     ap.add_argument("--text-only", action="store_true", help="A16 ablation: calibrator sees only domain/tier/prompt/candidate text (no signals line, no numeric features)")
+    ap.add_argument("--layout", default=DEFAULT_LAYOUT, choices=list(LAYOUTS),
+                    help="calibrator text layout (A22): prompt_first = frozen v1; candidate_first = candidate before the prompt; "
+                         "middle_truncate = prompt head+tail around the candidate (needs the tokenizer)")
     ap.add_argument("--init-only", action="store_true", help="zero training steps: score with the untrained (seeded) head, the 'twin' of a trained run")
     ap.add_argument("--predict", nargs="*", help="NAME=PATH row files to score after training/loading (writes preds_NAME.jsonl)")
     ap.add_argument("--bf16", action="store_true", help="bfloat16 autocast (xla only)")
@@ -365,13 +350,17 @@ def main(argv: list[str] | None = None) -> int:
     tiers = [t for t in args.tiers.split(",") if t]
     rows = read_jsonl(args.data)
     tr_rows, va_rows, counts = select_rows(rows, not args.no_slice_filter)
-    tr, va = make_examples(tr_rows, args.mode, tiers, args.text_only), make_examples(va_rows, args.mode, tiers, args.text_only)
+    lay_tok = None
+    if args.layout == "middle_truncate" and args.mode == "calibrator":
+        lay_tok = _need("transformers").AutoTokenizer.from_pretrained(args.backbone)
+    tr = make_examples(tr_rows, args.mode, tiers, args.text_only, args.layout, lay_tok, args.max_len)
+    va = make_examples(va_rows, args.mode, tiers, args.text_only, args.layout, lay_tok, args.max_len)
     if args.shuffle_labels:
         tr = shuffle_labels(tr)
     plan = {"mode": args.mode, "backbone": args.backbone, "lora_r": args.r, "tiers": tiers if args.mode == "router" else None,
             "rows_read": len(rows), "selection": counts, "examples": {"train": len(tr), "val": len(va)},
             "steps_per_epoch": math.ceil(len(tr) / args.batch_size) if tr else "TBD", "epochs": args.epochs,
-            "shuffle_labels": args.shuffle_labels, "slice": f"sha256(source||id) mod 20 in {list(ROUTER_TRAIN_BUCKETS)}",
+            "shuffle_labels": args.shuffle_labels, "layout": args.layout, "slice": f"sha256(source||id) mod 20 in {list(ROUTER_TRAIN_BUCKETS)}",
             "projected_hours": "TBD (run --timing-steps 50)"}
     if args.print_plan:
         print(json.dumps(plan, indent=1))

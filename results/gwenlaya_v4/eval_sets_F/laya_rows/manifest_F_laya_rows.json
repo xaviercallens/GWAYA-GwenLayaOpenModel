@@ -1,0 +1,52 @@
+{
+ "counts_python_math": {
+  "tasks": 908,
+  "router_rows": 908,
+  "calibrator_rows": 2724,
+  "tasks_without_any_tier": 0
+ },
+ "n_router_lean": 229,
+ "n_calibrator_lean": 687,
+ "tiers": [
+  "qwen3.5-2b-bf16",
+  "qwen3.5-4b-bf16",
+  "qwen3.5-9b-bf16"
+ ],
+ "leak_check_python_math": {
+  "label_changes_rendered_text": 0,
+  "prompt_differs_from_task_prompt": 0,
+  "unexpected_fields": []
+ },
+ "leak_check_lean": {
+  "label_changes_rendered_text": 0,
+  "prompt_differs_from_task_prompt": 0,
+  "unexpected_fields": []
+ },
+ "task_file_sha256": {
+  "tasks_F_python.jsonl": "49546c3bd612d5b4cf2eb1b72fc73b7822bf67f831efd954a5d3060bc417e68e",
+  "tasks_F_math.jsonl": "8277bc52e3a0f06ae809744db76bd85c83b88eca5fa75d99c0fde3073230de70",
+  "tasks_F_lean.jsonl": "27ca4024f2b4bbb61986f6d4ef655c47ffc57dd9607b2e01278bf278872d097d"
+ },
+ "row_file_sha256": {
+  "router_F.jsonl": "d4339c92c563ed718dfcf21568a1dbe94ac833a8d246077df61f128ada3534d8",
+  "calibrator_F.jsonl": "8cfb7e7e58a48b4cd835f43d63e6b3913d55fbb44bab057ab522cd266f750814",
+  "router_F_lean.jsonl": "e7a7a1dcdba29e3aa961419a69803bbf4431bed75ccab46219c4b87aed2957b7",
+  "calibrator_F_lean.jsonl": "35053b13610a13807c859c5cecc6a2ad048c2ddcffcec956a7a9a6b018a5859c"
+ },
+ "calibrator_rows_by_domain_tier": {
+  "python|qwen3.5-2b-bf16": 407,
+  "python|qwen3.5-4b-bf16": 407,
+  "python|qwen3.5-9b-bf16": 407,
+  "math|qwen3.5-2b-bf16": 501,
+  "math|qwen3.5-4b-bf16": 501,
+  "math|qwen3.5-9b-bf16": 501
+ },
+ "label_mean_by_domain_tier": {
+  "python|qwen3.5-2b-bf16": 0.1892,
+  "python|qwen3.5-4b-bf16": 0.3292,
+  "python|qwen3.5-9b-bf16": 0.3956,
+  "math|qwen3.5-2b-bf16": 0.4132,
+  "math|qwen3.5-4b-bf16": 0.507,
+  "math|qwen3.5-9b-bf16": 0.5349
+ }
+}

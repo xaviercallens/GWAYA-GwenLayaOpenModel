@@ -1,0 +1,193 @@
+{
+ "router": {
+  "rows": 20,
+  "values": 60,
+  "max_abs_diff": 0.003810545162921286,
+  "mean_abs_diff": 0.0007818098591041123,
+  "latency_s_mean": 2.7593315130798146,
+  "latency_s_max": 11.539145541843027
+ },
+ "calibrator": {
+  "rows": 20,
+  "max_abs_diff": 0.0029473987088282083,
+  "mean_abs_diff": 0.0006313678683702109,
+  "latency_s_mean": 9.399931272503455,
+  "latency_s_max": 14.178264325950295,
+  "truncated_candidate_rows": 9,
+  "rows_detail": [
+   {
+    "id": "ma/gsm8k/1193",
+    "tier": "qwen3.5-2b-bf16",
+    "domain": "math",
+    "got": 0.9826319379230406,
+    "stored": 0.982664942741394,
+    "n_tokens": 439
+   },
+   {
+    "id": "ma/gsm8k/2852",
+    "tier": "qwen3.5-2b-bf16",
+    "domain": "math",
+    "got": 0.6762785394199771,
+    "stored": 0.6750328540802002,
+    "n_tokens": 640
+   },
+   {
+    "id": "ma/gsm8k/3950",
+    "tier": "qwen3.5-2b-bf16",
+    "domain": "math",
+    "got": 0.5435737457738001,
+    "stored": 0.5406263470649719,
+    "n_tokens": 451
+   },
+   {
+    "id": "ma/gsm8k/6088",
+    "tier": "qwen3.5-4b-bf16",
+    "domain": "math",
+    "got": 0.9826432622511636,
+    "stored": 0.9826860427856445,
+    "n_tokens": 300
+   },
+   {
+    "id": "ma/gsm8k/6994",
+    "tier": "qwen3.5-4b-bf16",
+    "domain": "math",
+    "got": 0.9714414125120882,
+    "stored": 0.9711827039718628,
+    "n_tokens": 353
+   },
+   {
+    "id": "ma/train/algebra/1070",
+    "tier": "qwen3.5-9b-bf16",
+    "domain": "math",
+    "got": 0.9929351713477599,
+    "stored": 0.9929664134979248,
+    "n_tokens": 725
+   },
+   {
+    "id": "ma/train/algebra/1660",
+    "tier": "qwen3.5-9b-bf16",
+    "domain": "math",
+    "got": 0.9809061593779356,
+    "stored": 0.9809063673019409,
+    "n_tokens": 368
+   },
+   {
+    "id": "ma/train/algebra/810",
+    "tier": "qwen3.5-2b-bf16",
+    "domain": "math",
+    "got": 0.17978279489608556,
+    "stored": 0.18065986037254333,
+    "n_tokens": 928
+   },
+   {
+    "id": "ma/train/counting_and_probability/482",
+    "tier": "qwen3.5-2b-bf16",
+    "domain": "math",
+    "got": 0.24351317920788407,
+    "stored": 0.24140164256095886,
+    "n_tokens": 822
+   },
+   {
+    "id": "ma/train/geometry/614",
+    "tier": "qwen3.5-4b-bf16",
+    "domain": "math",
+    "got": 0.9925132456677497,
+    "stored": 0.9925234317779541,
+    "n_tokens": 399
+   },
+   {
+    "id": "ma/train/intermediate_algebra/1245",
+    "tier": "qwen3.5-4b-bf16",
+    "domain": "math",
+    "got": 0.0555266911931564,
+    "stored": 0.05513140559196472,
+    "n_tokens": 1015
+   },
+   {
+    "id": "ma/train/intermediate_algebra/72",
+    "tier": "qwen3.5-4b-bf16",
+    "domain": "math",
+    "got": 0.039438410621273005,
+    "stored": 0.03852537274360657,
+    "n_tokens": 1102
+   },
+   {
+    "id": "ma/train/number_theory/281",
+    "tier": "qwen3.5-9b-bf16",
+    "domain": "math",
+    "got": 0.6748307034402561,
+    "stored": 0.675028383731842,
+    "n_tokens": 737
+   },
+   {
+    "id": "ma/train/number_theory/851",
+    "tier": "qwen3.5-9b-bf16",
+    "domain": "math",
+    "got": 0.7674832060395381,
+    "stored": 0.766120433807373,
+    "n_tokens": 673
+   },
+   {
+    "id": "ma/train/prealgebra/594",
+    "tier": "qwen3.5-2b-bf16",
+    "domain": "math",
+    "got": 0.9873493407034447,
+    "stored": 0.9874846935272217,
+    "n_tokens": 504
+   },
+   {
+    "id": "ma/train/precalculus/408",
+    "tier": "qwen3.5-2b-bf16",
+    "domain": "math",
+    "got": 0.944042675126629,
+    "stored": 0.9440891146659851,
+    "n_tokens": 1277
+   },
+   {
+    "id": "py/MBPP/208",
+    "tier": "qwen3.5-4b-bf16",
+    "domain": "python",
+    "got": 0.7810159693790107,
+    "stored": 0.7795718312263489,
+    "n_tokens": 161
+   },
+   {
+    "id": "py/MBPP/371",
+    "tier": "qwen3.5-4b-bf16",
+    "domain": "python",
+    "got": 0.7983619079471577,
+    "stored": 0.7979031801223755,
+    "n_tokens": 234
+   },
+   {
+    "id": "py/MBPP/654",
+    "tier": "qwen3.5-9b-bf16",
+    "domain": "python",
+    "got": 0.9771439485430382,
+    "stored": 0.9771633148193359,
+    "n_tokens": 128
+   },
+   {
+    "id": "py/MBPP/857",
+    "tier": "qwen3.5-9b-bf16",
+    "domain": "python",
+    "got": 0.9777440450334098,
+    "stored": 0.9776473045349121,
+    "n_tokens": 212
+   }
+  ]
+ },
+ "meta": {
+  "command": "python scripts/laya_runtime_parity.py --n 20 --threads 3",
+  "n_requested": 20,
+  "cpu": "Intel(R) Core(TM) i7-4930MX CPU @ 3.00GHz",
+  "threads": 3,
+  "device": "cpu",
+  "precision": "fp32 (LoRA merged)",
+  "torch": "2.14.0+cu130",
+  "transformers": "5.17.0",
+  "peft": "0.21.0",
+  "stored_predictions": "TPU v5e bf16 (torch 2.8.0, transformers 5.19.0, peft 0.21.2)",
+  "sha256_verified": true
+ }
+}

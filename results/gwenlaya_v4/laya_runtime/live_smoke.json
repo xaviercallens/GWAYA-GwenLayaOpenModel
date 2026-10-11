@@ -1,0 +1,222 @@
+{
+ "note": "SMOKE TEST, n = 3: shows that the wiring runs end to end and what each stage costs. It is not an evaluation: no accuracy, calibration or LIKELY_CORRECT precision claim can be drawn from it.",
+ "served_weights": "Qwen3.5-2B Q4_K_M GGUF via llama.cpp llama-server; the frozen Laya was trained on bf16 generations (quant_shift, not measured here)",
+ "machine": {
+  "cpu_count": 8,
+  "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+  "load_avg_start": [
+   3.63,
+   4.88,
+   6.11
+  ],
+  "load_avg_end": [
+   6.38,
+   5.57,
+   6.17
+  ],
+  "shared": "yes: another job's llama-server and python processes were running (see load)"
+ },
+ "env": {
+  "GWENLAYA_BACKEND": "llamacpp",
+  "GWENLAYA_LLAMA_URLS": "qwen3.5-2b-bf16=http://127.0.0.1:8093",
+  "GWENLAYA_LAYA_DIR": "/mnt/data/home/xavkal/gwaya-data/laya_data/laya_v1",
+  "GWENLAYA_SERVED_QUANT": "q4_k_m",
+  "GWENLAYA_LAYA_THRESHOLDS": "results/gwenlaya_v4/laya_runtime/thresholds_C.json",
+  "GWENLAYA_LAYA_DOMAINS": null,
+  "GWENLAYA_LAYA_TAU_ROUTE": null,
+  "GWENLAYA_LAYA_THREADS": "2"
+ },
+ "system_build_s": 38.93,
+ "thresholds": "exploratory results/gwenlaya_v4/laya_runtime/thresholds_C.json (in-sample on C; never registered)",
+ "tasks": [
+  {
+   "id": "smoke_python_tests",
+   "domain": "python",
+   "has_visible_tests": true,
+   "error": null,
+   "verdict": "VERIFIED",
+   "answered": true,
+   "p_correct": 1.0,
+   "tier": "qwen3.5-2b-bf16",
+   "wall_s": 12.22,
+   "latency_s": {
+    "route": 1.12,
+    "generate": 8.08,
+    "gate_total": 0.58,
+    "gate_of_which_pot_generation": 0.0,
+    "calibrate": 2.44
+   },
+   "gen_signals": [
+    {
+     "mean_logprob": -0.02642340475106791,
+     "min_logprob": -0.20250412821769714
+    }
+   ],
+   "gate": [
+    {
+     "status": "VERIFIED",
+     "reason": null,
+     "decision": null,
+     "raw_score": 0.9945226531076901,
+     "scorer_error": null
+    }
+   ],
+   "routing": {
+    "p_tier": {
+     "qwen3.5-2b-bf16": 0.7340138990329984,
+     "qwen3.5-4b-bf16": 0.7675972322958546,
+     "qwen3.5-9b-bf16": 0.7336780813212495
+    },
+    "tau_route": 0.5,
+    "policy": "start_at",
+    "start_tier": "qwen3.5-2b-bf16"
+   },
+   "evidence_flags": {
+    "signals_incomplete": false,
+    "truncated_candidate": false,
+    "quant_shift": true,
+    "served_quant": "q4_k_m",
+    "model_sha": "556ca49fac7a",
+    "scorer_applied": true,
+    "scorer_reason": null,
+    "likely_correct_vetoed": []
+   },
+   "load_avg_before": [
+    4.54,
+    4.94,
+    6.08
+   ],
+   "load_avg_after": [
+    4.99,
+    5.03,
+    6.1
+   ]
+  },
+  {
+   "id": "smoke_python_no_tests",
+   "domain": "python",
+   "has_visible_tests": false,
+   "error": null,
+   "verdict": "LIKELY_WRONG",
+   "answered": false,
+   "p_correct": 0.42857142857142855,
+   "tier": "qwen3.5-2b-bf16",
+   "wall_s": 13.97,
+   "latency_s": {
+    "route": 1.54,
+    "generate": 9.58,
+    "gate_total": 0.0,
+    "gate_of_which_pot_generation": 0.0,
+    "calibrate": 2.85
+   },
+   "gen_signals": [
+    {
+     "mean_logprob": -0.14903621161204722,
+     "min_logprob": -1.1672438383102417
+    }
+   ],
+   "gate": [
+    {
+     "status": "UNVERIFIED",
+     "reason": "p_at_or_below_tau_lo",
+     "decision": "p_at_or_below_tau_lo",
+     "raw_score": 0.5810652703555204,
+     "scorer_error": null
+    }
+   ],
+   "routing": {
+    "p_tier": {
+     "qwen3.5-2b-bf16": 0.26339178924145096,
+     "qwen3.5-4b-bf16": 0.4221906711309488,
+     "qwen3.5-9b-bf16": 0.4509190824733494
+    },
+    "tau_route": 0.5,
+    "policy": "start_at",
+    "start_tier": "qwen3.5-2b-bf16"
+   },
+   "evidence_flags": {
+    "signals_incomplete": false,
+    "truncated_candidate": false,
+    "quant_shift": true,
+    "served_quant": "q4_k_m",
+    "model_sha": "556ca49fac7a",
+    "scorer_applied": true,
+    "scorer_reason": null,
+    "likely_correct_vetoed": []
+   },
+   "load_avg_before": [
+    4.99,
+    5.03,
+    6.1
+   ],
+   "load_avg_after": [
+    5.64,
+    5.17,
+    6.13
+   ]
+  },
+  {
+   "id": "smoke_math",
+   "domain": "math",
+   "has_visible_tests": false,
+   "error": null,
+   "verdict": "LIKELY_CORRECT",
+   "answered": true,
+   "p_correct": 0.968,
+   "tier": "qwen3.5-2b-bf16",
+   "wall_s": 97.29,
+   "latency_s": {
+    "route": 1.07,
+    "generate": 71.14,
+    "gate_total": 16.98,
+    "gate_of_which_pot_generation": 14.99,
+    "calibrate": 8.11
+   },
+   "gen_signals": [
+    {
+     "mean_logprob": -0.07264246765840113,
+     "min_logprob": -1.2270753383636475
+    }
+   ],
+   "gate": [
+    {
+     "status": "UNVERIFIED",
+     "reason": null,
+     "decision": "p_at_or_above_tau_hi",
+     "raw_score": 0.9762495975325681,
+     "scorer_error": null
+    }
+   ],
+   "routing": {
+    "p_tier": {
+     "qwen3.5-2b-bf16": 0.855729861327701,
+     "qwen3.5-4b-bf16": 0.8817936010335587,
+     "qwen3.5-9b-bf16": 0.8857850683346705
+    },
+    "tau_route": 0.5,
+    "policy": "start_at",
+    "start_tier": "qwen3.5-2b-bf16"
+   },
+   "evidence_flags": {
+    "signals_incomplete": false,
+    "truncated_candidate": false,
+    "quant_shift": true,
+    "served_quant": "q4_k_m",
+    "model_sha": "556ca49fac7a",
+    "scorer_applied": true,
+    "scorer_reason": null,
+    "likely_correct_vetoed": []
+   },
+   "load_avg_before": [
+    5.64,
+    5.17,
+    6.13
+   ],
+   "load_avg_after": [
+    6.38,
+    5.57,
+    6.17
+   ]
+  }
+ ]
+}

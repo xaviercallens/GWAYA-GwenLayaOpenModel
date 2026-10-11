@@ -1,0 +1,13 @@
+{
+ "served": "qwen3.5-4b-bf16",
+ "quant": "bf16",
+ "temperature": 0.0,
+ "accelerator": "TPU v5e x1",
+ "kind": "pot",
+ "chips": 1,
+ "seconds_unit": "accelerator chip-seconds (slice wall time split by token share x chips), not GPU-seconds",
+ "added": 501,
+ "skipped_existing": 0,
+ "tasks_without_generation": 407,
+ "source_raw": "/mnt/data/home/xavkal/gwaya-data/eval_sets_F_tpu/out_small/raw_pot_qwen3.5-4b-bf16.jsonl"
+}

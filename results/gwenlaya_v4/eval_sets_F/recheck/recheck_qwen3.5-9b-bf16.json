@@ -1,0 +1,29 @@
+{
+ "model": "qwen3.5-9b-bf16",
+ "rechecked": 947,
+ "n_flips": 1,
+ "flips": [
+  {
+   "what": "gate",
+   "domain": "math",
+   "task_id": "ma/MATHtest/algebra/829",
+   "was": "UNVERIFIED",
+   "now": "VERIFIED"
+  }
+ ],
+ "timeouts_when_run_alone": [],
+ "reasons": {
+  "math:gate:UNVERIFIED:mismatch": 13,
+  "math:gate:UNVERIFIED:no_boxed_answer": 221,
+  "math:gate:UNVERIFIED:no_program_output": 6,
+  "math:gate:UNVERIFIED:program_error": 29,
+  "math:gate:UNVERIFIED:program_timeout": 1,
+  "math:gate:UNVERIFIED:unparseable_output": 11,
+  "math:gate:VERIFIED:None": 1,
+  "math:score:FAILED:None": 7,
+  "math:score:UNVERIFIED:no_boxed_answer": 221,
+  "math:score:UNVERIFIED:unparseable_answer": 5,
+  "python:gate:FAILED:None": 186,
+  "python:score:FAILED:None": 246
+ }
+}

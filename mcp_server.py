@@ -87,6 +87,21 @@ def gwaya_system_status() -> Dict[str, Any]:
         status["ollama"]["running"] = False
         status["ollama"]["error"] = str(exc)
 
+    # GwenLaya runtime wiring (env only, plus a 2 s health probe of each llama-server tier)
+    try:
+        cfg = gwenlaya.runtime_config()
+        health = {}
+        for name, url in cfg.get("urls", {}).items():
+            try:
+                with urllib.request.urlopen(f"{url.rstrip('/')}/health", timeout=2.0) as resp:
+                    health[name] = resp.status == 200
+            except Exception:  # noqa: BLE001
+                health[name] = False
+        cfg["server_health"] = health
+        status["gwenlaya"] = cfg
+    except Exception as exc:  # noqa: BLE001 - status must never raise
+        status["gwenlaya"] = {"error": f"{type(exc).__name__}: {exc}"}
+
     return status
 
 
@@ -242,14 +257,16 @@ def gwaya_answer(
 
     Returns {answer, verdict, p_correct, evidence, tier, cost_s}. verdict is one of VERIFIED
     (executed gate checks passed), LIKELY_CORRECT, LIKELY_WRONG (answer withheld), ESCALATE,
-    ABSTAIN. p_correct is null unless a calibration is loaded (GWENLAYA_CALIBRATION) and a
-    scorer is wired; VERIFIED is never inferred from p. Pass only gate-visible checks.
+    ABSTAIN. p_correct is null unless a scorer is wired (GWENLAYA_LAYA_DIR, with a tier that reports
+    log-probs: GWENLAYA_BACKEND=llamacpp); VERIFIED is never inferred from p. Pass only gate-visible checks.
+    Check `gwaya_system_status` -> "gwenlaya" to see what is actually in effect and why a component is inert.
 
     Args:
         prompt: The task description.
         domain: 'python', 'rust', 'lean4' or 'math'.
         tests: Gate-visible test code (python/rust).
-        reference_answer: Reference answer (math).
+        reference_answer: Reference answer (math). Optional: without it the registered program-of-thought gate
+            decides (VERIFIED = a program written by the same tier reproduces the boxed answer; not a proof).
         formal_statement: Theorem statement that must be preserved (lean4).
         allow_escalation: Allow moving to higher tiers when undecided.
     """

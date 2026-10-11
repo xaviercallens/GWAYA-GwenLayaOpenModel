@@ -1,0 +1,29 @@
+{
+ "model": "qwen3.5-2b-bf16",
+ "rechecked": 1247,
+ "n_flips": 1,
+ "flips": [
+  {
+   "what": "gate",
+   "domain": "python",
+   "task_id": "py/BigCodeBench/843",
+   "was": "FAILED",
+   "now": "VERIFIED"
+  }
+ ],
+ "timeouts_when_run_alone": [],
+ "reasons": {
+  "math:gate:UNVERIFIED:mismatch": 47,
+  "math:gate:UNVERIFIED:no_boxed_answer": 260,
+  "math:gate:UNVERIFIED:no_program_output": 11,
+  "math:gate:UNVERIFIED:program_error": 30,
+  "math:gate:UNVERIFIED:program_timeout": 2,
+  "math:gate:UNVERIFIED:unparseable_output": 11,
+  "math:score:FAILED:None": 30,
+  "math:score:UNVERIFIED:no_boxed_answer": 260,
+  "math:score:UNVERIFIED:unparseable_answer": 4,
+  "python:gate:FAILED:None": 261,
+  "python:gate:VERIFIED:None": 1,
+  "python:score:FAILED:None": 330
+ }
+}

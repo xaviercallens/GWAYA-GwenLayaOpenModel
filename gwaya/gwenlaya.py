@@ -19,8 +19,9 @@ Pipeline per prompt (docs/GWENLAYA_PREREGISTRATION.md section 1):
 Honesty notes. Laya itself (router / post head) is injected as plain callables; no Laya weights
 are loaded or assumed here. Without a scorer plus a fitted calibration, p_correct is None and
 only VERIFIED can be answered (fail-closed). Gate-visible checks only: the caller must not put
-scoring/hidden checks in ``checker_payload``. Math has no program-of-thought gate in this repo
-yet, so math without a reference answer is UNVERIFIED (the PoT gate is TBD).
+scoring/hidden checks in ``checker_payload``. Math without a reference answer is gated by the registered
+program-of-thought gate (gwaya/math_pot_runtime.py; VERIFIED = two derivations by the same model agree, not a
+proof; measured precision in that module's docstring); ``math_pot=False`` restores UNVERIFIED no_reference_answer.
 
 Verdict policy (recorded in evidence["policy"] on every output):
   * weak gate (python/rust, OFF by default): with ``min_visible_tests`` configured for the domain, a
@@ -291,9 +292,14 @@ def load_calibrations(path: str | Path) -> dict[str, CalibrationArtifact]:
 
 @dataclass
 class Tier:
-    """A generator tier. ``generate(prompt, domain) -> response text``. List order = cheapest first."""
+    """A generator tier. ``generate(prompt, domain) -> response text``. List order = cheapest first.
+
+    Optional richer protocol: ``generate_with_signals(prompt, domain) -> (text, {"mean_logprob": f, "min_logprob": f})``
+    for backends that return token log-probs. It is used instead of ``generate`` when present; missing keys mean the
+    signal is unavailable (never zero). Ollama 0.1.44 returns no log-probs, so ``ollama_tier`` leaves it None."""
     name: str
     generate: Callable[[str, str], str]
+    generate_with_signals: Callable[[str, str], tuple[str, Mapping[str, Any]]] | None = None
 
 
 def ollama_tier(model: str, max_new_tokens: int = DEFAULT_MAX_NEW_TOKENS) -> Tier:
@@ -305,7 +311,8 @@ def ollama_tier(model: str, max_new_tokens: int = DEFAULT_MAX_NEW_TOKENS) -> Tie
 
 
 Router = Callable[[str, str], Mapping[str, float]]      # (prompt, domain) -> {tier_name: p_t(correct)}
-Scorer = Callable[[dict[str, Any]], float]             # features -> raw score in [0, 1]
+Scorer = Callable[[dict[str, Any]], float | None]      # features -> raw score in [0, 1]; None = not applicable (abstain)
+ROUTE_POLICIES = ("filter", "start_at")
 Checker = Callable[[Task, str], CheckResult]
 
 
@@ -355,7 +362,8 @@ class GwenLaya:
                  tau_route: float | None = None, budget_s: float | None = None,
                  checker: Checker = domain_check,
                  clock: Callable[[], float] = time.perf_counter,
-                 min_visible_tests: Mapping[str, int] | None = None) -> None:
+                 min_visible_tests: Mapping[str, int] | None = None, math_pot: bool = True,
+                 route_policy: str = "filter") -> None:
         """``min_visible_tests`` ({'python': k, 'rust': k}) turns on the weak-gate policy: a python/rust gate
         pass backed by fewer than k visible tests (or an unknown count) is not VERIFIED (see the module
         docstring). None reads $GWENLAYA_MIN_VISIBLE_TESTS (an int for both domains, or 'python=3,rust=2');
@@ -363,6 +371,9 @@ class GwenLaya:
         of A15.2/A17 were measured on E and must not set a default. Malformed values raise ValueError."""
         if not tiers:
             raise ValueError("at least one tier required")
+        if route_policy not in ROUTE_POLICIES:
+            raise ValueError(f"route_policy {route_policy!r} not in {ROUTE_POLICIES}")
+        self.route_policy = route_policy  # "filter": tiers with p >= tau only (default); "start_at": registered A13b policy
         self.min_visible_tests = parse_min_visible_tests(
             min_visible_tests if min_visible_tests is not None else os.environ.get(MIN_VISIBLE_TESTS_ENV))
         self.tiers = list(tiers)
@@ -371,6 +382,7 @@ class GwenLaya:
         self.tau_route = tau_route
         self.budget_s = budget_s
         self.checker, self.clock = checker, clock
+        self.math_pot = math_pot
 
     def _cal(self, domain: str) -> CalibrationArtifact | None:
         return self.calibrations.get(domain) or self.calibrations.get("*")
@@ -382,11 +394,28 @@ class GwenLaya:
             ev["routing"] = "static_ladder" + ("" if self.router else " (no router)")
             return list(self.tiers)
         try:
-            probs = dict(self.router(prompt, domain))
+            raw = self.router(prompt, domain)
+            laya_ev = getattr(raw, "evidence", None)  # a Laya router explains itself (see gwaya.laya_runtime)
+            probs = dict(raw) if raw is not None else None
         except Exception as exc:  # noqa: BLE001 - router failure must not break answering
             ev["routing"] = f"static_ladder (router_error: {type(exc).__name__})"
             return list(self.tiers)
+        if laya_ev is not None:
+            ev.setdefault("laya", {})["router"] = laya_ev
+        if not probs:  # router declined (domain it never saw): static ladder, never a made-up probability
+            ev["routing"] = "static_ladder (router_not_applicable)"
+            return list(self.tiers)
+        if not any(t.name in probs for t in self.tiers):
+            ev["routing"] = "static_ladder (router_tiers_unmatched)"
+            return list(self.tiers)
         ev["routing"] = {"p_tier": probs, "tau_route": tau}
+        if self.route_policy == "start_at":
+            # A13b policy (scripts/analyze_laya.py::run_policy): start at the cheapest tier with p >= tau, else the
+            # last; every tier above the start stays on the ladder (the gate cascades upward).
+            ev["routing"]["policy"] = "start_at"
+            start = next((i for i, t in enumerate(self.tiers) if probs.get(t.name, -math.inf) >= tau), len(self.tiers) - 1)
+            ev["routing"]["start_tier"] = self.tiers[start].name
+            return self.tiers[start:]
         return [t for t in self.tiers if probs.get(t.name, -math.inf) >= tau]
 
     def answer(self, prompt: str, domain: str = "python", checker_payload: Mapping[str, Any] | None = None,
@@ -406,8 +435,14 @@ class GwenLaya:
             step: dict[str, Any] = {"tier": tier.name}
             ev["trajectory"].append(step)
             t0 = self.clock()
+            gen_signals: dict[str, Any] | None = None
             try:
-                response = tier.generate(prompt, domain)
+                if tier.generate_with_signals is not None:
+                    response, sig = tier.generate_with_signals(prompt, domain)
+                    gen_signals = dict(sig or {})
+                    step["gen_signals"] = gen_signals
+                else:
+                    response = tier.generate(prompt, domain)
             except Exception as exc:  # noqa: BLE001 - a dead generator is an undecided tier
                 response, step["generation_error"] = "", f"{type(exc).__name__}: {exc}"[:300]
             step["gen_s"] = gen_s = max(0.0, self.clock() - t0)
@@ -416,9 +451,10 @@ class GwenLaya:
             if "generation_error" in step:
                 outcome = "UNDECIDED"
             else:
-                res = self.checker(task, response)
+                res = self._gate(task, response, tier, step)
+                cost_s += step.get("pot", {}).get("gen_s", 0.0)  # the PoT program is a second generation
                 step["gate"] = {"status": res.status, "evidence": res.evidence}
-                p = self._p(prompt, domain, tier, i, response, res, ev, step, cal)
+                p = self._p(prompt, domain, tier, i, response, res, ev, step, cal, gen_signals)
                 if res.status == "VERIFIED" and not self._demote_pass(task, res, step):
                     return self._out(response, "VERIFIED", p, ev, tier.name, cost_s, domain, None)
                 if res.status == "FAILED":
@@ -438,6 +474,14 @@ class GwenLaya:
         final = ev["trajectory"][-1]
         verdict = "LIKELY_WRONG" if outcome == "LIKELY_WRONG" else "ABSTAIN"
         return self._out(None, verdict, final.get("p_correct"), ev, eligible[-1].name, cost_s, domain, None)
+
+    def _gate(self, task: Task, response: str, tier: Tier, step: dict[str, Any]) -> CheckResult:
+        """Math without a gold answer: PoT re-execution by the same tier (lazy; fails closed); else the checker."""
+        from gwaya import math_pot_runtime as pot
+        if not (self.math_pot and self.checker is domain_check and pot.applies(task)):  # injected checker wins
+            return self.checker(task, response)
+        res, step["pot"] = pot.check_math_pot(task, response, tier.generate, clock=self.clock)
+        return res
 
     def policy(self) -> dict[str, Any]:
         """The verdict policy in force, as written into evidence["policy"]."""
@@ -467,6 +511,10 @@ class GwenLaya:
         policy demoted (shared path). The decision goes to step["decision"]; step["reason"] keeps a demotion
         reason when one is set. A demoted pass can only become LIKELY_WRONG through p <= tau_lo."""
         if p is not None and cal is not None and p >= cal.tau_hi:
+            veto = step.get("likely_correct_vetoed")
+            if veto:  # the scorer saw out-of-distribution input (truncation / missing signals): no confident verdict
+                step["decision"] = step["reason"] = "likely_correct_vetoed:" + ",".join(veto)
+                return "UNDECIDED"
             if domain != "lean4":
                 step["decision"] = "p_at_or_above_tau_hi"
                 return "LIKELY_CORRECT"
@@ -482,13 +530,29 @@ class GwenLaya:
         return outcome
 
     def _p(self, prompt: str, domain: str, tier: Tier, i: int, response: str, res: CheckResult,
-           ev: dict[str, Any], step: dict[str, Any], cal: CalibrationArtifact | None) -> float | None:
+           ev: dict[str, Any], step: dict[str, Any], cal: CalibrationArtifact | None,
+           gen_signals: Mapping[str, Any] | None = None) -> float | None:
         if self.scorer is None or cal is None:
             return None
+        feats: dict[str, Any] = {"prompt": prompt, "domain": domain, "tier": tier.name, "tier_index": i,
+                                 "response": response, "gate_status": res.status, "gate_evidence": res.evidence}
+        if gen_signals is not None:
+            feats["gen_signals"] = dict(gen_signals)
         try:
-            raw = float(self.scorer({"prompt": prompt, "domain": domain, "tier": tier.name, "tier_index": i,
-                                     "response": response, "gate_status": res.status,
-                                     "gate_evidence": res.evidence}))
+            raw_out = self.scorer(feats)
+            laya_ev = feats.get("laya")  # a Laya scorer annotates its feature dict (see gwaya.laya_runtime)
+            if isinstance(laya_ev, dict):
+                step["laya"] = laya_ev
+                ev.setdefault("laya", {}).update({"scorer": laya_ev, "truncated_candidate": bool(laya_ev.get("truncated_candidate")),
+                                                  "signals_incomplete": bool(laya_ev.get("signals_incomplete")),
+                                                  "model_sha": laya_ev.get("model_sha"),
+                                                  **{k: laya_ev[k] for k in ("quant_shift", "served_quant") if k in laya_ev}})
+                if laya_ev.get("likely_correct_vetoed"):
+                    step["likely_correct_vetoed"] = list(laya_ev["likely_correct_vetoed"])
+            if raw_out is None:  # scorer not applicable (domain/tier it never saw): no p, gate-only policy
+                step["scorer"] = "not_applicable"
+                return None
+            raw = float(raw_out)
             if not (0.0 <= raw <= 1.0) or raw != raw:
                 raise ValueError(f"raw score {raw} outside [0, 1]")
         except Exception as exc:  # noqa: BLE001
@@ -544,9 +608,123 @@ def system_from_env() -> GwenLaya:
     GWENLAYA_TIERS: comma-separated Ollama tags, cheapest first (default: the locally installed
     qwen2.5-coder:1.5b,3b,7b; the preregistered Qwen3.5 ladder is not pulled yet).
     GWENLAYA_CALIBRATION: path to a JSON written by save_calibrations. No Laya router/scorer is
-    wired by default, so without them only VERIFIED answers are returned."""
-    names = [n.strip() for n in os.environ.get(
-        "GWENLAYA_TIERS", "qwen2.5-coder:1.5b,qwen2.5-coder:3b,qwen2.5-coder:7b").split(",") if n.strip()]
+    wired unless GWENLAYA_LAYA_DIR is set (gwaya.laya_runtime), so otherwise only VERIFIED answers are returned.
+    GWENLAYA_MATH_POT=0 switches off the program-of-thought math gate (default on).
+    GWENLAYA_BACKEND=llamacpp serves the tiers from running llama-servers (gwaya.llama_tier, returns log-probs) listed in
+    GWENLAYA_LLAMA_URLS='name=url,name=url' (cheapest first; names are used verbatim and GWENLAYA_TIERS is ignored).
+    Default backend 'ollama' is unchanged."""
+    backend = os.environ.get("GWENLAYA_BACKEND", "ollama").strip().lower() or "ollama"
     cal_path = os.environ.get("GWENLAYA_CALIBRATION")
     cals = load_calibrations(cal_path) if cal_path and Path(cal_path).is_file() else {}
-    return GwenLaya([ollama_tier(n) for n in names], calibrations=cals)
+    if backend == "llamacpp":
+        tiers = _llama_tiers(os.environ.get("GWENLAYA_LLAMA_URLS", ""))
+    elif backend == "ollama":
+        names = [n.strip() for n in os.environ.get(
+            "GWENLAYA_TIERS", "qwen2.5-coder:1.5b,qwen2.5-coder:3b,qwen2.5-coder:7b").split(",") if n.strip()]
+        tiers = [ollama_tier(n) for n in names]
+    else:
+        raise ValueError(f"GWENLAYA_BACKEND must be 'ollama' or 'llamacpp', got {backend!r}")
+    math_pot = os.environ.get("GWENLAYA_MATH_POT", "1") != "0"
+    laya_dir = os.environ.get("GWENLAYA_LAYA_DIR")
+    if not laya_dir:  # exactly the pre-Laya behaviour
+        return GwenLaya(tiers, calibrations=cals, math_pot=math_pot)
+    return _system_with_laya(tiers, cals, laya_dir, math_pot, quant_shift=backend == "llamacpp")
+
+
+LAYA_TRAINED_TIERS = ("qwen3.5-2b-bf16", "qwen3.5-4b-bf16", "qwen3.5-9b-bf16")  # the tier names the frozen heads know
+
+
+def runtime_config(env: Mapping[str, str] | None = None) -> dict[str, Any]:
+    """What ``system_from_env`` would build, read from env only: no model load, no network, no GPU.
+
+    Used by the MCP status tool so a user can see whether Laya, the log-prob tier and the math gate are actually
+    in effect. ``warnings`` lists configurations in which a component is wired but cannot act (for example Laya
+    enabled while no served tier name is one of the trained tiers)."""
+    e = os.environ if env is None else env
+    backend = (e.get("GWENLAYA_BACKEND", "ollama").strip().lower() or "ollama")
+    warnings: list[str] = []
+    if backend == "llamacpp":
+        tiers = [p.partition("=")[0].strip() for p in e.get("GWENLAYA_LLAMA_URLS", "").split(",") if p.strip()]
+        urls = {p.partition("=")[0].strip(): p.partition("=")[2].strip()
+                for p in e.get("GWENLAYA_LLAMA_URLS", "").split(",") if "=" in p}
+        if not tiers:
+            warnings.append("GWENLAYA_BACKEND=llamacpp but GWENLAYA_LLAMA_URLS is empty")
+    else:
+        tiers = [n.strip() for n in e.get("GWENLAYA_TIERS", "qwen2.5-coder:1.5b,qwen2.5-coder:3b,qwen2.5-coder:7b").split(",")
+                 if n.strip()]
+        urls = {}
+        if backend != "ollama":
+            warnings.append(f"unknown GWENLAYA_BACKEND {backend!r}")
+    laya_dir = e.get("GWENLAYA_LAYA_DIR") or None
+    tier_map = {}
+    for part in (e.get("GWENLAYA_LAYA_TIER_MAP") or "").split(","):
+        k, sep, v = part.partition("=")
+        if sep:
+            tier_map[k.strip()] = v.strip()
+    laya: dict[str, Any] = {"enabled": bool(laya_dir)}
+    if laya_dir:
+        mapped = [tier_map.get(t, t) for t in tiers]
+        laya.update(dir=laya_dir, device=e.get("GWENLAYA_LAYA_DEVICE", "cpu"),
+                    domains=[d.strip() for d in e.get("GWENLAYA_LAYA_DOMAINS", "python,math").split(",") if d.strip()],
+                    tau_route=float(e.get("GWENLAYA_LAYA_TAU_ROUTE", "0.5")),
+                    thresholds=e.get("GWENLAYA_LAYA_THRESHOLDS") or None, tier_map=tier_map,
+                    tiers_known_to_laya=[t for t, m in zip(tiers, mapped) if m in LAYA_TRAINED_TIERS])
+        if not laya["tiers_known_to_laya"]:
+            warnings.append("Laya is enabled but no served tier is one of the trained tiers "
+                            f"{list(LAYA_TRAINED_TIERS)}: routing falls back to the static ladder and the scorer abstains "
+                            "(set GWENLAYA_LAYA_TIER_MAP or serve tiers under the trained names)")
+        if backend != "llamacpp":
+            warnings.append("Laya is enabled on a backend that returns no log-probabilities: the calibrator's output "
+                            "cannot support LIKELY_CORRECT (signals_incomplete); use GWENLAYA_BACKEND=llamacpp")
+        if not laya["thresholds"]:
+            warnings.append("no GWENLAYA_LAYA_THRESHOLDS: Laya routes and reports p_correct but never decides "
+                            "LIKELY_CORRECT / LIKELY_WRONG")
+    return {"backend": backend, "tiers": tiers, "urls": urls, "served_quant": e.get("GWENLAYA_SERVED_QUANT", "unspecified"),
+            "math_pot": e.get("GWENLAYA_MATH_POT", "1") != "0",
+            "min_visible_tests": e.get(MIN_VISIBLE_TESTS_ENV) or None,
+            "calibration": e.get("GWENLAYA_CALIBRATION") or None, "laya": laya, "warnings": warnings}
+
+
+def _llama_tiers(spec: str) -> list[Tier]:
+    """'name=url,name=url' -> llama.cpp tiers in the given order (cheapest first). Raises on an empty or bad spec."""
+    from gwaya.llama_tier import llama_cpp_tier
+    tiers: list[Tier] = []
+    for part in (p.strip() for p in spec.split(",") if p.strip()):
+        name, sep, url = part.partition("=")
+        if not (sep and name.strip() and url.strip().startswith("http")):
+            raise ValueError(f"GWENLAYA_LLAMA_URLS entry {part!r} is not name=http://host:port")
+        tiers.append(llama_cpp_tier(name.strip(), url.strip()))
+    if not tiers:
+        raise ValueError("GWENLAYA_BACKEND=llamacpp needs GWENLAYA_LLAMA_URLS='name=http://127.0.0.1:8091,...'")
+    return tiers
+
+
+def _system_with_laya(tiers: list[Tier], cals: dict[str, CalibrationArtifact], laya_dir: str,
+                      math_pot: bool = True, quant_shift: bool = False) -> GwenLaya:
+    """Wire the frozen Laya (gwaya.laya_runtime) as router and scorer. Env:
+    GWENLAYA_LAYA_DIR (router/ and calibrator/ inside), GWENLAYA_LAYA_DEVICE (default cpu),
+    GWENLAYA_LAYA_DOMAINS (default 'python,math'; rust is at chance on fresh data, lean4 is refused),
+    GWENLAYA_LAYA_TAU_ROUTE (default 0.5, the tau chosen on C for the registered A13b router policy),
+    GWENLAYA_LAYA_THRESHOLDS (optional JSON {domain: {tau_hi, tau_lo}}; without it Laya never yields LIKELY_CORRECT/WRONG),
+    GWENLAYA_LAYA_TIER_MAP ('runtime_tier=trained_tier,...'; no map means names must match the trained tiers),
+    GWENLAYA_LAYA_THREADS. A bad directory or a sha256 mismatch raises (no silent fallback).
+    ``quant_shift`` (llama.cpp tiers: quantised GGUF served, Laya trained on bf16 generations) marks every Laya scorer
+    evidence ``quant_shift: true`` with ``served_quant`` = $GWENLAYA_SERVED_QUANT; it is a label, not a correction."""
+    from gwaya.laya_runtime import LayaRuntime, load_thresholds, parse_tier_map
+    rt = LayaRuntime.load(laya_dir, os.environ.get("GWENLAYA_LAYA_DEVICE", "cpu"),
+                          tier_map=parse_tier_map(os.environ.get("GWENLAYA_LAYA_TIER_MAP")),
+                          threads=int(os.environ.get("GWENLAYA_LAYA_THREADS", "0")) or None)
+    th_path = os.environ.get("GWENLAYA_LAYA_THRESHOLDS")
+    laya_cals = rt.calibration_artifacts(load_thresholds(th_path) if th_path else None)
+    score = rt.scorer
+    if quant_shift:
+        served = os.environ.get("GWENLAYA_SERVED_QUANT", "unspecified")
+
+        def score(features: dict[str, Any]) -> float | None:  # labelled wrapper around rt.scorer
+            out = rt.scorer(features)
+            if isinstance(features.get("laya"), dict):
+                features["laya"].update(quant_shift=True, served_quant=served)
+            return out
+    return GwenLaya(tiers, router=rt.router, scorer=score, calibrations={**cals, **laya_cals},
+                    tau_route=float(os.environ.get("GWENLAYA_LAYA_TAU_ROUTE", "0.5")), route_policy="start_at",
+                    math_pot=math_pot)
