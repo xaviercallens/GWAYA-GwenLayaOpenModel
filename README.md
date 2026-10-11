@@ -107,6 +107,30 @@ by tier, hardened gate with known limits). The Laya runtime and a llama.cpp tier
 **not** been validated end to end (no Q4_K_M calibration, accuracy or threshold evaluation). Python and math are the
 primary domains, Lean 4 secondary, Rust gate-only.
 
+### Latest measured results (paper revision 3.10.0)
+
+All rows are read from committed files and were recomputed by an independent audit
+([`docs/CLAIM_AUDIT_3100.md`](docs/CLAIM_AUDIT_3100.md)). Fresh sets F: Python 407, math 501, Lean 4 229 tasks; greedy,
+bf16, Qwen3.5 2B / 4B / 9B on TPU v5e. "Exploratory" means not a registered confirmatory test.
+
+| Question | Result | Status |
+|---|---|---|
+| Accuracy on F, Python + math pooled (2B / 4B / 9B) | 0.313 / 0.427 / 0.472 | descriptive |
+| Executed gate vs log-prob threshold at equal coverage, confident-wrong rate (9B) | Python 0.147 vs 0.224; math 0.004 vs 0.078 | exploratory |
+| Frozen Laya, calibrated score vs raw log-prob (H1, 9B, 908 tasks) | AURC difference -0.104, 95% CI [-0.132, -0.078], Holm p = 0.0002 | **supported** (deviated; carried by math, Python alone includes zero) |
+| Frozen Laya vs the gate alone at the gate's coverage (H3) | -0.002, 95% CI [-0.022, +0.016] | **not supported** |
+| Laya vs logistic regression on the same hand features | AUROC -0.004 [-0.015, +0.006]; AURC +0.010 [+0.003, +0.019] (regression slightly better) | text adds nothing measurable |
+| Router at tau = 0.5 vs always-9B | accuracy 0.476 vs 0.472, cost 0.89x | exploratory |
+| Gate-driven 2B-4B-9B cascade vs always-9B (pooled) | cost ratio 1.74, accuracy -0.007 [-0.026, +0.012] | **no saving** |
+| Lean 4 proofs, miniF2F test, 223 (0.8B / 2B / 4B / 9B) | 22 / 41 / 59 / 69 proved, all exact statement matches | descriptive |
+| Lean 4 proofs, fresh miniF2F-valid set, 229 (2B / 4B / 9B) | 33 / 65 / 76 proved | descriptive |
+| Laya candidate-first text layout (A22) | not better (ΔAUROC -0.010 on E', +0.004 on R', CI spans 0) | negative |
+
+What this does **not** show: that the generators have not seen these public benchmarks, anything about a 27B model
+(never loaded on the available TPU slice), end-to-end behaviour of the opt-in Laya runtime or the llama.cpp tier, or a
+deployed serverless endpoint (the tooling in [`docs/TPU_ENDPOINT.md`](docs/TPU_ENDPOINT.md) is written and tested
+against a fake TPU API only).
+
 ## 🛠️ Architecture: The GWAYA Fail-Closed Gate
 
 For any candidate $c$ in language $\ell \in \{\text{python}, \text{rust}, \text{lean4}\}$, the gate accepts if and only if:
@@ -270,19 +294,37 @@ For larger models or massive multi-benchmark runs, we provide a self-deleting Go
 
 ## 🧪 Open Call for Community Contributions (Humans & AI Agents)
 
-We actively welcome contributions from **human researchers, software engineers, and autonomous AI agents**!
+GWAYA and GwenLaya are open research code with a habit of publishing negative results and retracting claims that did not
+survive an audit. **You are welcome to contribute, to reproduce, and above all to try to break it.** Everything here is
+MIT-licensed; the paper revision 3.10.0 is archived at
+[doi:10.5281/zenodo.23300156](https://doi.org/10.5281/zenodo.23300156). Start with [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-### Top Priority Research Tracks:
-1. **Qwen (Gwen) Model Series Scaling:**
-   - Run `scripts/run_benchmark.py` on `0.5b`, `3b`, `7b`, `14b`, and `32b` models and submit raw `rows.jsonl` and `results.json` pull requests.
-2. **Multi-Turn Exception Trace Self-Repair:**
-   - Enhance `low_tier_engine.py` to parse traceback line numbers and exception types into the repair prompt.
-3. **Formal Verification (Lean 4 Mathlib):**
-   - Extend the Lean oracle to automatically discover `lake_packages` and evaluate auto-formalization datasets (MiniF2F, ProofNet).
-4. **New Language Oracles:**
-   - Implement fail-closed compiler oracles for C++ (`clang++`), Go (`go vet`), and Julia.
-5. **AI Agent Pull Request Protocol:**
-   - If you are an AI coding agent (Claude Code, Antigravity, OpenHands), you are invited to fork this repo, implement an improvement, execute `pytest tests/`, verify `git diff`, and open an automated PR with full execution telemetry.
+### Where help matters most
+1. **Break the gate.** Try to get a wrong or hollow candidate `VERIFIED` (Python sandbox escapes, Rust stubs that compile,
+   Lean statement-matching bypasses). The Lean gate's known limits (binder info not compared, defeq accepted, red team
+   incomplete) are listed in the paper; a reproducible bypass is a first-class contribution.
+2. **Replicate or refute.** Re-run the audit scripts on the committed rows, or run the protocol on another model family
+   (Qwen3, Llama, Gemma, DeepSeek) and tell us whether H1 and the gate's confident-wrong reduction transfer.
+3. **A bigger tier.** Qwen3.5-27B (or any 20B+ model) never loaded on one v5litepod-4. Multi-host TPU, int8, or a GPU run
+   would close the "tier gap" question left open by the cascade result.
+4. **Make Laya's text matter.** Laya is not distinguishable from a logistic regression on gate and log-prob features, and
+   its 512-token window drops the candidate on long prompts. Variable-length inputs, better pooling or fine-tuning
+   recipes are open; a layout change alone did not help (A22).
+5. **Fresh, decontaminated evaluation sets** (post-training-cutoff problems, Rust, Lean, other languages) built with
+   `gwaya.decontaminate` and sanity checks as in `scripts/data/build_eval_sets_F.py`.
+6. **Run and measure the serverless TPU endpoint** (`deploy/tpu_endpoint`): real cold-start time, throughput, and fixes
+   for the points listed as unverified in `docs/TPU_ENDPOINT.md`.
+7. **New language oracles** (C++, Go, Julia) with fail-closed semantics and a stub-audit.
+
+### Ground rules
+- Plan before you run: write the analysis plan (as an addendum in `docs/ANALYSIS_PLAN_E_TPU.md` or in the PR) *before*
+  looking at results; record every deviation in `docs/DEVIATIONS.md`.
+- Every number must be traceable to a committed rows/JSON file. No hand-typed results. Negative and null results are
+  welcome and will be merged.
+- Open an issue or PR with the exact command, the commit hash, the hardware, and the raw rows.
+- **AI coding agents** (Claude Code, Codex, OpenHands, Antigravity, ...) are welcome: fork, implement, run
+  `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q`, check `git diff`, and open a PR with the full execution log. State in the
+  PR that an agent wrote it.
 
 ---
 
