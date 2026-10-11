@@ -194,7 +194,7 @@ def table_laya(L: dict) -> str:
     def row(label, f):
         return f"{label} & " + " & ".join(f(pt[x]) for x in TIERS) + "\\\\\n"
     t += row("accuracy", lambda d: n(d["accuracy"]))
-    t += row("gate coverage", lambda d: n(d["gate_coverage"]))
+    t += row("gate coverage (verdicts as in the Laya rows, before the serial re-check)", lambda d: n(d["gate_coverage"]))
     for key, lab in (("laya", "Laya"), ("raw_logprob", "log-prob"), ("gate", "gate"), ("hand_lr", "hand-feature LR")):
         t += row(f"AUROC {lab}", lambda d, k=key: n(d["metrics"][k]["auroc"]))
     for key, lab in (("laya", "Laya"), ("raw_logprob", "log-prob"), ("gate", "gate"), ("hand_lr", "hand-feature LR")):

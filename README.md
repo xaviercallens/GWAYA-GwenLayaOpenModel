@@ -78,8 +78,9 @@ All benchmarks evaluate **`qwen2.5-coder:1.5b`** on the **MBPP-sanitized** test 
 ## 🧪 GwenLaya v4 (work in progress, exploratory results only)
 
 GwenLaya asks whether a small open model (Qwen3.5) can answer only when an executed check or a calibrated
-score supports the answer, and otherwise abstain or escalate. **No pre-registered hypothesis test has been
-completed**: both primary hypotheses need the Laya calibrator and a separate calibration split, which do not exist yet.
+score supports the answer, and otherwise abstain or escalate. **No hypothesis test has run in its registered form**:
+the two primary hypotheses were tested only in deviated forms (a trained Laya calibrator and a separate calibration split
+exist since 3.6.0; see the status paragraph below). The three bullets that follow are the 3.4.0 baselines.
 What has been measured (full 1,536-task E set, one greedy sample, one TPU v5e chip; see
 [`papers/gwenlaya_v4.pdf`](papers/gwenlaya_v4.pdf) and [`results/gwenlaya_v4/e_tpu/`](results/gwenlaya_v4/e_tpu/)):
 
@@ -97,8 +98,9 @@ All of it is deviated or exploratory and every number is read from a committed f
 [`docs/CLAIM_AUDIT_3100.md`](docs/CLAIM_AUDIT_3100.md); the audit of the previous one is
 [`docs/CLAIM_AUDIT_390.md`](docs/CLAIM_AUDIT_390.md); deviations D1-D77 in [`docs/DEVIATIONS.md`](docs/DEVIATIONS.md)).
 In 3.10.0 the frozen Laya was run unchanged on fresh Python and math sets F (908 tasks): H1 (calibrated score vs raw
-log-prob, AURC) is supported, H3 (vs the gate alone at the gate's coverage) is not, and Laya is not distinguishable from a
-logistic regression on the same features. First Lean 4 results are descriptive (greedy proof rate on miniF2F 0.10 to 0.33
+log-prob, AURC) is supported in a deviated test on Python and math pooled (within Python alone the 9B interval includes
+zero; it was not supported on the fresh Rust set of 3.7.0), H3 (vs the gate alone at the gate's coverage) is not, and Laya is
+not distinguishable from a logistic regression on the same features. First Lean 4 results are descriptive (greedy proof rate on miniF2F 0.10 to 0.33
 by tier, hardened gate with known limits). The Laya runtime and a llama.cpp tier exist as opt-in system changes and have
 **not** been validated end to end (no Q4_K_M calibration, accuracy or threshold evaluation). Python and math are the
 primary domains, Lean 4 secondary, Rust gate-only.
