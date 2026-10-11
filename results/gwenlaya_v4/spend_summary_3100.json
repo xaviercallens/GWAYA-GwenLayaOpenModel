@@ -1,0 +1,38 @@
+{
+ "lines_total": 31,
+ "total_usd": 22.0055,
+ "lines_3_9": 27,
+ "total_3_9": 19.2801,
+ "lines_new": 4,
+ "total_new": 2.7254,
+ "last_ts": "2026-10-11T15:54:04+02:00",
+ "last_item": "tpu_laya-layout-152621",
+ "a18_generation_lines_in_3_9": 2,
+ "new_items": {
+  "tpu_f-9b-185104": {
+   "ts": "2026-10-10T19:11:33+02:00",
+   "seconds": 1016,
+   "usd": 1.3547,
+   "accel": "v5litepod-4 on-demand"
+  },
+  "tpu_f-small-185104": {
+   "ts": "2026-10-10T19:28:56+02:00",
+   "seconds": 2139,
+   "usd": 0.713,
+   "accel": "v5litepod-1 on-demand"
+  },
+  "tpu_f-laya-152622": {
+   "ts": "2026-10-11T15:35:59+02:00",
+   "seconds": 444,
+   "usd": 0.148,
+   "accel": "v5litepod-1 on-demand"
+  },
+  "tpu_laya-layout-152621": {
+   "ts": "2026-10-11T15:54:04+02:00",
+   "seconds": 1529,
+   "usd": 0.5097,
+   "accel": "v5litepod-1 on-demand"
+  }
+ },
+ "note": "lines after 27 were written after the 3.9.0 build (A21 generation of F on 2B/4B/9B, the frozen Laya on F, the A22 layout ablation); the A18 Lean generation lines (26, 27) were already counted in 3.9.0"
+}

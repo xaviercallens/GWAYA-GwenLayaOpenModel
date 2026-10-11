@@ -1,0 +1,63 @@
+{
+ "note": "which lexical rule of gwaya/lean_gate.py::lexical_flaws fires on the stored text of every row whose reason is forbidden_construct; offline, no Lean process; 'unexplained' = rows with that reason but no flaw found by the function",
+ "sets": {
+  "A18_minif2f_test": {
+   "qwen3.5-0.8b-bf16": {
+    "rows": 223,
+    "forbidden_construct": 89,
+    "flaws": {
+     "sorry": 89
+    },
+    "unexplained": 0
+   },
+   "qwen3.5-2b-bf16": {
+    "rows": 223,
+    "forbidden_construct": 77,
+    "flaws": {
+     "sorry": 77
+    },
+    "unexplained": 0
+   },
+   "qwen3.5-4b-bf16": {
+    "rows": 223,
+    "forbidden_construct": 0,
+    "flaws": {},
+    "unexplained": 0
+   },
+   "qwen3.5-9b-bf16": {
+    "rows": 223,
+    "forbidden_construct": 1,
+    "flaws": {
+     "sorry": 1
+    },
+    "unexplained": 0
+   }
+  },
+  "F_minif2f_valid": {
+   "qwen3.5-2b-bf16": {
+    "rows": 229,
+    "forbidden_construct": 76,
+    "flaws": {
+     "sorry": 76
+    },
+    "unexplained": 0
+   },
+   "qwen3.5-4b-bf16": {
+    "rows": 229,
+    "forbidden_construct": 1,
+    "flaws": {
+     "sorry": 1
+    },
+    "unexplained": 0
+   },
+   "qwen3.5-9b-bf16": {
+    "rows": 229,
+    "forbidden_construct": 2,
+    "flaws": {
+     "sorry": 2
+    },
+    "unexplained": 0
+   }
+  }
+ }
+}
