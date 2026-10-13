@@ -1,0 +1,119 @@
+{
+ "endpoint": "https://gwenlaya-endpoint-1003063861791.us-central1.run.app",
+ "model": "gwenlaya-4b",
+ "cold_start_s": 427.1,
+ "rows": [
+  {
+   "id": "rev_words",
+   "verdict": "VERIFIED",
+   "rounds": 1,
+   "wall_s": 36.09,
+   "first_round_passed": true,
+   "tokens": 19,
+   "signals": {
+    "mean_logprob": -0.09670290160360501,
+    "min_logprob": -0.5979437828063965
+   },
+   "note": ""
+  },
+  {
+   "id": "is_pal",
+   "verdict": "VERIFIED",
+   "rounds": 1,
+   "wall_s": 2.0,
+   "first_round_passed": true,
+   "tokens": 35,
+   "signals": {
+    "mean_logprob": -0.06361055378774023,
+    "min_logprob": -0.8868672847747803
+   },
+   "note": ""
+  },
+  {
+   "id": "fib",
+   "verdict": "VERIFIED",
+   "rounds": 1,
+   "wall_s": 2.23,
+   "first_round_passed": true,
+   "tokens": 72,
+   "signals": {
+    "mean_logprob": -0.029960177310414338,
+    "min_logprob": -0.571509063243866
+   },
+   "note": ""
+  },
+  {
+   "id": "merge_iv",
+   "verdict": "VERIFIED",
+   "rounds": 1,
+   "wall_s": 2.66,
+   "first_round_passed": true,
+   "tokens": 105,
+   "signals": {
+    "mean_logprob": -0.04602260848462374,
+    "min_logprob": -0.7939160466194153
+   },
+   "note": ""
+  },
+  {
+   "id": "flatten",
+   "verdict": "VERIFIED",
+   "rounds": 1,
+   "wall_s": 1.96,
+   "first_round_passed": true,
+   "tokens": 48,
+   "signals": {
+    "mean_logprob": -0.016959880875977735,
+    "min_logprob": -0.2854689657688141
+   },
+   "note": ""
+  },
+  {
+   "id": "roman",
+   "verdict": "VERIFIED",
+   "rounds": 1,
+   "wall_s": 4.17,
+   "first_round_passed": true,
+   "tokens": 209,
+   "signals": {
+    "mean_logprob": -0.04675964681387584,
+    "min_logprob": -1.045554280281067
+   },
+   "note": ""
+  },
+  {
+   "id": "lru",
+   "verdict": "VERIFIED",
+   "rounds": 1,
+   "wall_s": 3.25,
+   "first_round_passed": true,
+   "tokens": 149,
+   "signals": {
+    "mean_logprob": -0.03273417282958848,
+    "min_logprob": -0.7048794031143188
+   },
+   "note": ""
+  },
+  {
+   "id": "topk",
+   "verdict": "VERIFIED",
+   "rounds": 1,
+   "wall_s": 1.78,
+   "first_round_passed": true,
+   "tokens": 75,
+   "signals": {
+    "mean_logprob": -0.06696187727978516,
+    "min_logprob": -1.1927119493484497
+   },
+   "note": ""
+  }
+ ],
+ "summary": {
+  "n": 8,
+  "verified": 8,
+  "first_try": 8,
+  "mean_wall_s": 6.77,
+  "tok_per_s": 13.2
+ },
+ "stop_http": 200
+}

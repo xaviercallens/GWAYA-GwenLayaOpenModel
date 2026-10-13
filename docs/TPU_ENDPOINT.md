@@ -1,7 +1,12 @@
 # GWAYA / GwenLaya serverless endpoint on TPU (OpenAI format)
 
-Status: **tooling written and unit-tested against a fake TPU API; not deployed, no cold-start number measured yet.**
-Every latency/cost figure below is marked *estimate* until `deploy/tpu_endpoint/smoke.py` has been run.
+Status: **deployed (Cloud Run, 2026-10-11) and exercised once on 2026-10-13 with `scripts/gwaya_assist.py bench`.**
+Measured (one run, rows in `results/assist_smoke_2026-10-13.json`): cold start (warmup -> ready) **427 s**; 8 hand-written
+Python tasks, all VERIFIED in round 1 (a smoke check, not a benchmark); first request 36 s (includes first-request
+compile), warm requests 1.8-4.2 s for 35-209 tokens (about 50 tok/s single stream on Roman numerals, 13 tok/s over the
+whole run including gate time); VM deleted by `/v1/stop`. Other figures below remain *estimates* until re-measured.
+Items 1-3 under "Known limits" are resolved by this run for the paths exercised: vLLM HTTP serving of Qwen3.5-4B works,
+the gateway reached the VM, and the IAM role was sufficient to create and delete the node.
 
 ## What it is
 
