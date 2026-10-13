@@ -103,6 +103,7 @@ BODY = {"model": "anything", "messages": [{"role": "user", "content": "hello"}],
 def test_auth_required_and_fail_closed(gw):
     c = client(gw, FakeCloud())
     assert c.get("/healthz").status_code == 200
+    assert c.get("/health").status_code == 200
     assert c.get("/v1/models").status_code == 401
     assert c.get("/v1/models", headers={"Authorization": "Bearer nope"}).status_code == 401
     assert c.post("/v1/chat/completions", json=BODY).status_code == 401

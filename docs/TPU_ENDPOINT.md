@@ -80,7 +80,7 @@ bucket/firewall/SA/role if you no longer want them.
 ## User guide: calling it as a public endpoint
 
 Base URL: the Cloud Run URL printed by `deploy.sh` (e.g. `https://gwenlaya-endpoint-xxxxx-uc.a.run.app`).
-The URL is public; **every route except `/healthz` requires `Authorization: Bearer <API key>`**. With no key
+The URL is public; **every route except `/health` (`/healthz` is intercepted by Cloud Run's front end with a 404) requires `Authorization: Bearer <API key>`**. With no key
 configured the gateway rejects everything (fail closed). Share the key only with people you want to spend your TPU
 time. Rotate with `gcloud run services update gwenlaya-endpoint --update-env-vars GWAYA_API_KEYS=<new>,...` (several
 keys may be comma-separated).
@@ -114,7 +114,7 @@ r = c.chat.completions.create(model="gwenlaya-4b", messages=[{"role": "user", "c
 print(r.choices[0].message.content)
 ```
 
-Routes: `GET /healthz` (open), `GET /v1/models`, `POST /v1/chat/completions`, `POST /v1/completions`,
+Routes: `GET /health` (open), `GET /v1/models`, `POST /v1/chat/completions`, `POST /v1/completions`,
 `POST /v1/warmup`, `GET /v1/status`, `POST /v1/stop`.
 Limits enforced by the gateway: body at most 512 KiB, `max_tokens` clamped to 2,048 (default 512), `n` forced to 1,
 `model` forced to `gwenlaya-4b`, context 8,192 tokens, at most 16 concurrent sequences on the TPU.

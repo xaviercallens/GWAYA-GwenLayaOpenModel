@@ -38,7 +38,7 @@ def main() -> int:
         print("set GWAYA_ENDPOINT and GWAYA_API_KEY", file=sys.stderr)
         return 2
     out: dict = {"endpoint": base}
-    s, d, _ = call(base, key, "GET", "/healthz")
+    s, d, _ = call(base, key, "GET", "/health")
     out["gateway_health"] = s
     s, d, _ = call(base, key, "GET", "/v1/status")
     out["state_before"] = d.get("state")
