@@ -20,6 +20,8 @@ def summ(m):
     k = int(y[m].sum()); n = int(m.sum()); return dict(n_accept=n, coverage=n / len(m) if False else None, precision=k / n if n else None, wilson=wil(k, n))
 def cut(mask):
     yy, ss = y[mask], sc[mask]; N = len(yy); out = dict(n=N, base_rate=float(yy.mean()))
+    g = np.array([r["gate"] == "verified" for r in R])[mask]; kg = int(yy[g].sum()); ng = int(g.sum())
+    out["gate_only"] = dict(n_accept=ng, coverage=ng / N, precision=kg / ng if ng else None, wilson=wil(kg, ng))
     out["at_frozen_threshold"] = {}
     for t, v in meta["thresholds"].items():
         a = ss >= v["threshold"]; k = int(yy[a].sum()); n = int(a.sum())
@@ -40,6 +42,7 @@ json.dump(res, open(OUT, "w"), indent=1)
 for t in sorted(set(tiers)):
     for b, v in res[t].items():
         f = v["at_frozen_threshold"]["0.85"]; r5 = v["rank_curve"]["0.5"]
+        print("   gate-only cov %.2f prec %s" % (v["gate_only"]["coverage"], v["gate_only"]["precision"]))
         print("%-22s %-10s n %d base %.3f | thr0.85 cov %.2f prec %s %s | cov0.5 prec %.3f %s | A30 rank %s" % (
             t, b, v["n"], v["base_rate"], f["coverage"], None if f["precision"] is None else round(f["precision"], 3),
             None if f["wilson"][0] is None else [round(x, 3) for x in f["wilson"]], r5["precision"], [round(x, 3) for x in r5["wilson"]],
