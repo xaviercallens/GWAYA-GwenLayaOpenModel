@@ -18,18 +18,18 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-VERSION = "3.10.0"
+VERSION = "3.12.0"
 PDF = ROOT / "papers" / "gwenlaya_v4.pdf"
-RELEASE_URL = "https://github.com/xaviercallens/GWAYA-GwenLayaOpenModel/releases/tag/v3.10.0"
+RELEASE_URL = "https://github.com/xaviercallens/GWAYA-GwenLayaOpenModel/releases/tag/v3.12.0"
 DESCRIPTION = """\
-<p><b>GwenLaya v4 (revision 3.10.0)</b>: a pre-registered study of answering only when a check can back the answer.
+<p><b>GwenLaya v4 (revision 3.12.0)</b>: a pre-registered study of answering only when a check can back the answer.
 Qwen3.5 generators (2B/4B/9B) with the GWAYA fail-closed gate and the Laya router/calibrator, for Python, math and Lean 4.</p>
-<p>Main results of this revision: on fresh evaluation sets F (Python 407, math 501, Lean 4 229) the frozen Laya replicates
-H1 out of sample (calibrated P(correct) beats raw log-probabilities, AURC difference -0.104, 95% CI -0.132 to -0.078,
-carried by math) and does not replicate H3 (no gain over the executed gate); Laya is about equal to a hand-feature
-logistic regression. First Lean 4 results with the hardened gate: miniF2F test 22/41/59/69 of 223 (0.8B/2B/4B/9B).
-All claims were recomputed by an independent audit (docs/CLAIM_AUDIT_3100.md in the repository). Exploratory results are
-labelled as such; competition-stratum accuracies are floors; no claim that the generators have not seen public benchmarks.</p>
+<p>New in this revision (phase 2, exploratory, decision rules written before each result): a feedback-retrofitted Laya v2
+(no net gain), best-of-8 sampling with the visible gate on 2B/4B/9B (not a lever), a learned selector over sampled pools
+(not a lever), and a sealed confirmation on the previously seen, easy set E of a frozen downstream accept policy
+(9B: coverage 0.73, precision 0.886, Wilson 95% 0.850 to 0.914). On the fresh set F the same goal is met only at low
+coverage; the goal redefinition is post hoc and labelled so. The revision was recomputed by an independent audit
+(docs/CLAIM_AUDIT_3120.md in the repository, 8 slips fixed).</p>
 <p>Code, data, results and the audit: <a href="https://github.com/xaviercallens/GWAYA-GwenLayaOpenModel">GitHub</a>.</p>
 """
 
