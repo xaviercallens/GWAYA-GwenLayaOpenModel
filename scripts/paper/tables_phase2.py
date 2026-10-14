@@ -71,7 +71,7 @@ def a30_largest(curve: dict) -> tuple | None:
 def table_U(U: dict) -> str:
     t = ("\\begin{table}[!htbp]\\centering\\scriptsize\\setlength{\\tabcolsep}{3pt}\n"
          "\\caption{A26 upstream decision U (accept the task from the prompt alone, before any generation), development table (F Python 407 + E$'$ MBPP 169 tasks, 576 tasks per tier), "
-         "grouped five-fold CV by source cluster, seed 0, threshold chosen on inner folds of the training part (\\code{lever\\_U\\_prompt\\_only.json}). "
+         "grouped five-fold CV by source cluster, seed 0, threshold chosen on inner folds of the training part (\\code{lever_U_prompt_only.json}). "
          "Cells: AUROC / balanced accuracy at that threshold [95\\% cluster-bootstrap interval] / accuracy. The target of A26 as amended is 0.80 for both balanced accuracy and accuracy (stretch 0.90); no model reaches it. "
          "The base rate of ``tier solves the task'' is in the header. The last rows are references that are not prompt-only.}\\label{tab:p2-U}\n"
          "\\begin{tabular}{l" + "c" * 3 + "}\\toprule\nmodel")
@@ -99,7 +99,7 @@ def table_U(U: dict) -> str:
 def table_D(D: dict, B: dict) -> str:
     c = D["lr|core"]
     t = ("\\begin{table}[!htbp]\\centering\\scriptsize\\setlength{\\tabcolsep}{3pt}\n"
-         "\\caption{A26 downstream decision D (accept the answer), development table (1,728 task-tier rows; grouped five-fold CV by source cluster, seed 0; \\code{lever\\_D\\_stacked\\_calibrated.json}, \\code{baseline\\_dev.json}). "
+         "\\caption{A26 downstream decision D (accept the answer), development table (1,728 task-tier rows; grouped five-fold CV by source cluster, seed 0; \\code{lever_D_stacked_calibrated.json}, \\code{baseline_dev.json}). "
          "Precision of the accepted set with Wilson 95\\% interval, coverage = accepted share of rows. D3 \\code{lr|core} is a logistic regression on gate, mean and minimum log-prob, log completion tokens, truncation flag and visible-test count, "
          "isotonic-calibrated; ``at CV thr.'' uses a threshold chosen inside the training folds for target 0.85; ``rank'' columns accept the top share by score, so the A30 column picks its coverage with labels and is optimistic. "
          "Hand rules need no model: gate-verified answers, then log-prob (``gate then lp''), and log-prob alone. The A30 criterion is precision $\\ge0.84$ with Wilson lower bound $\\ge0.80$. "
@@ -123,7 +123,7 @@ def table_D(D: dict, B: dict) -> str:
 def table_cons(C: dict) -> str:
     t = ("\\begin{table}[!htbp]\\centering\\scriptsize\\setlength{\\tabcolsep}{3pt}\n"
          "\\caption{A26 consensus lever: does cross-tier agreement of executed outputs on probe inputs add to the base features of D3? Learned grouped-CV logistic model on the development table "
-         "(\\code{lever\\_D\\_consensus\\_agreement.json}); precision at rank coverage 0.5 with Wilson interval, and AUROC. ``two tier'' = the candidate against one partner tier, ``three tier'' = against both others. "
+         "(\\code{lever_D_consensus_agreement.json}); precision at rank coverage 0.5 with Wilson interval, and AUROC. ``two tier'' = the candidate against one partner tier, ``three tier'' = against both others. "
          "Agreement is agreement of outputs, not correctness; two tiers that share a misunderstanding agree and are both wrong.}\\label{tab:p2-cons}\n"
          "\\begin{tabular}{llccc}\\toprule\ntier & variant & base only & agreement only & base + agreement\\\\\\midrule\n")
     for tr in TIERS:
@@ -145,7 +145,7 @@ def table_v2(V: dict) -> str:
         return (f"{lab} & {n(V['v1'][key])} & {n(V['v2'][key])} & {n(d[key]['point'], 3, True)} [{n(ci[0], 3, True)}, {n(ci[1], 3, True)}]\\\\\n")
     t = ("\\begin{table}[!htbp]\\centering\\scriptsize\n"
          f"\\caption{{A28, Laya v2 (verifier feedback retrofitted, confident-wrong rows duplicated 3$\\times$) against the frozen Laya v1 on the held-out F fold 0 "
-         f"({V['n_tasks']} tasks, {V['n_rows']} task-tier rows, {V['v1']['n_cw']} gate-verified-but-wrong rows; calibrator head; \\code{{phase2\\_v1\\_vs\\_v2\\_F\\_fold0.json}}). "
+         f"({V['n_tasks']} tasks, {V['n_rows']} task-tier rows, {V['v1']['n_cw']} gate-verified-but-wrong rows; calibrator head; \\code{{phase2_v1_vs_v2_F_fold0.json}}). "
          "Paired bootstrap by source problem, 2,000 resamples, seed 0. The registered rule: v2 improves only if Python AUROC rises with interval above zero and math AUROC does not fall by more than 0.01. "
          "v2 values are raw (no isotonic map was fitted for v2), so ECE and Brier are not like-for-like; the AUROC rows are the rule.}\\label{tab:p2-v2}\n"
          "\\begin{tabular}{lccc}\\toprule\nmetric & v1 & v2 & v2 $-$ v1 [95\\% CI]\\\\\\midrule\n")
@@ -161,7 +161,7 @@ def table_v2(V: dict) -> str:
 def table_bok(A29r: dict, A30: dict) -> str:
     t = ("\\begin{table}[!htbp]\\centering\\scriptsize\\setlength{\\tabcolsep}{2.5pt}\n"
          "\\caption{A29 (2B, 4B) and A30 (9B), verifier-guided best-of-8 on F Python (407 tasks; eight samples at $T=0.8$, top-$p$ 0.95, plus the greedy candidate; hidden checks score and never select; "
-         "\\code{phase2\\_A29\\_best\\_of\\_8\\_F\\_python\\_rerun\\_A30script.json}, \\code{phase2\\_A30\\_best\\_of\\_8\\_F\\_python\\_9b.json}). "
+         "\\code{phase2_A29_rerun_A30script.json}, \\code{phase2_A30_best_of_8_F_python_9b.json}). "
          "G = greedy candidate accepted when the visible-test gate verifies; S1 = among the nine candidates the gate-verified one with the highest mean log-prob, refuse if none; ``S1 @0.5'' ranks S1 tasks by number of verified candidates, then log-prob. "
          "``D3 @0.5'' is the D3 \\code{lr|core} value on the same tier at rank coverage 0.5 on F+E$'$ rows (not identical rows). ``some correct'' = the share of tasks for which some of the nine candidates passes the hidden check. "
          "The identical-text arm is post hoc and not part of any rule.}\\label{tab:p2-bok}\n"
@@ -191,7 +191,7 @@ def table_bok(A29r: dict, A30: dict) -> str:
 
 def table_sel(S: dict) -> str:
     t = ("\\begin{table}[!htbp]\\centering\\scriptsize\\setlength{\\tabcolsep}{2.5pt}\n"
-         "\\caption{A32, a learned selector over the sampled pools (F Python, 407 tasks per tier, five-fold CV grouped by cluster, seed 0; \\code{phase2\\_A32\\_selector\\_over\\_pool\\_F\\_python.json}). "
+         "\\caption{A32, a learned selector over the sampled pools (F Python, 407 tasks per tier, five-fold CV grouped by cluster, seed 0; \\code{phase2_A32_selector_over_pool_F_python.json}). "
          "B0 = the same model class restricted to the greedy candidate; B1 = candidate-level model over the nine candidates, the task takes its highest-scoring candidate. Logistic model (primary); threshold chosen inside training folds for target 0.85. "
          "Rule (all three): (a) at the CV threshold precision $\\ge0.84$ and Wilson lower bound $\\ge0.80$; (b) coverage gain over B0 $\\ge0.05$; (c) paired bootstrap interval of the difference in correct accepted tasks at coverage 0.30 above zero. "
          "B0 here is F Python alone and is not the D3 number (F+E$'$).}\\label{tab:p2-sel}\n"
@@ -214,11 +214,11 @@ def table_sel(S: dict) -> str:
 
 def table_sealed(E: dict) -> str:
     t = ("\\begin{table}[!htbp]\\centering\\scriptsize\\setlength{\\tabcolsep}{2.5pt}\n"
-         "\\caption{A31, the frozen D3 \\code{lr|core} policy on the sealed E table (HumanEval+ 156 and MBPP+ 373 tasks per tier; \\code{sealed\\_E\\_D3\\_lr\\_core.json}; read once; \\emph{previously seen task set}, the Laya v1 trained on it; "
+         "\\caption{A31, the frozen D3 \\code{lr|core} policy on the sealed E table (HumanEval+ 156 and MBPP+ 373 tasks per tier; \\code{sealed_E_D3_lr_core.json}; read once; \\emph{previously seen task set}, the Laya v1 trained on it; "
          "no component of the policy was fitted on E). Precision with Wilson 95\\% interval, coverage = accepted share. ``Frozen 0.85'' is the threshold fixed on dev before the read; ``rank 0.5'' accepts the top half by score. "
          "Gate only = accept every gate-verified answer (the baseline the plan required). Rule (i): precision $\\ge0.84$ with lower bound $\\ge0.80$ at the frozen 0.85 threshold; rule (ii): precision $\\ge0.80$ with lower bound $\\ge0.75$ at rank coverage 0.5; "
          "primary tier 9B pooled, secondary tiers reported separately and never pooled to reach a number. Accept-everything is the base rate.}\\label{tab:p2-sealed}\n"
-         "\\begin{tabular}{llcccccc}\\toprule\ntier & split & $n$ & accept all & gate only: cov, prec [W] & frozen 0.85: cov, prec [W] & rule (i) & rank 0.5: prec [W] & rule (ii)\\\\\\midrule\n")
+         "\\begin{tabular}{llccccccc}\\toprule\ntier & split & $n$ & accept all & gate only: cov, prec [W] & frozen 0.85: cov, prec [W] & rule (i) & rank 0.5: prec [W] & rule (ii)\\\\\\midrule\n")
     for tr in TIERS[::-1]:
         for sp in ("ALL", "HumanEval+", "MBPP+"):
             x = E[tr][sp]
@@ -234,7 +234,7 @@ def table_sealed(E: dict) -> str:
 def table_devE(E: dict, D: dict) -> str:
     c = D["lr|core"]
     t = ("\\begin{table}[!htbp]\\centering\\scriptsize\n"
-         "\\caption{The frozen thresholds on the development table (grouped-CV values with per-fold thresholds, \\code{lever\\_D\\_stacked\\_calibrated.json}) and on sealed E (the single frozen threshold, \\code{sealed\\_E\\_D3\\_lr\\_core.json}). "
+         "\\caption{The frozen thresholds on the development table (grouped-CV values with per-fold thresholds, \\code{lever_D_stacked_calibrated.json}) and on sealed E (the single frozen threshold, \\code{sealed_E_D3_lr_core.json}). "
          "Coverage, precision. E is easier (accept-all base rate 0.450, 0.673, 0.726 for 2B, 4B, 9B against 0.248, 0.389, 0.457 on dev) and its gate is stronger, so coverage rises; precision does not rise at every cell. "
          "The last block pools the three tiers of E: it is computed here from the counts of the committed file and is not a registered quantity.}\\label{tab:p2-devE}\n"
          "\\begin{tabular}{llcc}\\toprule\ntier & target & dev (CV): cov, prec & sealed E: cov, prec\\\\\\midrule\n")
@@ -272,11 +272,11 @@ def table_spend(S: dict) -> str:
             "tpu_f-sample-221616": "A29 best-of-8 sampling, 2B and 4B",
             "tpu_f-sample-9b-084710": "A30 best-of-8 sampling, 9B (v5litepod-4)"}
     t = ("\\begin{table}[!htbp]\\centering\\scriptsize\n"
-         "\\caption{Ledger lines added since 3.10.0 (\\code{spend\\_summary\\_3120.json}, from \\code{spend\\_ledger.jsonl}); USD is the list-price estimate of the ledger, not the billed amount. "
+         "\\caption{Ledger lines added since 3.10.0 (\\code{spend_summary_3120.json}, from \\code{spend_ledger.jsonl}); USD is the list-price estimate of the ledger, not the billed amount. "
          "The purpose column is inferred from the item names, the plan addenda and the commit log, not from VM logs.}\\label{tab:spend3120}\n"
-         "\\begin{tabular}{llllrr}\\toprule\nledger time & item & accelerator & purpose & seconds & USD\\\\\\midrule\n")
+         "\\begin{tabular}{lllp{5.4cm}rr}\\toprule\nledger time & item & accelerator & purpose & seconds & USD\\\\\\midrule\n")
     for k, v in S["new_items"].items():
-        t += f"{v['ts'].replace('T', ' ')[:16]} & \\code{{{k}}} & {v['accel']} & {what.get(k, '?')} & {v['seconds']:,} & {v['usd']:.4f}\\\\\n"
+        t += f"{v['ts'].replace('T', ' ')[:16]} & \\code{{{k}}} & {v['accel'].replace(' on-demand', '')} & {what.get(k, '?')} & {v['seconds']:,} & {v['usd']:.4f}\\\\\n"
     t += (f"\\midrule & \\multicolumn{{3}}{{l}}{{added since 3.10.0 ({S['lines_new']} lines)}} & & {S['total_new']:.4f}\\\\\n"
           f"& \\multicolumn{{3}}{{l}}{{ledger total ({S['lines_total']} lines; {S['lines_3_10']} lines, {S['total_3_10']:.4f} at 3.10.0)}} & & {S['total_usd']:.4f}\\\\\n")
     return t + "\\bottomrule\\end{tabular}\\end{table}\n"
@@ -287,7 +287,7 @@ HASHED = [
     "results/gwenlaya_v4/trust_loop/lever_U_prompt_only.json", "results/gwenlaya_v4/trust_loop/lever_D_stacked_calibrated.json",
     "results/gwenlaya_v4/trust_loop/lever_D_consensus_agreement.json",
     "results/gwenlaya_v4/laya/phase2_v1_vs_v2_F_fold0.json", "results/gwenlaya_v4/laya/phase2_A29_best_of_8_F_python.json",
-    "results/gwenlaya_v4/laya/phase2_A29_best_of_8_F_python_rerun_A30script.json", "results/gwenlaya_v4/laya/phase2_A30_best_of_8_F_python_9b.json",
+    "results/gwenlaya_v4/laya/phase2_A29_rerun_A30script.json", "results/gwenlaya_v4/laya/phase2_A30_best_of_8_F_python_9b.json",
     "results/gwenlaya_v4/laya/phase2_A32_selector_over_pool_F_python.json", "results/gwenlaya_v4/laya/sealed_E_D3_lr_core.json",
     "results/gwenlaya_v4/laya/frozen_policy_D/policy_thresholds.json", "results/gwenlaya_v4/laya/frozen_policy_D/policy.pkl",
     "results/refusal_F_python_laya_v1.json", "results/assist_smoke_2026-10-13.json",
@@ -299,7 +299,7 @@ HASHED = [
 def main() -> None:
     U = J(TL / "lever_U_prompt_only.json"); D = J(TL / "lever_D_stacked_calibrated.json"); C = J(TL / "lever_D_consensus_agreement.json")
     V = J(LAYA / "phase2_v1_vs_v2_F_fold0.json")
-    A29 = J(LAYA / "phase2_A29_best_of_8_F_python.json"); A29r = J(LAYA / "phase2_A29_best_of_8_F_python_rerun_A30script.json")
+    A29 = J(LAYA / "phase2_A29_best_of_8_F_python.json"); A29r = J(LAYA / "phase2_A29_rerun_A30script.json")
     for tr in A29:                       # the rerun may only add fields, never change one of the committed A29 file
         for k, v in A29[tr].items():
             assert A29r[tr][k] == v, (tr, k)
@@ -308,7 +308,7 @@ def main() -> None:
     tabs = [table_U(U), table_D(D, None), table_cons(C), table_v2(V), table_bok(A29r, A30), table_sel(S32), table_sealed(E), table_devE(E, D)]
     S = spend()
     (RES / "spend_summary_3120.json").write_text(json.dumps(S, indent=1) + "\n")
-    (ROOT / "papers/tables_phase2.tex").write_text(HEAD + "\n".join(fit(t) for t in tabs) + "\n" + table_spend(S))
+    (ROOT / "papers/tables_phase2.tex").write_text(HEAD + "\n".join(fit(t) for t in tabs) + "\n" + fit(table_spend(S)))
     items = ", ".join(f"\\code{{{k}}} ({v['accel'].split()[0]}, {v['seconds']:,} s, \\${v['usd']:.4f})" for k, v in S["new_items"].items())
     (ROOT / "papers/numbers3120.tex").write_text(
         HEAD + f"\\newcommand{{\\SpendLinesNow}}{{{S['lines_total']}}}\n\\newcommand{{\\SpendTotalNow}}{{{S['total_usd']:.4f}}}\n"
