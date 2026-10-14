@@ -101,9 +101,9 @@ def table_D(D: dict, B: dict) -> str:
     t = ("\\begin{table}[!htbp]\\centering\\scriptsize\\setlength{\\tabcolsep}{3pt}\n"
          "\\caption{A26 downstream decision D (accept the answer), development table (1,728 task-tier rows; grouped five-fold CV by source cluster, seed 0; \\code{lever_D_stacked_calibrated.json}, \\code{baseline_dev.json}). "
          "Precision of the accepted set with Wilson 95\\% interval, coverage = accepted share of rows. D3 \\code{lr|core} is a logistic regression on gate, mean and minimum log-prob, log completion tokens, truncation flag and visible-test count, "
-         "isotonic-calibrated; ``at CV thr.'' uses a threshold chosen inside the training folds for target 0.85; ``rank'' columns accept the top share by score, so the A30 column picks its coverage with labels and is optimistic. "
-         "Hand rules need no model: gate-verified answers, then log-prob (``gate then lp''), and log-prob alone. The A30 criterion is precision $\\ge0.84$ with Wilson lower bound $\\ge0.80$. "
-         "Pooled = all three tiers; its rows are not a tier-level claim.}\\label{tab:p2-D}\n"
+         "isotonic-calibrated; ``at CV thr.'' uses a threshold chosen inside the training folds for target 0.85; ``rank'' columns accept the top share by score, so the A30 column picks its coverage with labels and is optimistic; it is read on the 0.1-step rank curve, as the A30 rule states (on every rank prefix the largest meeting prefixes are coverage 0.33 for the 4B, 0.47 for the 9B and 0.34 pooled, \\code{audit3120_recomputed.json}). "
+         "Hand rules need no model: gate-verified answers, then log-prob (``gate then lp''), and log-prob alone. The hand rule can accept only as many rows as the gate verifies: for the 2B that is 229 rows (coverage 0.40), so its cell is at coverage 0.40, not 0.5; D3 on its top 229 rows is 0.624 and at its 0.4 curve point (231 rows) 0.619 [0.555, 0.679], so the two are level at equal coverage. The A30 criterion is precision $\\ge0.84$ with Wilson lower bound $\\ge0.80$. "
+         "Pooled = all three tiers; its rows are not a tier-level claim. The last two rows split the pooled development table by source, D3 only (the hand-rule columns are not in the committed file for subsets): F Python alone (1,221 rows, the fresh set) and E$'$ MBPP alone (507 rows, easier); on F Python alone, per tier, the CV-threshold figures are in \\code{audit3120_recomputed.json}.}\\label{tab:p2-D}\n"
          "\\begin{tabular}{lcccccccc}\\toprule\n"
          "scope & base rate & gate verified: cov, prec & gate then lp @0.5 & log-prob only @0.5 & D3 rank 0.5 & D3 at CV thr. 0.85: cov, prec [W] & A30 at CV thr. & A30 rank-curve largest (cov, prec)\\\\\\midrule\n")
     for sc in ("qwen3.5-2b-bf16", "qwen3.5-4b-bf16", "qwen3.5-9b-bf16", "ALL"):
@@ -113,9 +113,21 @@ def table_D(D: dict, B: dict) -> str:
         ok = cv["precision"] >= 0.84 and cv["wilson"][0] >= 0.80
         big = a30_largest(c[sc]["curve"])
         bigs = "none" if big is None else f"{big[0]:.1f}, {big[1]:.3f}"
+        hc = h['gate_then_logprob']['0.5']
+        hcell = w((hc['precision'], hc['wilson'])) + ("" if hc['coverage'] >= 0.495 else f" (at coverage {hc['coverage']:.2f})")
         t += (f"{SH[sc]} & {c[sc]['base_rate']:.3f} & {h['gate_verified']['coverage']:.2f}, {n(h['gate_verified']['precision'])} & "
-              f"{w((h['gate_then_logprob']['0.5']['precision'], h['gate_then_logprob']['0.5']['wilson']))} & "
+              f"{hcell} & "
               f"{w((h['logprob_only_cov50']['precision'], h['logprob_only_cov50']['wilson']))} & {w((r5['precision'], r5['wilson']))} & "
+              f"{cv['coverage']:.2f}, {w((cv['precision'], cv['wilson']))} & {'met' if ok else 'not met'} & {bigs}\\\\\n")
+    t += "\\midrule\n"
+    for key, lab in (("F", "F Python only (3 tiers pooled)"), ("Eprime", "E$'$ MBPP only (3 tiers pooled)")):
+        cs = c[key]
+        cv = cs["at_cv_threshold"]["0.85"]
+        r5 = cs["curve"]["0.5"]
+        ok = cv["precision"] >= 0.84 and cv["wilson"][0] >= 0.80
+        big = a30_largest(cs["curve"])
+        bigs = "none" if big is None else f"{big[0]:.1f}, {big[1]:.3f}"
+        t += (f"{lab} & {cs['base_rate']:.3f} & -- & -- & -- & {w((r5['precision'], r5['wilson']))} & "
               f"{cv['coverage']:.2f}, {w((cv['precision'], cv['wilson']))} & {'met' if ok else 'not met'} & {bigs}\\\\\n")
     return t + "\\bottomrule\\end{tabular}\\end{table}\n"
 
@@ -170,7 +182,7 @@ def table_bok(A29r: dict, A30: dict) -> str:
     def r(lab, f):
         return lab + "".join(f" & {f(S[tr], tr)}" for tr in TIERS) + "\\\\\n"
     t += r("greedy pass rate", lambda s, tr: n(s["greedy_base_rate"]))
-    t += r("mean sampled pass rate", lambda s, tr: n(s["sample_pass_rate"]))
+    t += r("mean pass rate over the nine candidates (8 samples + greedy)", lambda s, tr: n(s["sample_pass_rate"]))
     t += r("some candidate correct", lambda s, tr: n(s["oracle_any_correct"]))
     t += r("gate-verified samples failing the hidden check", lambda s, tr: f"{s['verified_samples']['hidden_fail']} of {s['verified_samples']['n']} ({s['verified_samples']['hidden_fail'] / s['verified_samples']['n']:.3f})")
     t += r("G (greedy + gate): coverage, precision [W]", lambda s, tr: f"{s['G_gate']['cov']:.2f}, {w((s['G_gate']['prec'], s['G_gate']['wilson']))}")
@@ -178,7 +190,7 @@ def table_bok(A29r: dict, A30: dict) -> str:
     t += r("S1 @0.5: precision [W]", lambda s, tr: w((s["S1_cov50"]["prec"], s["S1_cov50"]["wilson"])))
     t += r("D3 \\code{lr|core} @0.5 (F+E$'$)", lambda s, tr: n(s["D3_core_cov50_FplusEprime"]["lr"]))
     t += r("S1 largest prefix meeting the A30 criterion", lambda s, tr: "none" if s["S1_A30_largest_coverage"] is None else f"{s['S1_A30_largest_coverage']['cov']:.2f}")
-    t += r("D3 \\code{lr|core} rank-curve largest (A30 reference)", lambda s, tr: "none" if s["D3_lr_core_A30_reference"]["rank_curve"] is None else f"{s['D3_lr_core_A30_reference']['rank_curve']['coverage']:.2f}")
+    t += r("D3 \\code{lr|core} rank-curve largest, 0.1-step grid (A30 reference)", lambda s, tr: "none" if s["D3_lr_core_A30_reference"]["rank_curve"] is None else f"{s['D3_lr_core_A30_reference']['rank_curve']['coverage']:.2f}")
     t += r("decision: S1 is a lever", lambda s, tr: "no" if not s["A30_decision"]["lever"] else "yes")
     t += r("post hoc identical-text @0.5: precision [W]", lambda s, tr: w((s["posthoc_identical_text"]["cov50"]["prec"], s["posthoc_identical_text"]["cov50"]["wilson"])))
     t += r("post hoc identical-text, largest A30 prefix", lambda s, tr: "none" if s["posthoc_identical_text"]["A30_largest_coverage"] is None else
@@ -235,7 +247,7 @@ def table_devE(E: dict, D: dict) -> str:
     c = D["lr|core"]
     t = ("\\begin{table}[!htbp]\\centering\\scriptsize\n"
          "\\caption{The frozen thresholds on the development table (grouped-CV values with per-fold thresholds, \\code{lever_D_stacked_calibrated.json}) and on sealed E (the single frozen threshold, \\code{sealed_E_D3_lr_core.json}). "
-         "Coverage, precision. E is easier (accept-all base rate 0.450, 0.673, 0.726 for 2B, 4B, 9B against 0.248, 0.389, 0.457 on dev) and its gate is stronger, so coverage rises; precision does not rise at every cell. "
+         "Coverage, precision. E is easier (accept-all base rate 0.450, 0.673, 0.726 for 2B, 4B, 9B against 0.248, 0.389, 0.457 on dev) and its gate (one visible test, as on F) verifies more answers, so coverage rises; precision does not rise at every cell: target 0.80 higher on E for the 2B, 4B and pooled and level for the 9B (0.864 against 0.864); target 0.85 lower on E for the 4B, 9B and pooled, higher for the 2B; target 0.90 lower for the 4B, level pooled (0.913 against 0.914), higher for the 2B and 9B. "
          "The last block pools the three tiers of E: it is computed here from the counts of the committed file and is not a registered quantity.}\\label{tab:p2-devE}\n"
          "\\begin{tabular}{llcc}\\toprule\ntier & target & dev (CV): cov, prec & sealed E: cov, prec\\\\\\midrule\n")
     for tr in TIERS:

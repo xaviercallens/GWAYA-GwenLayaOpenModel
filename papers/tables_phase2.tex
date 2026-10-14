@@ -16,14 +16,17 @@ Laya calibrator $p$ (uses the generation; not a U input), AUROC only & 0.942 & 0
 \bottomrule\end{tabular}}\end{table}
 
 \begin{table}[!htbp]\centering\scriptsize\setlength{\tabcolsep}{3pt}
-\caption{A26 downstream decision D (accept the answer), development table (1,728 task-tier rows; grouped five-fold CV by source cluster, seed 0; \code{lever_D_stacked_calibrated.json}, \code{baseline_dev.json}). Precision of the accepted set with Wilson 95\% interval, coverage = accepted share of rows. D3 \code{lr|core} is a logistic regression on gate, mean and minimum log-prob, log completion tokens, truncation flag and visible-test count, isotonic-calibrated; ``at CV thr.'' uses a threshold chosen inside the training folds for target 0.85; ``rank'' columns accept the top share by score, so the A30 column picks its coverage with labels and is optimistic. Hand rules need no model: gate-verified answers, then log-prob (``gate then lp''), and log-prob alone. The A30 criterion is precision $\ge0.84$ with Wilson lower bound $\ge0.80$. Pooled = all three tiers; its rows are not a tier-level claim.}\label{tab:p2-D}
+\caption{A26 downstream decision D (accept the answer), development table (1,728 task-tier rows; grouped five-fold CV by source cluster, seed 0; \code{lever_D_stacked_calibrated.json}, \code{baseline_dev.json}). Precision of the accepted set with Wilson 95\% interval, coverage = accepted share of rows. D3 \code{lr|core} is a logistic regression on gate, mean and minimum log-prob, log completion tokens, truncation flag and visible-test count, isotonic-calibrated; ``at CV thr.'' uses a threshold chosen inside the training folds for target 0.85; ``rank'' columns accept the top share by score, so the A30 column picks its coverage with labels and is optimistic; it is read on the 0.1-step rank curve, as the A30 rule states (on every rank prefix the largest meeting prefixes are coverage 0.33 for the 4B, 0.47 for the 9B and 0.34 pooled, \code{audit3120_recomputed.json}). Hand rules need no model: gate-verified answers, then log-prob (``gate then lp''), and log-prob alone. The hand rule can accept only as many rows as the gate verifies: for the 2B that is 229 rows (coverage 0.40), so its cell is at coverage 0.40, not 0.5; D3 on its top 229 rows is 0.624 and at its 0.4 curve point (231 rows) 0.619 [0.555, 0.679], so the two are level at equal coverage. The A30 criterion is precision $\ge0.84$ with Wilson lower bound $\ge0.80$. Pooled = all three tiers; its rows are not a tier-level claim. The last two rows split the pooled development table by source, D3 only (the hand-rule columns are not in the committed file for subsets): F Python alone (1,221 rows, the fresh set) and E$'$ MBPP alone (507 rows, easier); on F Python alone, per tier, the CV-threshold figures are in \code{audit3120_recomputed.json}.}\label{tab:p2-D}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{lcccccccc}\toprule
 scope & base rate & gate verified: cov, prec & gate then lp @0.5 & log-prob only @0.5 & D3 rank 0.5 & D3 at CV thr. 0.85: cov, prec [W] & A30 at CV thr. & A30 rank-curve largest (cov, prec)\\\midrule
-2B & 0.248 & 0.40, 0.624 & 0.624 [0.560, 0.685] & 0.285 [0.236, 0.339] & 0.497 [0.439, 0.554] & 0.15, 0.820 [0.728, 0.886] & not met & none\\
+2B & 0.248 & 0.40, 0.624 & 0.624 [0.560, 0.685] (at coverage 0.40) & 0.285 [0.236, 0.339] & 0.497 [0.439, 0.554] & 0.15, 0.820 [0.728, 0.886] & not met & none\\
 4B & 0.389 & 0.52, 0.749 & 0.757 [0.704, 0.803] & 0.524 [0.467, 0.581] & 0.771 [0.719, 0.816] & 0.27, 0.891 [0.832, 0.931] & met & 0.3, 0.884\\
 9B & 0.457 & 0.59, 0.778 & 0.799 [0.749, 0.841] & 0.625 [0.568, 0.679] & 0.819 [0.771, 0.860] & 0.28, 0.909 [0.855, 0.944] & met & 0.4, 0.874\\
 pooled & 0.365 & 0.50, 0.727 & 0.729 [0.699, 0.758] & 0.481 [0.448, 0.515] & 0.726 [0.695, 0.754] & 0.24, 0.883 [0.848, 0.910] & met & 0.3, 0.861\\
+\midrule
+F Python only (3 tiers pooled) & 0.305 & -- & -- & -- & 0.609 [0.570, 0.647] & 0.14, 0.865 [0.806, 0.909] & met & none\\
+E$'$ MBPP only (3 tiers pooled) & 0.509 & -- & -- & -- & 0.878 [0.832, 0.913] & 0.47, 0.895 [0.850, 0.928] & met & 0.5, 0.878\\
 \bottomrule\end{tabular}}\end{table}
 
 \begin{table}[!htbp]\centering\scriptsize\setlength{\tabcolsep}{3pt}
@@ -58,7 +61,7 @@ confident-wrong rows scored below the median $p$ & 0.000 & 0.196 & $+0.196$ [$+0
 \begin{tabular}{lccc}\toprule
  & 2B & 4B & 9B\\\midrule
 greedy pass rate & 0.189 & 0.329 & 0.396\\
-mean sampled pass rate & 0.144 & 0.313 & 0.373\\
+mean pass rate over the nine candidates (8 samples + greedy) & 0.144 & 0.313 & 0.373\\
 some candidate correct & 0.339 & 0.541 & 0.617\\
 gate-verified samples failing the hidden check & 503 of 954 (0.527) & 490 of 1503 (0.326) & 494 of 1698 (0.291)\\
 G (greedy + gate): coverage, precision [W] & 0.36, 0.531 [0.450, 0.610] & 0.46, 0.709 [0.641, 0.769] & 0.54, 0.729 [0.666, 0.783]\\
@@ -66,7 +69,7 @@ S1, all accepted: coverage, precision [W] & 0.62, 0.446 [0.386, 0.508] & 0.75, 0
 S1 @0.5: precision [W] & 0.475 [0.408, 0.544] & 0.701 [0.635, 0.760] & 0.750 [0.686, 0.804]\\
 D3 \code{lr|core} @0.5 (F+E$'$) & 0.497 & 0.771 & 0.819\\
 S1 largest prefix meeting the A30 criterion & none & none & none\\
-D3 \code{lr|core} rank-curve largest (A30 reference) & none & 0.30 & 0.40\\
+D3 \code{lr|core} rank-curve largest, 0.1-step grid (A30 reference) & none & 0.30 & 0.40\\
 decision: S1 is a lever & no & no & no\\
 post hoc identical-text @0.5: precision [W] & 0.505 [0.437, 0.573] & 0.745 [0.681, 0.800] & 0.765 [0.702, 0.818]\\
 post hoc identical-text, largest A30 prefix & none & none & 0.30, 0.871\\
@@ -105,7 +108,7 @@ tier & split & $n$ & accept all & gate only: cov, prec [W] & frozen 0.85: cov, p
 \bottomrule\end{tabular}}\end{table}
 
 \begin{table}[!htbp]\centering\scriptsize
-\caption{The frozen thresholds on the development table (grouped-CV values with per-fold thresholds, \code{lever_D_stacked_calibrated.json}) and on sealed E (the single frozen threshold, \code{sealed_E_D3_lr_core.json}). Coverage, precision. E is easier (accept-all base rate 0.450, 0.673, 0.726 for 2B, 4B, 9B against 0.248, 0.389, 0.457 on dev) and its gate is stronger, so coverage rises; precision does not rise at every cell. The last block pools the three tiers of E: it is computed here from the counts of the committed file and is not a registered quantity.}\label{tab:p2-devE}
+\caption{The frozen thresholds on the development table (grouped-CV values with per-fold thresholds, \code{lever_D_stacked_calibrated.json}) and on sealed E (the single frozen threshold, \code{sealed_E_D3_lr_core.json}). Coverage, precision. E is easier (accept-all base rate 0.450, 0.673, 0.726 for 2B, 4B, 9B against 0.248, 0.389, 0.457 on dev) and its gate (one visible test, as on F) verifies more answers, so coverage rises; precision does not rise at every cell: target 0.80 higher on E for the 2B, 4B and pooled and level for the 9B (0.864 against 0.864); target 0.85 lower on E for the 4B, 9B and pooled, higher for the 2B; target 0.90 lower for the 4B, level pooled (0.913 against 0.914), higher for the 2B and 9B. The last block pools the three tiers of E: it is computed here from the counts of the committed file and is not a registered quantity.}\label{tab:p2-devE}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{llcc}\toprule
 tier & target & dev (CV): cov, prec & sealed E: cov, prec\\\midrule
