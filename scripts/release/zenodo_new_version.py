@@ -65,6 +65,7 @@ def main() -> int:
     ap.add_argument("--record", default="23121788", help="any record id of the concept to version")
     ap.add_argument("--license", default="cc-by-4.0", help="Zenodo license id (default matches the existing record)")
     ap.add_argument("--sandbox", action="store_true")
+    ap.add_argument("--draft", metavar="DRAFT_ID", help="reuse this existing draft (replace its file and metadata) instead of creating a new version")
     ap.add_argument("--publish", metavar="DRAFT_ID", help="publish this draft deposition (irreversible)")
     a = ap.parse_args()
     z = Z("https://sandbox.zenodo.org/api" if a.sandbox else "https://zenodo.org/api", token(a.sandbox))
@@ -77,9 +78,11 @@ def main() -> int:
     if not PDF.is_file():
         sys.exit(f"missing {PDF}")
     sha = hashlib.sha256(PDF.read_bytes()).hexdigest()
-    new = z.call("POST", f"/deposit/depositions/{a.record}/actions/newversion")
-    draft_url = new["links"]["latest_draft"]
-    draft = z.call("GET", draft_url)
+    if a.draft:
+        draft = z.call("GET", f"/deposit/depositions/{a.draft}")
+    else:
+        new = z.call("POST", f"/deposit/depositions/{a.record}/actions/newversion")
+        draft = z.call("GET", new["links"]["latest_draft"])
     dep_id = draft["id"]
     for f in draft.get("files", []):  # a new version starts with the old files: replace them
         z.call("DELETE", f["links"]["self"])
