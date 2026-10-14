@@ -27,7 +27,7 @@ for tier in ("qwen3.5-2b-bf16", "qwen3.5-4b-bf16"):
     for (m, tid), ss in samp.items():
         if m != tier: continue
         g = greedy.get((tier, tid)) or greedy.get((tier, tid.replace("py/", "")))
-        cands = [(s["gate"] == "verified", s["hidden"] == "VERIFIED", s["mean_logprob"] if s["mean_logprob"] is not None else -9.0) for s in ss]
+        cands = [(s["gate"].lower() == "verified", s["hidden"] == "VERIFIED", s["mean_logprob"] if s["mean_logprob"] is not None else -9.0) for s in ss]
         if g: cands.append((g["gate"] == "verified", bool(g["correct"]), g["mean_logprob"]))
         v = [c for c in cands if c[0]]
         rows.append(dict(tid=tid, n_v=len(v), best=max(v, key=lambda c: c[2]) if v else None,
