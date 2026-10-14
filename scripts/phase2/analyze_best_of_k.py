@@ -22,7 +22,8 @@ def key_tid(t): return t if t.startswith("py/") else "py/" + t
 d3 = json.load(open(D3))
 res = {}
 rng = np.random.default_rng(0)
-for tier in ("qwen3.5-2b-bf16", "qwen3.5-4b-bf16"):
+TIERS = sys.argv[2].split(",") if len(sys.argv) > 2 else ["qwen3.5-2b-bf16", "qwen3.5-4b-bf16"]
+for tier in TIERS:
     rows = []
     for (m, tid), ss in samp.items():
         if m != tier: continue
@@ -40,6 +41,11 @@ for tier in ("qwen3.5-2b-bf16", "qwen3.5-4b-bf16"):
     acc_rank = sorted(acc, key=lambda r: (-r["n_v"], -r["best"][2]))[:int(math.ceil(0.5*n))]
     gsel = [r for r in rows if r["g"] and r["g"][0]]
     gk = sum(1 for r in gsel if r["g"][1])
+    ranked = sorted(acc, key=lambda r: (-r["n_v"], -r["best"][2])); best_a30 = None; ks = 0
+    for i, r in enumerate(ranked, 1):
+        ks += int(r["best"][1])
+        if i >= 20 and ks / i >= 0.84 and wil(ks, i)[0] >= 0.80: best_a30 = dict(n=i, cov=i / n, prec=ks / i, wilson=wil(ks, i))
+    gr = sorted(gsel, key=lambda r: -r["g"][0]); 
     boot = []
     for _ in range(1000):
         idx = rng.integers(0, len(acc_rank), len(acc_rank)); boot.append(np.mean([acc_rank[i]["best"][1] for i in idx]))
@@ -48,11 +54,12 @@ for tier in ("qwen3.5-2b-bf16", "qwen3.5-4b-bf16"):
     res[tier] = dict(n_tasks=n, greedy_base_rate=float(np.mean([r["g"][1] for r in rows if r["g"]])),
         sample_pass_rate=float(np.mean([r["samp_pass"] for r in rows])), oracle_any_correct=float(np.mean([r["any_correct"] for r in rows])),
         G_gate=dict(n=len(gsel), cov=len(gsel)/n, prec=gk/len(gsel) if gsel else None, wilson=wil(gk, len(gsel))),
-        S1_all=summ(acc), S1_cov50=summ(acc_rank), S1_cov50_boot_ci=[float(np.percentile(boot, 2.5)), float(np.percentile(boot, 97.5))],
+        S1_all=summ(acc), S1_cov50=summ(acc_rank), S1_A30_largest_coverage=best_a30, S1_cov50_boot_ci=[float(np.percentile(boot, 2.5)), float(np.percentile(boot, 97.5))],
         D3_core_cov50_FplusEprime=dict(lr=d3c.get("precision"), gbm=d3g.get("precision")))
 json.dump(res, open(OUT, "w"), indent=1)
 for t, v in res.items():
     print(t, "n", v["n_tasks"], "greedy %.3f sample-mean %.3f oracle-any %.3f" % (v["greedy_base_rate"], v["sample_pass_rate"], v["oracle_any_correct"]))
     for k in ("G_gate", "S1_all", "S1_cov50"):
         s = v[k]; print("  %-9s cov %.2f prec %s wilson %s n %d" % (k, s["cov"], None if s["prec"] is None else round(s["prec"], 3), None if s["wilson"][0] is None else [round(x, 3) for x in s["wilson"]], s["n"]))
+    print("  A30 largest coverage (prec>=0.84, LB>=0.80, n>=20):", v["S1_A30_largest_coverage"])
     print("  S1_cov50 boot CI", [round(x, 3) for x in v["S1_cov50_boot_ci"]], "D3 core @cov50 (F+E')", v["D3_core_cov50_FplusEprime"])

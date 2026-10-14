@@ -30,7 +30,7 @@ if __name__ == "__main__":
     if os.path.exists(out):
         for l in open(out): r = json.loads(l); done.add((r["model"], r["task_id"], r["sample"]))
     jobs = []
-    for m in ("qwen3.5-2b-bf16", "qwen3.5-4b-bf16"):
+    for m in (sys.argv[5].split(",") if len(sys.argv) > 5 else ["qwen3.5-2b-bf16", "qwen3.5-4b-bf16"]):
         for l in open(f"{rawdir}/raw_sample_{m}.jsonl"):
             r = json.loads(l)
             if r.get("domain") == "python" and (m, r["task_id"], r["sample"]) not in done: jobs.append((m, r))
