@@ -1,0 +1,30 @@
+{
+ "policy": "D3 lr|core, one model for all tiers",
+ "cols": [
+  "gate",
+  "mlp",
+  "minlp",
+  "logtok",
+  "trunc",
+  "nvis"
+ ],
+ "n_dev_rows": 1728,
+ "n_clusters": 576,
+ "dev_base_rate": 0.3645833333333333,
+ "thresholds": {
+  "0.8": {
+   "threshold": 0.6746994666843756,
+   "dev_oof_coverage": 0.3582175925925926
+  },
+  "0.85": {
+   "threshold": 0.7983878633943219,
+   "dev_oof_coverage": 0.24305555555555555
+  },
+  "0.9": {
+   "threshold": 0.9218758582761255,
+   "dev_oof_coverage": 0.1261574074074074
+  }
+ },
+ "score": "iso.predict(p)+1e-6*p, accept if score >= threshold",
+ "note": "fit on dev only; test_table.jsonl never opened by this script"
+}

@@ -1,0 +1,171 @@
+{
+ "qwen3.5-2b-bf16": {
+  "n_tasks": 407,
+  "greedy_base_rate": 0.1891891891891892,
+  "sample_pass_rate": 0.14414414414414414,
+  "oracle_any_correct": 0.33906633906633904,
+  "n_samples_scored": 3256,
+  "verified_samples": {
+   "n": 954,
+   "hidden_fail": 503
+  },
+  "G_gate": {
+   "n": 145,
+   "cov": 0.35626535626535627,
+   "prec": 0.5310344827586206,
+   "wilson": [
+    0.45005692704969014,
+    0.6104100391748062
+   ]
+  },
+  "S1_all": {
+   "n": 251,
+   "cov": 0.6167076167076168,
+   "prec": 0.44621513944223107,
+   "wilson": [
+    0.3859876893111405,
+    0.5080641452402044
+   ]
+  },
+  "S1_cov50": {
+   "n": 204,
+   "cov": 0.5012285012285013,
+   "prec": 0.47549019607843135,
+   "wilson": [
+    0.40804676498101494,
+    0.5438396716130065
+   ]
+  },
+  "S1_A30_largest_coverage": null,
+  "S1_cov50_boot_ci": [
+   0.4068627450980392,
+   0.5392156862745098
+  ],
+  "posthoc_identical_text": {
+   "note": "not part of any rule; A29 post hoc arm",
+   "cov50": {
+    "n": 204,
+    "cov": 0.5012285012285013,
+    "prec": 0.5049019607843137,
+    "wilson": [
+     0.43683790049756005,
+     0.5727848121836355
+    ]
+   },
+   "A30_largest_coverage": null,
+   "tasks_with_group_ge2": 17
+  },
+  "D3_core_cov50_FplusEprime": {
+   "lr": 0.4965277777777778,
+   "gbm": 0.4965277777777778
+  },
+  "D3_lr_core_A30_reference": {
+   "rank_curve": null,
+   "cv_threshold_085": {
+    "n_accept": 89,
+    "coverage": 0.1545138888888889,
+    "precision": 0.8202247191011236,
+    "wilson": [
+     0.7277468791243101,
+     0.8862020403255917
+    ]
+   }
+  },
+  "A30_decision": {
+   "rule": "S1 A30 coverage >= D3 lr|core rank-curve coverage + 0.05, both conditions holding",
+   "S1_A30_cov": 0.0,
+   "D3_rank_curve_cov": null,
+   "D3_cv_threshold_cov": 0.1545138888888889,
+   "lever": false
+  }
+ },
+ "qwen3.5-4b-bf16": {
+  "n_tasks": 407,
+  "greedy_base_rate": 0.32923832923832924,
+  "sample_pass_rate": 0.31313131313131315,
+  "oracle_any_correct": 0.5405405405405406,
+  "n_samples_scored": 3256,
+  "verified_samples": {
+   "n": 1503,
+   "hidden_fail": 490
+  },
+  "G_gate": {
+   "n": 189,
+   "cov": 0.4643734643734644,
+   "prec": 0.708994708994709,
+   "wilson": [
+    0.6405860014550239,
+    0.7690766439492872
+   ]
+  },
+  "S1_all": {
+   "n": 307,
+   "cov": 0.7542997542997543,
+   "prec": 0.6188925081433225,
+   "wilson": [
+    0.5634125965358889,
+    0.6714337046026976
+   ]
+  },
+  "S1_cov50": {
+   "n": 204,
+   "cov": 0.5012285012285013,
+   "prec": 0.7009803921568627,
+   "wilson": [
+    0.6349115575344514,
+    0.7596196623945713
+   ]
+  },
+  "S1_A30_largest_coverage": null,
+  "S1_cov50_boot_ci": [
+   0.6372549019607843,
+   0.7599264705882351
+  ],
+  "posthoc_identical_text": {
+   "note": "not part of any rule; A29 post hoc arm",
+   "cov50": {
+    "n": 204,
+    "cov": 0.5012285012285013,
+    "prec": 0.7450980392156863,
+    "wilson": [
+     0.681145590821063,
+     0.799990043238721
+    ]
+   },
+   "A30_largest_coverage": null,
+   "tasks_with_group_ge2": 56
+  },
+  "D3_core_cov50_FplusEprime": {
+   "lr": 0.7708333333333334,
+   "gbm": 0.7673611111111112
+  },
+  "D3_lr_core_A30_reference": {
+   "rank_curve": {
+    "step": "0.3",
+    "n_accept": 173,
+    "coverage": 0.3003472222222222,
+    "precision": 0.884393063583815,
+    "wilson": [
+     0.8281807448271123,
+     0.9239047373218843
+    ]
+   },
+   "cv_threshold_085": {
+    "n_accept": 156,
+    "coverage": 0.2708333333333333,
+    "precision": 0.8910256410256411,
+    "wilson": [
+     0.8324142436725224,
+     0.9308413793943138
+    ]
+   }
+  },
+  "A30_decision": {
+   "rule": "S1 A30 coverage >= D3 lr|core rank-curve coverage + 0.05, both conditions holding",
+   "S1_A30_cov": 0.0,
+   "D3_rank_curve_cov": 0.3003472222222222,
+   "D3_cv_threshold_cov": 0.2708333333333333,
+   "lever": false
+  }
+ }
+}

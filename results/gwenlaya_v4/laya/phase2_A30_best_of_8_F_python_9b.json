@@ -1,0 +1,99 @@
+{
+ "qwen3.5-9b-bf16": {
+  "n_tasks": 407,
+  "greedy_base_rate": 0.3955773955773956,
+  "sample_pass_rate": 0.3726453726453727,
+  "oracle_any_correct": 0.6167076167076168,
+  "n_samples_scored": 3256,
+  "verified_samples": {
+   "n": 1698,
+   "hidden_fail": 494
+  },
+  "G_gate": {
+   "n": 221,
+   "cov": 0.542997542997543,
+   "prec": 0.7285067873303167,
+   "wilson": [
+    0.6663397710389409,
+    0.782865358260975
+   ]
+  },
+  "S1_all": {
+   "n": 325,
+   "cov": 0.7985257985257985,
+   "prec": 0.6461538461538462,
+   "wilson": [
+    0.592736416705717,
+    0.6961564727583898
+   ]
+  },
+  "S1_cov50": {
+   "n": 204,
+   "cov": 0.5012285012285013,
+   "prec": 0.75,
+   "wilson": [
+    0.686328584797025,
+    0.8044297619439547
+   ]
+  },
+  "S1_A30_largest_coverage": null,
+  "S1_cov50_boot_ci": [
+   0.6911764705882353,
+   0.8088235294117647
+  ],
+  "posthoc_identical_text": {
+   "note": "not part of any rule; A29 post hoc arm",
+   "cov50": {
+    "n": 204,
+    "cov": 0.5012285012285013,
+    "prec": 0.7647058823529411,
+    "wilson": [
+     0.7019370471348754,
+     0.8176894376496912
+    ]
+   },
+   "A30_largest_coverage": {
+    "n": 124,
+    "cov": 0.3046683046683047,
+    "prec": 0.8709677419354839,
+    "wilson": [
+     0.8006481734584795,
+     0.9189923817285645
+    ]
+   },
+   "tasks_with_group_ge2": 55
+  },
+  "D3_core_cov50_FplusEprime": {
+   "lr": 0.8194444444444444,
+   "gbm": 0.8298611111111112
+  },
+  "D3_lr_core_A30_reference": {
+   "rank_curve": {
+    "step": "0.4",
+    "n_accept": 231,
+    "coverage": 0.4010416666666667,
+    "precision": 0.8744588744588745,
+    "wilson": [
+     0.8255158528797393,
+     0.9111509046283003
+    ]
+   },
+   "cv_threshold_085": {
+    "n_accept": 164,
+    "coverage": 0.2847222222222222,
+    "precision": 0.9085365853658537,
+    "wilson": [
+     0.8545832125782394,
+     0.9437885855933701
+    ]
+   }
+  },
+  "A30_decision": {
+   "rule": "S1 A30 coverage >= D3 lr|core rank-curve coverage + 0.05, both conditions holding",
+   "S1_A30_cov": 0.0,
+   "D3_rank_curve_cov": 0.4010416666666667,
+   "D3_cv_threshold_cov": 0.2847222222222222,
+   "lever": false
+  }
+ }
+}

@@ -5,7 +5,7 @@ deletes itself when idle (see deploy/tpu_endpoint/vm/startup.sh). The gateway ho
 (name, state, internal IP) IS the state, read from the Cloud TPU API on each request.
 
 Routes (OpenAI format; Authorization: Bearer <key> on everything except /healthz):
-  GET  /healthz                 gateway liveness, never wakes the TPU
+  GET  /healthz, /health        gateway liveness, never wakes the TPU (on Cloud Run use /health: GFE reserves /healthz)
   GET  /v1/models               static model list, never wakes the TPU
   POST /v1/chat/completions     wakes the TPU if needed, then streams/proxies to vLLM
   POST /v1/completions          same
@@ -185,6 +185,7 @@ async def ensure_up(hold_s: float) -> tuple[str | None, dict[str, Any]]:
 
 
 @app.get("/healthz")
+@app.get("/health")  # Cloud Run's front end answers /healthz itself with a 404 page; /health reaches the app
 async def healthz() -> dict[str, str]:
     return {"status": "ok"}
 

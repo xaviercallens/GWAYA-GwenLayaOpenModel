@@ -12,6 +12,8 @@ tier. Nothing here fabricates text or log-probs; a response without log-probs yi
 from __future__ import annotations
 
 import json
+import os
+import time
 import urllib.error
 import urllib.request
 from typing import Any
@@ -19,6 +21,8 @@ from typing import Any
 from gwaya.generators import OllamaGenerator
 
 DEFAULT_MAX_NEW_TOKENS = 1024
+API_KEY_ENV = "GWENLAYA_LLAMA_API_KEY"  # bearer key for an authenticated OpenAI-format endpoint (deploy/tpu_endpoint gateway)
+DEFAULT_COLD_WAIT_S = 0.0  # seconds to keep retrying HTTP 503 (an endpoint that is still starting); 0 = fail at once
 DEFAULT_TIMEOUT_S = 1800.0  # the 4B tier decodes about 1.3 tok/s on the study CPU: 1024 tokens is about 13 min
 
 
@@ -53,8 +57,11 @@ class LlamaServerClient:
     """One tier's connection. ``last`` holds the stats of the most recent call (finish_reason, token counts)."""
 
     def __init__(self, name: str, base_url: str, max_new_tokens: int = DEFAULT_MAX_NEW_TOKENS,
-                 timeout_s: float = DEFAULT_TIMEOUT_S, seed: int = 0) -> None:
+                 timeout_s: float = DEFAULT_TIMEOUT_S, seed: int = 0, api_key: str | None = None,
+                 cold_wait_s: float = DEFAULT_COLD_WAIT_S) -> None:
         self.name = name
+        self.api_key = api_key if api_key is not None else os.environ.get(API_KEY_ENV, "")
+        self.cold_wait_s = float(cold_wait_s)
         url = base_url.rstrip("/")
         self.url = url if url.endswith("/v1") else url + "/v1"
         self.max_new_tokens = int(max_new_tokens)
@@ -70,16 +77,29 @@ class LlamaServerClient:
                                    "stop": self.gen.stop_sequences(domain)}
         if logprobs:
             payload["logprobs"] = 1
-        req = urllib.request.Request(self.url + "/completions", data=json.dumps(payload).encode("utf-8"),
-                                     headers={"Content-Type": "application/json"}, method="POST")
-        try:
-            with urllib.request.urlopen(req, timeout=self.timeout_s) as resp:  # nosec B310 - operator-supplied local URL
-                data = json.loads(resp.read().decode("utf-8"))
-        except urllib.error.HTTPError as exc:
-            body = exc.read().decode("utf-8", errors="replace")[:200]
-            raise LlamaServerError(f"llama-server {self.url} returned HTTP {exc.code}: {body}") from exc
-        except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:  # includes JSONDecodeError
-            raise LlamaServerError(f"llama-server {self.url} request failed: {type(exc).__name__}: {exc}") from exc
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        body = json.dumps(payload).encode("utf-8")
+        deadline = time.monotonic() + self.cold_wait_s
+        while True:
+            req = urllib.request.Request(self.url + "/completions", data=body, headers=headers, method="POST")
+            try:
+                with urllib.request.urlopen(req, timeout=self.timeout_s) as resp:  # nosec B310 - operator-supplied URL
+                    data = json.loads(resp.read().decode("utf-8"))
+                break
+            except urllib.error.HTTPError as exc:
+                text_ = exc.read().decode("utf-8", errors="replace")[:200]
+                if exc.code == 503 and time.monotonic() < deadline:  # endpoint still starting: honour Retry-After
+                    try:
+                        wait = float(exc.headers.get("Retry-After", "") or 10)
+                    except ValueError:
+                        wait = 10.0
+                    time.sleep(max(0.0, min(wait, deadline - time.monotonic())))
+                    continue
+                raise LlamaServerError(f"llama-server {self.url} returned HTTP {exc.code}: {text_}") from exc
+            except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:  # includes JSONDecodeError
+                raise LlamaServerError(f"llama-server {self.url} request failed: {type(exc).__name__}: {exc}") from exc
         try:
             text, finish, lps, usage = parse_completion(data)
         except RuntimeError as exc:
@@ -92,10 +112,12 @@ class LlamaServerClient:
 
 
 def llama_cpp_tier(name: str, base_url: str, max_new_tokens: int = DEFAULT_MAX_NEW_TOKENS,
-                   timeout_s: float = DEFAULT_TIMEOUT_S):
+                   timeout_s: float = DEFAULT_TIMEOUT_S, api_key: str | None = None,
+                   cold_wait_s: float = DEFAULT_COLD_WAIT_S):
     """A GwenLaya ``Tier`` for a running llama-server (network is only touched when the tier is called)."""
     from gwaya.gwenlaya import Tier
-    client = LlamaServerClient(name, base_url, max_new_tokens=max_new_tokens, timeout_s=timeout_s)
+    client = LlamaServerClient(name, base_url, max_new_tokens=max_new_tokens, timeout_s=timeout_s,
+                               api_key=api_key, cold_wait_s=cold_wait_s)
 
     def generate(prompt: str, domain: str) -> str:
         return client.complete(prompt, domain, logprobs=False)[0]

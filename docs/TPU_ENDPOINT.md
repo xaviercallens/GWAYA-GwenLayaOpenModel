@@ -1,7 +1,12 @@
 # GWAYA / GwenLaya serverless endpoint on TPU (OpenAI format)
 
-Status: **tooling written and unit-tested against a fake TPU API; not deployed, no cold-start number measured yet.**
-Every latency/cost figure below is marked *estimate* until `deploy/tpu_endpoint/smoke.py` has been run.
+Status: **deployed (Cloud Run, 2026-10-11) and exercised once on 2026-10-13 with `scripts/gwaya_assist.py bench`.**
+Measured (one run, rows in `results/assist_smoke_2026-10-13.json`): cold start (warmup -> ready) **427 s**; 8 hand-written
+Python tasks, all VERIFIED in round 1 (a smoke check, not a benchmark); first request 36 s (includes first-request
+compile), warm requests 1.8-4.2 s for 35-209 tokens (about 50 tok/s single stream on Roman numerals, 13 tok/s over the
+whole run including gate time); VM deleted by `/v1/stop`. Other figures below remain *estimates* until re-measured.
+Items 1-3 under "Known limits" are resolved by this run for the paths exercised: vLLM HTTP serving of Qwen3.5-4B works,
+the gateway reached the VM, and the IAM role was sufficient to create and delete the node.
 
 ## What it is
 
@@ -80,7 +85,7 @@ bucket/firewall/SA/role if you no longer want them.
 ## User guide: calling it as a public endpoint
 
 Base URL: the Cloud Run URL printed by `deploy.sh` (e.g. `https://gwenlaya-endpoint-xxxxx-uc.a.run.app`).
-The URL is public; **every route except `/healthz` requires `Authorization: Bearer <API key>`**. With no key
+The URL is public; **every route except `/health` (`/healthz` is intercepted by Cloud Run's front end with a 404) requires `Authorization: Bearer <API key>`**. With no key
 configured the gateway rejects everything (fail closed). Share the key only with people you want to spend your TPU
 time. Rotate with `gcloud run services update gwenlaya-endpoint --update-env-vars GWAYA_API_KEYS=<new>,...` (several
 keys may be comma-separated).
@@ -114,7 +119,7 @@ r = c.chat.completions.create(model="gwenlaya-4b", messages=[{"role": "user", "c
 print(r.choices[0].message.content)
 ```
 
-Routes: `GET /healthz` (open), `GET /v1/models`, `POST /v1/chat/completions`, `POST /v1/completions`,
+Routes: `GET /health` (open), `GET /v1/models`, `POST /v1/chat/completions`, `POST /v1/completions`,
 `POST /v1/warmup`, `GET /v1/status`, `POST /v1/stop`.
 Limits enforced by the gateway: body at most 512 KiB, `max_tokens` clamped to 2,048 (default 512), `n` forced to 1,
 `model` forced to `gwenlaya-4b`, context 8,192 tokens, at most 16 concurrent sequences on the TPU.

@@ -15,6 +15,7 @@
 ## 📌 Links to Official Releases & Reports
 
 - **Zenodo Permanent Archival (v3.1.1):** [https://doi.org/10.5281/zenodo.23123923](https://doi.org/10.5281/zenodo.23123923)
+- **Paper revision 3.12.0** is in [`papers/gwenlaya_v4.pdf`](papers/gwenlaya_v4.pdf); no Zenodo record is claimed for it here, and the Zenodo record below is revision 3.10.0.
 - **GwenLaya v4 paper, revision 3.10.0 (Zenodo):** [https://doi.org/10.5281/zenodo.23300156](https://doi.org/10.5281/zenodo.23300156) (concept DOI of the record family: 10.5281/zenodo.23121787)
 - **Serverless TPU endpoint (OpenAI format):** tooling and user guide in [`docs/TPU_ENDPOINT.md`](docs/TPU_ENDPOINT.md). **Not deployed or measured yet**; the cold start (minutes, a TPU VM is created on demand) is an estimate.
 - **Hugging Face Verified Artifacts & Raw Telemetry:** [callensxavier/gwaya-v3-verified-report](https://huggingface.co/datasets/callensxavier/gwaya-v3-verified-report)
@@ -93,6 +94,16 @@ What has been measured (full 1,536-task E set, one greedy sample, one TPU v5e ch
   and a gate-driven 2B-to-4B cascade is **not** cheaper than always using the 4B (cost ratio 1.36) for the same accuracy.
 - All of this is on public benchmarks the models have probably seen. Every number is traceable to a committed file;
   an independent claim audit of the paper is in [`docs/CLAIM_AUDIT.md`](docs/CLAIM_AUDIT.md).
+
+**Status of the paper, revision 3.12.0 (14 October 2026; 3.11.x were tooling-only).** Phase 2 (section "Phase 2" of the paper;
+independent audit: [`docs/CLAIM_AUDIT_3120.md`](docs/CLAIM_AUDIT_3120.md); the author's register it started from: [`docs/CLAIM_AUDIT_3120_author.md`](docs/CLAIM_AUDIT_3120_author.md)) is exploratory Python-only development work with
+rules written before the numbers; nothing registered changed. A prompt-only accept/refuse decision (U) does not reach the 0.80 working target; a
+frozen stacked accept policy (D3) was read once on the sealed, previously seen set E and met both of its rules on the 9B
+(coverage 0.73, precision 0.886 [0.850, 0.914]), on an easy set (9B base rate 0.726; the gate there also rests on one visible test); on the development table (F Python plus E' MBPP) the goal holds
+only at coverage 0.24 to 0.40 (4B, 9B), and on its F Python rows alone only for the 9B at coverage 0.17. A feedback-retrofitted Laya v2, best-of-8 sampling with the visible gate (2B, 4B, 9B) and a learned selector over the sampled pools are
+null results; the Qwen3.5 LoRA probe on TPU timed out (inconclusive). The sealed E table is spent. The goal redefinition of A30 was made post hoc.
+The 3.10.0 paragraph below is the previous status; its statement that the endpoint tooling was "tested against a fake TPU API only" is superseded
+by one 8-task endpoint smoke run on 2026-10-13 (a plumbing check, not an evaluation).
 
 **Status of the paper, revision 3.10.0 (11 October 2026).** The bullets above are the 3.4.0 baselines; the paper
 ([`papers/gwenlaya_v4.pdf`](papers/gwenlaya_v4.pdf)) has since added a trained Laya, fresh evaluation sets and Lean 4 results.

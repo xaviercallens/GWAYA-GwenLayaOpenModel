@@ -22,7 +22,7 @@ ZONES="${TPU_ZONES:-us-west4-a us-central1-a us-east5-b}"
 ROOT="${GWAYA_DATA_ROOT:-/mnt/data/home/xavkal/gwaya-data}"; KEYS="$ROOT/endpoint/keys.json"
 YES=0; SHOW=0
 for a in "$@"; do case "$a" in --yes-spend) YES=1 ;; --show-key) SHOW=1 ;; -h|--help) sed -n 2,12p "$0"; exit 0 ;; *) echo "unknown arg $a" >&2; exit 2 ;; esac; done
-RUN() { if [ "$YES" = 1 ]; then printf '+ '; printf '%q ' "$@"; echo; "$@"; else printf '  '; printf '%q ' "$@"; echo; fi; }
+RUN() { if [ "$YES" = 1 ]; then printf '+ '; printf '%q ' "$@" | sed -e "s#$API_KEY#<api-key>#g" -e "s#$VLLM_KEY#<vllm-key>#g"; echo; "$@"; else printf '  '; printf '%q ' "$@"; echo; fi; }
 if [ "$YES" = 1 ] && [ "${GWAYA_CONFIRM_SPEND:-}" != 1 ]; then echo "REFUSED: --yes-spend also needs GWAYA_CONFIRM_SPEND=1" >&2; exit 3; fi
 [ "$YES" = 1 ] || echo "DRY RUN: nothing is executed. Real run: GWAYA_CONFIRM_SPEND=1 $0 --yes-spend"
 
@@ -64,8 +64,7 @@ RUN gcloud run deploy "$SERVICE" --project "$PROJECT" --region "$REGION" --image
   --service-account "$SA" --allow-unauthenticated \
   --min-instances 0 --max-instances 5 --concurrency 80 --timeout 3600 --cpu 1 --memory 512Mi --cpu-boost \
   --network default --subnet default --vpc-egress private-ranges-only \
-  --set-env-vars "GCP_PROJECT=$PROJECT,TPU_ZONES=${ZONES// /+},TPU_SERVICE_ACCOUNT=$SA,TPU_ACCEL=v5litepod-1,MODEL_HF=Qwen/Qwen3.5-4B,MODEL_SERVED=gwenlaya-4b,IDLE_MIN=10,MAX_UP_MIN=120,HOLD_S=540" \
-  --update-env-vars "GWAYA_API_KEYS=$API_KEY,VLLM_KEY=$VLLM_KEY" \
+  --set-env-vars "GCP_PROJECT=$PROJECT,TPU_ZONES=${ZONES// /+},TPU_SERVICE_ACCOUNT=$SA,TPU_ACCEL=v5litepod-1,MODEL_HF=Qwen/Qwen3.5-4B,MODEL_SERVED=gwenlaya-4b,IDLE_MIN=10,MAX_UP_MIN=120,HOLD_S=540,GWAYA_API_KEYS=$API_KEY,VLLM_KEY=$VLLM_KEY" \
   --labels purpose=gwenlaya
 
 if [ "$YES" = 1 ]; then

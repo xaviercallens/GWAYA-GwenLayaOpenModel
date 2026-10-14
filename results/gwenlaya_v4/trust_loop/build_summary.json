@@ -1,0 +1,28 @@
+{
+ "dev_rows": 1728,
+ "test_rows": 2116,
+ "dev_by_set_tier": {
+  "F|qwen3.5-2b-bf16": 407,
+  "F|qwen3.5-4b-bf16": 407,
+  "F|qwen3.5-9b-bf16": 407,
+  "Eprime|qwen3.5-2b-bf16": 169,
+  "Eprime|qwen3.5-4b-bf16": 169,
+  "Eprime|qwen3.5-9b-bf16": 169
+ },
+ "test_by_bench_tier": {
+  "HumanEval+|qwen2.5-coder-1.5b-bf16": 156,
+  "HumanEval+|qwen3.5-2b-bf16": 156,
+  "HumanEval+|qwen3.5-4b-bf16": 156,
+  "HumanEval+|qwen3.5-9b-bf16": 156,
+  "MBPP+|qwen2.5-coder-1.5b-bf16": 373,
+  "MBPP+|qwen3.5-2b-bf16": 373,
+  "MBPP+|qwen3.5-4b-bf16": 373,
+  "MBPP+|qwen3.5-9b-bf16": 373
+ },
+ "task_id_overlap_dev_test": [],
+ "n_overlap": 0,
+ "missing": {},
+ "no_gate": {
+  "E/qwen2.5-coder-1.5b-bf16": 529
+ }
+}
