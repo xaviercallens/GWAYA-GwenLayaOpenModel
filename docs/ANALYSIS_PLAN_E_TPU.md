@@ -449,3 +449,17 @@ Dated 2026-10-14. Exploratory, development data only (F python, 407 tasks; the s
 **Arms, same tasks, same folds (5 folds grouped by cluster, hash as in A26), seed 0.** B0 = greedy candidate only, same model class and same features restricted to the greedy row. B1 = candidate-level model over the full pool, task-level selection = highest-scoring candidate, task score = that score. Model classes: logistic regression (primary, as in the A30 `lr|core` choice) and a depth-2 gradient-boosted tree (secondary). Per tier 2B/4B/9B, each tier its own pool; calibration (isotonic on inner OOF) and threshold (target 0.85, largest coverage with Wilson LB >= 0.85, same procedure as D3) chosen inside each outer training fold.
 **Decision rule (fixed now).** B1 is a selector lever for a tier ONLY if, under the logistic model, (a) at the CV threshold its accepted set has precision >= 0.84 and Wilson LB >= 0.80 (A30 criterion) AND (b) its coverage exceeds B0's at its own CV threshold by >= 0.05 AND (c) the paired cluster bootstrap (1,000 resamples) 95% CI of the difference in the number of correct accepted tasks at equal coverage 0.30 is above zero. Primary tier 9B, secondary 4B, 2B; no pooling. Otherwise "no gain".
 **Not claimed.** One benchmark mix (F python, BigCodeBench-heavy), 407 tasks, CI will be wide; candidate-level selection and task-level accept use the same labels as the hidden checks only for scoring and never as features; the pool is a single seed at T=0.8; no execution-based agreement.
+
+### Outcome of A32 (2026-10-14; rule fixed and committed before the first run)
+Source: `results/gwenlaya_v4/laya/phase2_A32_selector_over_pool_F_python.json`, `scripts/phase2/selector_over_pool.py` (one run, seed 0, no tuning). **Not a lever for any tier.**
+| tier | arm (logistic) | coverage at CV threshold | precision [Wilson] | precision at coverage 0.5 |
+|---|---|---|---|---|
+| 9B | B0 greedy only | 0.30 | 0.846 [0.771, 0.899] | 0.740 |
+| 9B | B1 full pool | 0.32 | 0.884 [0.817, 0.928] | 0.804 |
+| 4B | B0 | 0.18 | 0.878 [0.785, 0.935] | 0.652 |
+| 4B | B1 | 0.27 | 0.835 [0.754, 0.893] | 0.755 |
+| 2B | B0 | 0.23 | 0.457 [0.359, 0.558] | 0.377 |
+| 2B | B1 | 0.42 | 0.506 [0.431, 0.580] | 0.500 |
+**9B (primary), the closest case.** B1 meets the A30 criterion at its CV threshold (0.884, LB 0.817) but fails (b): the coverage gain over B0 is +0.015, not >= 0.05; and fails (c): paired difference in correct accepted tasks at coverage 0.30 is +5.7 with CI [-0.02, +12], which touches zero. At coverage 0.5, B1 reaches 0.804 against 0.740 for the greedy-only model on the same tasks and folds; this is a real-looking but unconfirmed gain (+6 points, no CI computed for that cut, not a registered quantity). 4B: B1 misses the criterion at its CV threshold (0.835, LB 0.754), the gain in coverage is +0.09 but precision falls. 2B: far below 0.84 either way. The boosted-tree variant does not change any verdict.
+**Reading.** A learned selector over the pool helps most where the operating point is loose (coverage 0.5: +6 to +10 points over greedy-only on 9B and 4B, +12 on 2B), and not at the strict A30 point, where the greedy-only scorer is already near what the pool allows with these features. With 407 tasks the paired CI is wide; this is a direction, not a result. B0 here is a greedy-only model on F python alone and is not the D3 number (F+E').
+**Not tested.** Execution-based behavioural agreement; features from a second model; more samples or lower temperature; a bigger training set for the selector (F only has 407 tasks, 5-fold CV).
