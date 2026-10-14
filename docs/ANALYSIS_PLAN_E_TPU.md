@@ -403,3 +403,6 @@ Dated 2026-10-13. Exploratory, development data only (F python, 407 tasks); the 
 **Decision rules.** S1 is a lever toward 0.85 ONLY if, for 4B, precision at coverage >= 0.5 has point estimate >= 0.85 and Wilson lower bound >= 0.80 AND exceeds D3 by >= 3 points with paired bootstrap CI above zero. Otherwise reported as no gain. A tier is reported separately; no pooling to reach the number.
 **Not claimed.** Nothing about E, 9B, other languages, or humans; best-of-k selected with visible tests overfits them (rate of VERIFIED-but-hidden-fail among accepted is the headline cost and is reported); sampling raises compute per task about 9x.
 **Budget.** Ledger $23.64 after A28 (22.18 + 1.46). A29 worst case $1.8; ceiling stays the project cap, >= $3 reserve.
+
+### Amendment to A29 (2026-10-14, by the user, before any A29 sample was scored or read)
+The working target is set to **0.84** (point estimate of precision at coverage >= 0.5 for 4B; Wilson lower bound >= 0.79). All other A29 conditions, the +3-point margin over D3 and the per-tier reporting are unchanged. 0.85 stays reported alongside. Scoring of the samples was about 55% done and no result had been computed when this was written.
