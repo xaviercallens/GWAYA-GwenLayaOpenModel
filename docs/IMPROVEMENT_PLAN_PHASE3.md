@@ -183,13 +183,17 @@ features already exist.
 ### 4.1 Target tiers: Qwen3.5-35B-A3B and Qwen3.5-27B, and what the TPU stack supports today
 - Models: Qwen3.5-35B-A3B (MoE, 35B total, about 3B active per token, 8 of 256 routed experts plus 1 shared, 40-layer
   hybrid Gated DeltaNet + attention) and Qwen3.5-27B (dense, with a vision encoder we do not use); both Qwen/ on Hugging
-  Face.
+  Face. **Excluded by the user (2026-10-15): Qwen3.5-397B-A17B and Qwen3.5-122B-A10B.** The 397B needs about 800 GB
+  of bf16 weights (a v5litepod-64 or larger, above the 16-chip quota and at 76.80 USD/h on-demand), and a 397B
+  generator defeats the point of a GwenLaya combination, which is to make small tiers trustworthy. It is mentioned
+  below only because the TPU stack lists it as a tested model, which is evidence about the Qwen3.5 MoE code path, not a
+  candidate. The 122B (about 244 GB bf16, v5litepod-16 at the quota edge) is excluded for the same reason.
 - Tooling status (tpu-inference README, read 2026-10-15): tested models include Qwen3-4B, Qwen3-30B-A3B, Qwen3-32B,
   Qwen3-Coder-480B-A35B and Qwen3.5-397B-A17B; Qwen3.5-9B is listed as untested; Qwen3.5-35B-A3B and Qwen3.5-27B are
   not listed at all. Our own runs show Qwen3.5-2B/4B/9B work through the PyTorch (torchax) path with
   SKIP_JAX_PRECOMPILE=1 and max_num_batched_tokens 1024. The fused-MoE kernel row in the package's support table is
   unconfirmed for every quantization format. So: the 35B-A3B's architecture family (Qwen3.5 MoE) has a tested 397B
-  sibling, which is encouraging for the model code path, and nothing is known about its performance on v5e; the 27B is
+  sibling (excluded as a tier, see above), which is encouraging for the model code path, and nothing is known about its performance on v5e; the 27B is
   the 9B's architecture scaled, which we know runs.
 - Memory and slice. bf16 weights: 27B about 54 GB, 35B about 70 GB. A v5litepod-4 has 64 GB HBM, a v5litepod-8 128 GB
   (quota: 16 chips per region, so both are allowed). In bf16 both need v5litepod-8. With int8 weights (W8A8
