@@ -203,6 +203,12 @@ def dev(a):
         oracle = float(np.mean([max(c["ok"] for c in groups[k]["cands"]) for k in keys]))
         greedy = float(np.mean([next(c["ok"] for c in groups[k]["cands"] if c["cand"] == "g") for k in keys]))
         gain = v2["mean_cert_coverage"] - b0["mean_cert_coverage"]
+        def curve(r):
+            o = sorted(sk, key=lambda k: -r["oof_score"][k]); res = {}
+            for cv in (0.3, 0.4, 0.5):
+                n = int(math.ceil(cv * len(o))); kk = sum(r["oof_label"][k] for k in o[:n])
+                res[str(cv)] = {"n": n, "precision": kk / n, "wilson": wil(kk, n)}
+            return res
         out["tiers"][tier] = {
             "n_tasks": len(keys), "greedy_pass": greedy, "oracle_any": oracle,
             "V2": {k: v for k, v in v2.items() if not k.startswith("oof")},
@@ -210,6 +216,7 @@ def dev(a):
             "paired_correct_diff_cov40": {"mean": float(np.mean(d)), "ci": [lo, hi],
                                           "v2": correct_at(v2["oof_score"], v2["oof_label"], sk),
                                           "b0": correct_at(b0["oof_score"], b0["oof_label"], sk)},
+            "descriptive_rank_curve_oof": {"V2": curve(v2), "B0": curve(b0)},
             "rule_a": {"coverage_gain": gain, "gain_ok": gain >= 0.10, "ci_ok": lo > 0, "lever": bool(gain >= 0.10 and lo > 0)}}
         t = out["tiers"][tier]
         print(f"{tier}: n {len(keys)} greedy {greedy:.3f} oracle {oracle:.3f} | V2 cert cov {v2['mean_cert_coverage']:.3f} "

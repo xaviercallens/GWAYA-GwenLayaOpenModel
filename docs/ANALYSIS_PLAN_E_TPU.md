@@ -519,3 +519,13 @@ reach "engine ready" within its step timeout is dropped for this phase, no retry
 **Not claimed.** Python only; single seed; G may overlap the generators' pre-training data; synthesized tests can be
 wrong in both directions (their contradiction rate with the hidden check is measured on F only and reported);
 bf16 results do not speak to quantized serving.
+
+### Note to A33 (2026-10-16, before any Verifier V2 number; written after a pipeline check with the V2 features empty)
+A pipeline check of `scripts/phase3/verifier_v2.py` on the existing F pools, with no synthesized-test outputs (so the
+V2-specific features are constant), showed that the registered dev readout has low power: with 5 folds each
+calibration fold holds about 81 tasks, and the fixed-sequence certificate at risk 0.10 / delta 0.10 mostly abstains;
+the greedy baseline B0 certifies a mean coverage of 0.000 (2B, 4B) and 0.052 (9B). This is the small-calibration floor
+reported by Certified by Abstention (arXiv 2610.09541), not a code fault. Rule (a) is NOT changed. Added, as purely
+descriptive output (no decision rests on it): out-of-fold rank-curve precision with Wilson 95% at coverage 0.3, 0.4,
+0.5 for V2 and B0. The sealed read on G fits on all of F and certifies on G's 218 tasks, which has more power but is
+still strict (at coverage 0.40, about 87 accepted with at most 4 to 5 errors).
