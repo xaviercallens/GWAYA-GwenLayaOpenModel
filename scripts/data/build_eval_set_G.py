@@ -19,16 +19,7 @@ import build_eval_sets_F as F
 SEED = 20261016
 N_FSB_G, N_BCB_G = 150, 250
 
-def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--out", type=Path, required=True)
-    ap.add_argument("--workers", type=int, default=8)
-    a = ap.parse_args()
-    root = Path(os.environ.get("GWAYA_DATA_ROOT", "/mnt/data/home/xavkal/gwaya-data"))
-    a.out.mkdir(parents=True, exist_ok=True)
-    lean_a18 = ROOT / "results/gwenlaya_v4/lean_a18/tasks_lean.jsonl"
-    if not lean_a18.exists():
-        lean_a18 = Path("/home/xavkal/xdev/GWAYA-GwenLayaOpenModel/.claude/worktrees/agent-a261411ebec1b591e/results/gwenlaya_v4/lean_a18/tasks_lean.jsonl")
+def make_dec(root, lean_a18):
     paths = F.existing_sets(root, lean_a18)
     f_path = ROOT / "results/gwenlaya_v4/eval_sets_F/tasks_F_python.jsonl"
     # Same reference items as F's builder (E, P_all, Rust_fresh, A18, Laya rows), plus F python screened by PROMPT
@@ -50,16 +41,57 @@ def main() -> int:
                                  fields=[("prompt", F._strip_suffix(r.get("prompt") or ""))]))
             n += 1
         sizes[name] = n
-    f_rows = F.read_jsonl(f_path)
-    items.extend(dc.Item(dataset="F_python", item_id=r["task_id"], domain="python", fields=[("prompt", r["prompt"])])
-                 for r in f_rows)
-    sizes["F_python"] = len(f_rows)
     dec = dc.Decontaminator(items)
+    # F is screened by a SEPARATE prompt-only decontaminator whose hits count only for same-task methods (exact,
+    # jaccard >= 0.8, py_ast, id): BigCodeBench/FullStackBench prompts share docstring templates ("Requirements:",
+    # "Example: >>>"), so 13-gram and math-normalisation hits against F's prompts flag distinct tasks (diagnosed
+    # 2026-10-16: 309 of 511 F hits were template-only; the other 202 were F's own tasks, matched exactly).
+    f_rows = F.read_jsonl(f_path)
+    dec_f = dc.Decontaminator([dc.Item(dataset="F_python", item_id=r["task_id"], domain="python",
+                                       fields=[("prompt", r["prompt"])]) for r in f_rows])
+    sizes["F_python"] = len(f_rows)
     paths["F_python"] = f_path
+    return dec, dec_f, sizes, paths
+
+
+SAME_TASK = ("exact", "jaccard", "py_ast", "id")
+
+
+def screen_F(dec_f, rows, f_ids):
+    from gwaya import decontaminate as dc
+    kept, drops = [], []
+    for r in rows:
+        hits = dec_f.check(dc.Item(dataset="G", item_id=r["task_id"], domain="python", fields=[("prompt", r["prompt"])]))
+        same = [h for h in hits if h.method.split(":")[0] in SAME_TASK]
+        if same or r["task_id"] in f_ids:
+            drops.append({"task_id": r["task_id"], "methods": sorted({h.method for h in same}) or ["task_id"]})
+        else:
+            kept.append(r)
+    return kept, drops
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out", type=Path, required=True)
+    ap.add_argument("--workers", type=int, default=8)
+    a = ap.parse_args()
+    root = Path(os.environ.get("GWAYA_DATA_ROOT", "/mnt/data/home/xavkal/gwaya-data"))
+    a.out.mkdir(parents=True, exist_ok=True)
+    lean_a18 = ROOT / "results/gwenlaya_v4/lean_a18/tasks_lean.jsonl"
+    if not lean_a18.exists():
+        lean_a18 = Path("/home/xavkal/xdev/GWAYA-GwenLayaOpenModel/.claude/worktrees/agent-a261411ebec1b591e/results/gwenlaya_v4/lean_a18/tasks_lean.jsonl")
+    dec, dec_f, sizes, paths = make_dec(root, lean_a18)
     src = F.load_python_sources(root)
     src["leetcode"] = []          # fully used by F
     f_ids = {json.loads(l)["task_id"] for l in open(paths["F_python"])}
-    rows, rep = F.build_python(src, dec, a.workers, N_FSB_G, N_BCB_G, SEED)
+    rows, rep = F.build_python(src, dec, a.workers, 10**6, 10**6, SEED)   # no cap yet: F screen first
+    rows, f_drops = screen_F(dec_f, rows, f_ids)
+    rep["F_screen_drops"] = len(f_drops)
+    capped = []
+    for name, cap in (("ByteDance/FullStackBench:en", N_FSB_G), ("bigcode/bigcodebench:v0.1.4", N_BCB_G)):
+        part = [r for r in rows if r["source"] == name]
+        capped.extend(F.seeded_sample(part, cap, SEED, "G:" + name) if len(part) > cap else part)
+    rows = sorted(capped, key=lambda r: r["task_id"])
     overlap = sorted(r["task_id"] for r in rows if r["task_id"] in f_ids)
     assert not overlap, f"G overlaps F by task id: {overlap[:5]}"
     for r in rows:
@@ -79,6 +111,9 @@ def main() -> int:
     for s in man["report"]["sources"].values():
         if "sanity_dropped" in s: s["sanity_dropped"] = f"{len(s['sanity_dropped'])} items"
     man["report"]["n_decontam_dropped"] = len(rep.get("decontam_dropped", []))
+    (a.out / "decontam_dropped_G.json").write_text(json.dumps({"base": rep.get("decontam_dropped", []), "F_same_task": f_drops}, indent=0, default=str))
+    man["F_screen"] = {"methods_counted": list(SAME_TASK), "dropped": len(f_drops),
+                       "note": "13-gram and math-normalisation hits against F prompts ignored (shared docstring templates)"}
     (a.out / "manifest_G.json").write_text(json.dumps(man, indent=1, default=str))
     print(json.dumps({"rows": len(rows), "per_source": man["counts"]["per_source"], "sha256": sha}, indent=1))
     return 0
