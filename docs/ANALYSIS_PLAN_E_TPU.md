@@ -529,3 +529,23 @@ reported by Certified by Abstention (arXiv 2610.09541), not a code fault. Rule (
 descriptive output (no decision rests on it): out-of-fold rank-curve precision with Wilson 95% at coverage 0.3, 0.4,
 0.5 for V2 and B0. The sealed read on G fits on all of F and certifies on G's 218 tasks, which has more power but is
 still strict (at coverage 0.40, about 87 accepted with at most 4 to 5 errors).
+
+### Amendment A33.1 (2026-10-16, before any phase-3 large-tier generation; no large-tier output exists)
+Cause: v5litepod-8 creation failed in 23 spot and 10 on-demand attempts across all US zones; Cloud Audit Logs show
+`Quota limit 'TPUV5sLitepodServingPerProjectPerZoneForTPUAPI' has been exceeded. Limit: 4` (4 v5e chips per zone per
+project). The user rules out quota requests, so 8-chip slices are unavailable. Changes to T5 only:
+(1) Slice: v5litepod-4 (64 GB HBM), spot, zones not already holding a T6 slice.
+(2) Qwen3.5-35B-A3B runs as the community 4-bit AWQ checkpoint `QuantTrio/Qwen3.5-35B-A3B-AWQ` (Apache-2.0;
+quant_method awq, 4 bits, group 128; attention, linear-attention, shared expert, router and layer 0 kept in higher
+precision), because bf16 (~70 GB) does not fit 4 chips. There is no bf16 reference run, so the A25 accuracy rule for a
+quantized arm cannot be applied: every 35B-A3B number is labelled "4-bit AWQ (community checkpoint)" and makes no
+claim about the bf16 model.
+(3) Qwen3.5-27B runs in bf16 with TP=4 and max_num_seqs 16 then 8 (~54 GB of weights in 64 GB HBM); if it does not
+start it is dropped (A33 stop rule).
+(4) Samples per task for both large tiers: 4 instead of 8 (time on 4 chips); the 2B/4B/9B keep 8 on F (existing) and
+8 on G (T6 later). Comparisons of selection across tiers are therefore made at equal candidate counts by also
+reporting the 2B/4B/9B with greedy + their first 4 samples.
+(5) Synthesized tests: both large tiers write tests (2 draws x 12 asserts each); the test pool per task is the union
+of their asserts. For the 2B/4B/9B the writers are other models (decoupled); for each large tier, half of its pool's
+tests are its own (coupled) and half come from the other large tier; reported.
+Everything else in A33 (goal, decision rules, sealed read, stop rules, budget ceiling) is unchanged.
