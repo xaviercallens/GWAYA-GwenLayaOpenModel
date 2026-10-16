@@ -30,8 +30,32 @@ def main() -> int:
     if not lean_a18.exists():
         lean_a18 = Path("/home/xavkal/xdev/GWAYA-GwenLayaOpenModel/.claude/worktrees/agent-a261411ebec1b591e/results/gwenlaya_v4/lean_a18/tasks_lean.jsonl")
     paths = F.existing_sets(root, lean_a18)
-    paths["F_python"] = ROOT / "results/gwenlaya_v4/eval_sets_F/tasks_F_python.jsonl"
-    dec, sizes = F.build_decontaminator(paths)
+    f_path = ROOT / "results/gwenlaya_v4/eval_sets_F/tasks_F_python.jsonl"
+    # Same reference items as F's builder (E, P_all, Rust_fresh, A18, Laya rows), plus F python screened by PROMPT
+    # only: every converted BigCodeBench suite ends with the same unittest-runner harness, so test-field n-grams match
+    # all BCB tasks with each other (diagnosed 2026-10-16: 512 of 723 candidates dropped against F, ~207 of them F's
+    # own tasks, the rest harness matches). F's own tasks are still removed (identical prompts) and also by task id.
+    import glob
+    from gwaya import decontaminate as dc
+    items, sizes = [], {}
+    for name, p in paths.items():
+        recs = F.read_jsonl(p)
+        sizes[name] = len(recs)
+        items.extend(F.record_to_item(name, r) for r in recs)
+    for f in sorted(glob.glob(str(paths["E"].parents[2] / "laya_data/laya_*/router.jsonl"))):
+        name, n = "laya:" + Path(f).parent.name, 0
+        for line in open(f):
+            r = json.loads(line)
+            items.append(dc.Item(dataset=name, item_id=str(r.get("id")), domain=r.get("domain", "unknown"),
+                                 fields=[("prompt", F._strip_suffix(r.get("prompt") or ""))]))
+            n += 1
+        sizes[name] = n
+    f_rows = F.read_jsonl(f_path)
+    items.extend(dc.Item(dataset="F_python", item_id=r["task_id"], domain="python", fields=[("prompt", r["prompt"])])
+                 for r in f_rows)
+    sizes["F_python"] = len(f_rows)
+    dec = dc.Decontaminator(items)
+    paths["F_python"] = f_path
     src = F.load_python_sources(root)
     src["leetcode"] = []          # fully used by F
     f_ids = {json.loads(l)["task_id"] for l in open(paths["F_python"])}

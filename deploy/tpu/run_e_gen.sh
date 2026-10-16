@@ -22,11 +22,14 @@ fi
 # ("Mamba and attention pools together exceed the HBM budget"). Try a ladder; output is resumable.
 KINDS="${KINDS:-${KIND:-answer}}"            # answer | pot (program-of-thought programs for the math gate) | sample (SAMPLES draws, T 0.8); several allowed
 for spec in $MODELS; do
-  hf="${spec%%|*}"; served="${spec##*|}"
-  for KIND in $KINDS; do
+  IFS='|' read -r hf served mkinds <<< "$spec"   # optional third field: per-model kinds, comma-separated
+  KL="${mkinds//,/ }"; KL="${KL:-$KINDS}"
+  for KIND in $KL; do
     OUTPFX=raw_; [ "$KIND" = pot ] && OUTPFX=raw_pot_; [ "$KIND" = sample ] && OUTPFX=raw_sample_; [ "$KIND" = tests ] && OUTPFX=raw_tests_
+    TASKF=tasks_prompts.jsonl   # A33: optional smaller task file for the sampled and test kinds (e.g. G only)
+    [ "$KIND" != answer ] && [ -n "${SAMPLE_TASKS:-}" ] && [ -f "$SAMPLE_TASKS" ] && TASKF=$SAMPLE_TASKS
     for seqs in ${MAX_SEQS_LADDER:-96 32 16 8}; do
-      step "gen_${KIND}_${served}_s$seqs" ${STEP_TIMEOUT:-3600} "$PY repo/scripts/tpu/gen_batch.py --model $hf ${GEN_EXTRA:-} --served $served --tasks tasks_prompts.jsonl --out ${OUTPFX}$served.jsonl --kind $KIND --samples $([ "$KIND" = tests ] && echo ${TEST_SAMPLES:-2} || echo ${SAMPLES:-8}) --max-seqs $seqs --tensor-parallel ${TP:-1} ${LIMIT:+--limit $LIMIT}"
+      step "gen_${KIND}_${served}_s$seqs" ${STEP_TIMEOUT:-3600} "$PY repo/scripts/tpu/gen_batch.py --model $hf ${GEN_EXTRA:-} --served $served --tasks $TASKF --out ${OUTPFX}$served.jsonl --kind $KIND --samples $([ "$KIND" = tests ] && echo ${TEST_SAMPLES:-2} || echo ${SAMPLES:-8}) --max-seqs $seqs --tensor-parallel ${TP:-1} ${LIMIT:+--limit $LIMIT}"
       rc=$?
       [ $rc -eq 0 ] && break
       if [ $rc -eq 3 ]; then echo '{"step":"ABORT_NO_LOGPROBS","rc":3}' >> $R/status.jsonl; exit 3; fi
