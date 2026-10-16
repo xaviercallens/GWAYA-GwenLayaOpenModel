@@ -36,6 +36,20 @@ for cand in (HERE.parents[2], Path.home() / "smoke" / "repo"):
         break
 
 MAX_NEW_TOKENS = {"python": 1024, "rust": 1024, "math": 1024, "lean4": 1024}
+TESTS_MAX_TOKENS = 768
+# A33 Verifier V2 (kind "tests"): the model writes asserts from the prompt alone, never seeing a candidate (CodeT-style;
+# the inputs drive behavioural clustering on the host, the expected values are one more vote).
+TESTS_INSTRUCTION = (
+    "Below is a programming task. Do NOT solve it. Write 12 different Python assert statements that a correct "
+    "solution must pass, one per line, each of the form `assert <call> == <expected value>`. Call the function "
+    "exactly as the task defines it (for a method of `class Solution`, call `Solution().<method>(...)`). Use small, "
+    "concrete inputs, include edge cases, and do not use randomness, files or the network. Output only the asserts.\n\n"
+    "Task:\n")
+
+
+def tests_prompt(task_prompt: str, system: str) -> str:
+    return (f"<|im_start|>system\n{system}<|im_end|>\n<|im_start|>user\n{TESTS_INSTRUCTION}{task_prompt.strip()}"
+            f"<|im_end|>\n<|im_start|>assistant\n```python\nassert ")
 MAX_PROMPT_TOKENS = 2000
 
 
@@ -61,6 +75,8 @@ def done_keys(path: Path, need: int = 1) -> set[tuple[str, str]]:
 def sample_params(kind: str, samples: int, temperature: float, top_p: float, seed: int) -> dict:
     """Greedy for answer/pot; for sample, n independent draws (the registered Lean protocol: k=8, T=0.8, top_p 0.95).
     vLLM-TPU (JAX) rejects a per-request seed, so `seed` is applied to the engine instead (LLM(seed=...)), not here."""
+    if kind == "tests":
+        return {"n": samples, "temperature": 0.7, "top_p": 0.95}
     if kind != "sample":
         return {"temperature": 0.0}
     return {"n": samples, "temperature": temperature, "top_p": top_p}
@@ -101,7 +117,7 @@ def main(argv: list[str] | None = None) -> int:
                     help="prefill buffer; 2048 starves the KV/state cache of hybrid Qwen3.5 models on a 16 GB v5e chip")
     ap.add_argument("--limit", type=int, help="max tasks per domain (smoke tests)")
     ap.add_argument("--tensor-parallel", type=int, default=1)
-    ap.add_argument("--kind", choices=["answer", "pot", "sample"], default="answer",
+    ap.add_argument("--kind", choices=["answer", "pot", "sample", "tests"], default="answer",
                     help="pot: program-of-thought programs for the math gate (math tasks only); "
                          "sample: --samples draws per task at --temperature/--top-p (one row per draw)")
     ap.add_argument("--samples", type=int, default=8)
@@ -125,7 +141,9 @@ def main(argv: list[str] | None = None) -> int:
                 kept.append(t)
         tasks = kept
     out = Path(args.out)
-    done = done_keys(out, args.samples if args.kind == "sample" else 1)
+    if args.kind == "tests":
+        tasks = [t for t in tasks if t["domain"] == "python"]
+    done = done_keys(out, args.samples if args.kind in ("sample", "tests") else 1)
     todo = [t for t in tasks if (t["domain"], t["task_id"]) not in done]
     print(f"[gen_batch] {args.served}: {len(tasks)} tasks, {len(done)} already done, {len(todo)} to do", flush=True)
     if not todo:
@@ -148,12 +166,15 @@ def main(argv: list[str] | None = None) -> int:
             if args.kind == "pot":  # the problem text without the boxed-answer instruction
                 prompts = [gen.build_raw_prompt(re.sub(r"\s*Put the final answer in \\boxed\{\}\.?\s*$", "", t["prompt"]),
                                                 "math_pot") for t in chunk]
+            elif args.kind == "tests":
+                from gwaya.generators import _SYSTEM_PROMPT
+                prompts = [tests_prompt(t["prompt"], _SYSTEM_PROMPT.format(lang="python")) for t in chunk]
             else:
                 prompts = [gen.build_raw_prompt(t["prompt"], t["domain"]) for t in chunk]
             lens = [len(tok.encode(p)) for p in prompts]
             ok = [i for i, n in enumerate(lens) if n <= MAX_PROMPT_TOKENS]
             sp = sample_params(args.kind, args.samples, args.temperature, args.top_p, args.seed)
-            params = [SamplingParams(**sp, max_tokens=MAX_NEW_TOKENS[chunk[i]["domain"]],
+            params = [SamplingParams(**sp, max_tokens=TESTS_MAX_TOKENS if args.kind == "tests" else MAX_NEW_TOKENS[chunk[i]["domain"]],
                                      stop=gen.stop_sequences("math_pot" if args.kind == "pot" else chunk[i]["domain"]),
                                      logprobs=1) for i in ok]
             t1 = time.time()
@@ -167,7 +188,8 @@ def main(argv: list[str] | None = None) -> int:
                     rows = []
                     for j, o in enumerate(by_idx[i].outputs):
                         mean_lp, lp_list = mean_and_list(o)
-                        rows.append({**base, **({"sample": j} if args.kind == "sample" else {}), "text": o.text,
+                        rows.append({**base, **({"sample": j} if args.kind in ("sample", "tests") else {}),
+                                     "text": ("assert " + o.text) if args.kind == "tests" else o.text,
                                      "completion_tokens": len(o.token_ids), "finish_reason": o.finish_reason or "stop",
                                      "mean_logprob": mean_lp, "token_logprobs": lp_list})
                 else:  # prompt longer than we can serve: recorded, never silently dropped

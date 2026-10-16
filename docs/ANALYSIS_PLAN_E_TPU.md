@@ -471,3 +471,51 @@ Source: `results/gwenlaya_v4/laya/phase2_A32_selector_over_pool_F_python.json`, 
 **9B (primary), the closest case.** B1 meets the A30 criterion at its CV threshold (0.884, LB 0.817) but fails (b): the coverage gain over B0 is +0.015, not >= 0.05; and fails (c): paired difference in correct accepted tasks at coverage 0.30 is +5.7 with CI [-0.02, +12], which touches zero. At coverage 0.5, B1 reaches 0.804 against 0.740 for the greedy-only model on the same tasks and folds; this is a real-looking but unconfirmed gain (+6 points, no CI computed for that cut, not a registered quantity). 4B: B1 misses the criterion at its CV threshold (0.835, LB 0.754), the gain in coverage is +0.09 but precision falls. 2B: far below 0.84 either way. The boosted-tree variant does not change any verdict.
 **Reading.** A learned selector over the pool helps most where the operating point is loose (coverage 0.5: +6 to +10 points over greedy-only on 9B and 4B, +12 on 2B), and not at the strict A30 point, where the greedy-only scorer is already near what the pool allows with these features. With 407 tasks the paired CI is wide; this is a direction, not a result. B0 here is a greedy-only model on F python alone and is not the D3 number (F+E').
 **Not tested.** Execution-based behavioural agreement; features from a second model; more samples or lower temperature; a bigger training set for the selector (F only has 407 tasks, 5-fold CV).
+
+## Addendum A33: phase 3 registration - certified goal, larger tiers, Verifier V2, Laya data scale (written before any phase-3 generation; no phase-3 number exists)
+Dated 2026-10-16. Implements `docs/IMPROVEMENT_PLAN_PHASE3.md` (v3, commit 562b34d) under a user grant of 30 USD for this
+run, bounded by the project's hard cap: ledger 26.33 USD, ceiling 47.00 USD (50 minus the 3 USD reserve), so at most
+20.67 USD of new spend. Drivers run with GWAYA_CAP_USD=47. Exploratory development work plus one sealed read; nothing
+here is a registered hypothesis test of the original study.
+**Goal (fixed now, replaces the A30 working goal for phase 3).** For a tier on fresh Python, a frozen selective policy is
+"at 0.90" when (1) on the sealed set G a fixed-sequence Learn-then-Test over at most five thresholds, declared and
+committed before G is scored, certifies selective risk <= 0.10 at delta = 0.10 (exact binomial, declared order, stop at
+the first failure); (2) the certified coverage on G is >= 0.40; (3) the evidence that picks a candidate and the
+evidence that accepts it come from different generations or tools, and calibration rows are produced under the
+deployed selection rule; (4) point precision with Wilson 95% and the full rank curve are reported beside it; (5) paired
+baselines: gate-only, frozen D3 (A31), accept-all. Primary tier: the largest tier that runs (35B-A3B or 27B), with 9B
+as the reference tier; every tier separately, no pooling.
+**Data.** Dev: F python (407). Sealed: G (`scripts/data/build_eval_set_G.py`): FullStackBench and BigCodeBench tasks
+not in F, screened against E, P, Rust_fresh, A18 and F python with the F builder's decontaminator and sanity checks
+(LeetCodeDataset is not used: F took its whole test split). G is sealed from the commit of its task file; it is
+generated on and scored once, by the final stage, with the frozen policy. Laya track: pool O (OpenCodeInstruct,
+re-verified, decontaminated, A23), deterministic 6,000-task subset of train+calib.
+**Generation stages (TPU, launched in this order; each dry-run first; spot with a US zone ladder, on-demand fallback
+reported in the ledger).** T5 (v5litepod-8, bf16, TP=8, <= 150 min): Qwen3.5-35B-A3B then Qwen3.5-27B, greedy + 8
+samples (T 0.8) on F python + G; the 35B-A3B also writes synthesized tests (kind `tests`, 2 draws x 12 asserts, T 0.7,
+prompt only, non-thinking). Deviations from the plan, fixed now: no int8 W8A8 checkpoint exists for either model
+(official variants are FP8, which tpu-inference lists for v7 only, and GPTQ-Int4), so both run in bf16 on 8 chips;
+tests are written by the 35B-A3B for every tier, which decouples the test writer from the 2B/4B/9B generators
+(Verification Trap) but not from the 35B-A3B itself (reported); thinking is off for test writing (cost). If the
+35B-A3B fails to load, the 27B writes the tests. T6 (v5litepod-4, bf16, TP=4): 2B/4B/9B greedy + 8 samples on G, and
+greedy on the pool-O subset for the Laya track. T7 (v5e-1): Laya v3 training exactly as A23.
+**Verifier V2 (scored locally, hidden tests never select or train).** For each task: parse the asserts; inputs = the
+call expressions; run every candidate of a tier (greedy + 8 samples) on those inputs in the sandbox; features =
+fraction of model-written asserts passed, size of the candidate's behavioural cluster (identical outputs on all
+inputs), number of clusters, agreement of the cluster's outputs with the model-written expected values, gate verdict,
+mean log-prob, truncation. Selection = best candidate by a D4 logistic scorer over these features (grouped CV on F by
+cluster); acceptance threshold family = D4 calibrated probability at {0.95, 0.925, 0.90, 0.875, 0.85} tested in that
+order on calibration rows produced by the same selection rule.
+**Decision rules (fixed now).** (a) Verifier V2 is a lever for a tier ONLY if, on dev F under 5-fold grouped CV with the
+same certificate procedure inside each fold, its mean certified coverage exceeds that of D3 on greedy (same tier, same
+tasks) by >= 0.10, and the paired cluster-bootstrap CI of correct accepted tasks at coverage 0.40 is above zero.
+(b) A larger tier is a lever ONLY if its certified coverage under Verifier V2 on dev F exceeds the 9B's by >= 0.10 with
+the same paired CI condition. (c) The sealed read on G is reported for the frozen best policy per tier against the
+five-condition goal above; met or not met, no revision afterwards. (d) Laya v3: the A23 rule, unchanged. Each rule is
+reported as met or not met; nulls are reported as nulls.
+**Stop rules.** A stage that cannot get capacity in its spot ladder within 30 minutes falls back to on-demand only if the
+ledger plus the on-demand worst case stays under 47 USD; otherwise it is skipped and reported. A model that does not
+reach "engine ready" within its step timeout is dropped for this phase, no retry on a larger slice.
+**Not claimed.** Python only; single seed; G may overlap the generators' pre-training data; synthesized tests can be
+wrong in both directions (their contradiction rate with the hidden check is measured on F only and reported);
+bf16 results do not speak to quantized serving.

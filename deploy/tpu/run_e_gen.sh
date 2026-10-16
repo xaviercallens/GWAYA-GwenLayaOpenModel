@@ -13,19 +13,26 @@ mkdir -p repo && tar xzf repo.tgz -C repo
 step uv 300 "curl -LsSf https://astral.sh/uv/install.sh | sh"
 step venv 1500 "uv venv -q -p 3.12 vllm-venv && VIRTUAL_ENV=$R/vllm-venv uv pip install -q vllm-tpu && $R/vllm-venv/bin/python -c 'import vllm, jax; print(vllm.__version__, jax.devices())'"
 PY=$R/vllm-venv/bin/python
+# A33: spot runs push partial outputs to the bucket every 5 min so a preemption loses minutes, not the stage
+# (best effort: a VM without storage scope just skips it). gen_batch resumes from any raw file uploaded back.
+if [ -n "${SYNC_URI:-}" ]; then
+  ( while sleep 300; do gcloud storage cp $R/raw_*.jsonl $R/status.jsonl "$SYNC_URI/" >/dev/null 2>&1 || gsutil -q cp $R/raw_*.jsonl $R/status.jsonl "$SYNC_URI/" >/dev/null 2>&1; done ) &
+fi
 # Hybrid (Qwen3.5) models can refuse to start when max-seqs is too high for the 16 GB chip
 # ("Mamba and attention pools together exceed the HBM budget"). Try a ladder; output is resumable.
 KINDS="${KINDS:-${KIND:-answer}}"            # answer | pot (program-of-thought programs for the math gate) | sample (SAMPLES draws, T 0.8); several allowed
 for spec in $MODELS; do
   hf="${spec%%|*}"; served="${spec##*|}"
   for KIND in $KINDS; do
-    OUTPFX=raw_; [ "$KIND" = pot ] && OUTPFX=raw_pot_; [ "$KIND" = sample ] && OUTPFX=raw_sample_
+    OUTPFX=raw_; [ "$KIND" = pot ] && OUTPFX=raw_pot_; [ "$KIND" = sample ] && OUTPFX=raw_sample_; [ "$KIND" = tests ] && OUTPFX=raw_tests_
     for seqs in ${MAX_SEQS_LADDER:-96 32 16 8}; do
-      step "gen_${KIND}_${served}_s$seqs" 3600 "$PY repo/scripts/tpu/gen_batch.py --model $hf --served $served --tasks tasks_prompts.jsonl --out ${OUTPFX}$served.jsonl --kind $KIND --samples ${SAMPLES:-8} --max-seqs $seqs --tensor-parallel ${TP:-1} ${LIMIT:+--limit $LIMIT}"
+      step "gen_${KIND}_${served}_s$seqs" ${STEP_TIMEOUT:-3600} "$PY repo/scripts/tpu/gen_batch.py --model $hf ${GEN_EXTRA:-} --served $served --tasks tasks_prompts.jsonl --out ${OUTPFX}$served.jsonl --kind $KIND --samples $([ "$KIND" = tests ] && echo ${TEST_SAMPLES:-2} || echo ${SAMPLES:-8}) --max-seqs $seqs --tensor-parallel ${TP:-1} ${LIMIT:+--limit $LIMIT}"
       rc=$?
       [ $rc -eq 0 ] && break
       if [ $rc -eq 3 ]; then echo '{"step":"ABORT_NO_LOGPROBS","rc":3}' >> $R/status.jsonl; exit 3; fi
     done
   done
+  # free the disk before the next (large) checkpoint; the 35B-A3B alone is ~70 GB in bf16
+  [ -n "${CLEAN_HF:-}" ] && rm -rf "$HF_HOME/hub/models--${hf//\//--}"
 done
 echo SMOKE_DONE >> $R/status.jsonl
