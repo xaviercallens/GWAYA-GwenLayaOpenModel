@@ -156,6 +156,8 @@ def main(argv: list[str] | None = None) -> int:
                   max_num_batched_tokens=args.max_batched_tokens, tensor_parallel_size=args.tensor_parallel)
     if "Qwen3.5" in args.model or "Qwen3.8" in args.model:  # multimodal repos: text only
         kwargs["limit_mm_per_prompt"] = {"image": 0, "video": 0}
+    if "AWQ" in args.model.upper():  # auto_awq on TPU supports bfloat16 only; the checkpoint config says float16
+        kwargs["dtype"] = "bfloat16"
     llm = LLM(**kwargs)
     tok = llm.get_tokenizer()
     print(f"[gen_batch] engine ready in {time.time() - t0:.0f}s", flush=True)
