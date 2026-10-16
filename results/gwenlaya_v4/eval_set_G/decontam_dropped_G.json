@@ -1,0 +1,1649 @@
+{
+"base": [],
+"F_same_task": [
+{
+"task_id": "py/BigCodeBench/1021",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/1027",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/1041",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/1099",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/1106",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/1108",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/1113",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/1114",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/1117",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/1122",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/1126",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/113",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/1130",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/118",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/127",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/130",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/131",
+"methods": [
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/154",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/158",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/192",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/203",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/263",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/27",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/273",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/283",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/297",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/324",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/328",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/329",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/336",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/339",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/342",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/346",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/365",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/368",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/370",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/384",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/389",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/4",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/400",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/508",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/544",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/547",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/563",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/566",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/569",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/642",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/644",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/665",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/670",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/682",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/708",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/709",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/713",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/716",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/717",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/722",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/728",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/729",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/740",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/741",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/751",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/755",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/759",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/765",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/768",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/773",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/795",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/796",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/8",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/804",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/817",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/818",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/828",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/843",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/851",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/854",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/907",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/928",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/930",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/931",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/937",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/939",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/974",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/98",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/988",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/989",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/991",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/992",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/998",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/BigCodeBench/999",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1246",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1263",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1264",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1265",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1266",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1267",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1269",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1270",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1271",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1272",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1273",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1275",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1291",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1296",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1297",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1299",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1300",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1302",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1303",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1304",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1305",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1307",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1309",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1312",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/1313",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/171",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/182",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/183",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/196",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/226",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/229",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/235",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/320",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests",
+"py_ast"
+]
+},
+{
+"task_id": "py/FullStackBench/335",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests",
+"py_ast"
+]
+},
+{
+"task_id": "py/FullStackBench/346",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/349",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/351",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/353",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/355",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/356",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/360",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/364",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/376",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/385",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/386",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/390",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/391",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/392",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/457",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/459",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/460",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/463",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/464",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/467",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/469",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/486",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/493",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/499",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/504",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/553",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/559",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/569",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/570",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/572",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests",
+"py_ast"
+]
+},
+{
+"task_id": "py/FullStackBench/574",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/575",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/576",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/579",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/582",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/590",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/591",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/651",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests",
+"py_ast"
+]
+},
+{
+"task_id": "py/FullStackBench/653",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests",
+"py_ast"
+]
+},
+{
+"task_id": "py/FullStackBench/655",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests",
+"py_ast"
+]
+},
+{
+"task_id": "py/FullStackBench/658",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests",
+"py_ast"
+]
+},
+{
+"task_id": "py/FullStackBench/659",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/662",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests",
+"py_ast"
+]
+},
+{
+"task_id": "py/FullStackBench/666",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests",
+"py_ast"
+]
+},
+{
+"task_id": "py/FullStackBench/667",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests",
+"py_ast"
+]
+},
+{
+"task_id": "py/FullStackBench/671",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests",
+"py_ast"
+]
+},
+{
+"task_id": "py/FullStackBench/672",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests",
+"py_ast"
+]
+},
+{
+"task_id": "py/FullStackBench/674",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests",
+"py_ast"
+]
+},
+{
+"task_id": "py/FullStackBench/675",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests",
+"py_ast"
+]
+},
+{
+"task_id": "py/FullStackBench/680",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests",
+"py_ast"
+]
+},
+{
+"task_id": "py/FullStackBench/682",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests",
+"py_ast"
+]
+},
+{
+"task_id": "py/FullStackBench/683",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests",
+"py_ast"
+]
+},
+{
+"task_id": "py/FullStackBench/684",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests",
+"py_ast"
+]
+},
+{
+"task_id": "py/FullStackBench/685",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests",
+"py_ast"
+]
+},
+{
+"task_id": "py/FullStackBench/687",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests",
+"py_ast"
+]
+},
+{
+"task_id": "py/FullStackBench/689",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests",
+"py_ast"
+]
+},
+{
+"task_id": "py/FullStackBench/690",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/692",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/753",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/760",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/858",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/870",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/875",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/876",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/878",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/880",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/883",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/900",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/908",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/954",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/955",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/956",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/957",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/958",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/960",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/969",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/976",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+},
+{
+"task_id": "py/FullStackBench/977",
+"methods": [
+"exact",
+"jaccard:prompt",
+"jaccard:prompt+tests"
+]
+}
+]
+}
