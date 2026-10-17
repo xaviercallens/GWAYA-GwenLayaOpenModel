@@ -18,18 +18,19 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-VERSION = "3.10.0"
+VERSION = "3.13.0"
 PDF = ROOT / "papers" / "gwenlaya_v4.pdf"
-RELEASE_URL = "https://github.com/xaviercallens/GWAYA-GwenLayaOpenModel/releases/tag/v3.10.0"
+RELEASE_URL = "https://github.com/xaviercallens/GWAYA-GwenLayaOpenModel/releases/tag/v3.13.0"
 DESCRIPTION = """\
-<p><b>GwenLaya v4 (revision 3.10.0)</b>: a pre-registered study of answering only when a check can back the answer.
+<p><b>GwenLaya v4 (revision 3.13.0)</b>: a pre-registered study of answering only when a check can back the answer.
 Qwen3.5 generators (2B/4B/9B) with the GWAYA fail-closed gate and the Laya router/calibrator, for Python, math and Lean 4.</p>
-<p>Main results of this revision: on fresh evaluation sets F (Python 407, math 501, Lean 4 229) the frozen Laya replicates
-H1 out of sample (calibrated P(correct) beats raw log-probabilities, AURC difference -0.104, 95% CI -0.132 to -0.078,
-carried by math) and does not replicate H3 (no gain over the executed gate); Laya is about equal to a hand-feature
-logistic regression. First Lean 4 results with the hardened gate: miniF2F test 22/41/59/69 of 223 (0.8B/2B/4B/9B).
-All claims were recomputed by an independent audit (docs/CLAIM_AUDIT_3100.md in the repository). Exploratory results are
-labelled as such; competition-stratum accuracies are floors; no claim that the generators have not seen public benchmarks.</p>
+<p>New in this revision (phase 3, exploratory, decision rules written before each result): a test-executing selector (Verifier V2)
+and a 27B tier are not levers on the development table, and on a single sealed read of 218 fresh Python tasks (27B only) neither
+V2 nor the frozen D3 baseline certifies selective risk at most 0.10 (delta 0.10) at any threshold, so the certified goal is not met
+(descriptively, the top 40% of tasks by score have precision about 0.88 against 0.64 for accepting everything). The 35B-A3B
+(4-bit AWQ) could not be run on 4 chips and was dropped; the 2B, 4B and 9B have no sealed readout; Laya v3 was not trained.
+The revision was recomputed by an independent audit (docs/CLAIM_AUDIT_3130.md in the repository; it found that the sealed set was
+scored twice by overlapping runs, with an identical outcome, disclosed in the paper). Next steps: docs/NEXT_STEPS_PHASE4.md.</p>
 <p>Code, data, results and the audit: <a href="https://github.com/xaviercallens/GWAYA-GwenLayaOpenModel">GitHub</a>.</p>
 """
 
@@ -65,6 +66,7 @@ def main() -> int:
     ap.add_argument("--record", default="23121788", help="any record id of the concept to version")
     ap.add_argument("--license", default="cc-by-4.0", help="Zenodo license id (default matches the existing record)")
     ap.add_argument("--sandbox", action="store_true")
+    ap.add_argument("--draft", metavar="DRAFT_ID", help="reuse this existing draft (replace its file and metadata) instead of creating a new version")
     ap.add_argument("--publish", metavar="DRAFT_ID", help="publish this draft deposition (irreversible)")
     a = ap.parse_args()
     z = Z("https://sandbox.zenodo.org/api" if a.sandbox else "https://zenodo.org/api", token(a.sandbox))
@@ -77,9 +79,11 @@ def main() -> int:
     if not PDF.is_file():
         sys.exit(f"missing {PDF}")
     sha = hashlib.sha256(PDF.read_bytes()).hexdigest()
-    new = z.call("POST", f"/deposit/depositions/{a.record}/actions/newversion")
-    draft_url = new["links"]["latest_draft"]
-    draft = z.call("GET", draft_url)
+    if a.draft:
+        draft = z.call("GET", f"/deposit/depositions/{a.draft}")
+    else:
+        new = z.call("POST", f"/deposit/depositions/{a.record}/actions/newversion")
+        draft = z.call("GET", new["links"]["latest_draft"])
     dep_id = draft["id"]
     for f in draft.get("files", []):  # a new version starts with the old files: replace them
         z.call("DELETE", f["links"]["self"])
