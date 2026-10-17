@@ -127,6 +127,7 @@
 \newcommand{\code}[1]{\texttt{\detokenize{#1}}}
 \input{numbers3100.tex}
 \input{numbers3120.tex}
+\input{numbers3130.tex}
 \makeatletter\newcommand{\rawinput}[1]{\@@input #1 }\makeatother
 
 \title{GwenLaya v4: a pre-registered study of answering only when a check can back the answer\\[4pt]
@@ -1802,6 +1803,58 @@ A26: ``E2E trust'' and the gate-strength stub & no committed result & listed as 
 \paragraph{System side, not an evaluation.} A local coding assistant (remote generator on the TPU endpoint, local sandbox gate, repair loop; \code{gwaya/assistant.py}, \code{scripts/gwaya_assist.py}, \code{docs/IMPROVEMENT_PLAN_ASSISTANT.md}) had one smoke run on 2026-10-13: Qwen3.5-4B bf16 on one v5e chip behind the gateway, 8 hand-written easy Python tasks, 8 of 8 VERIFIED in round 1, cold start 427\,s, warm requests 1.8 to 4.2\,s (\code{results/assist_smoke_2026-10-13.json}). It shows that the plumbing works and that a TPU endpoint ran; it does not show that the assistant is good (easy tasks, no failure repaired). This supersedes the 3.10.0 statements that the endpoint did not run and was tested against a fake TPU API only (Section~\ref{sec:corr3120}).
 
 %-----------------------------------------------------------------------------
+\section{Phase 3: larger tiers, a test-executing selector and one sealed read (revision 3.13.0, draft)}\label{sec:phase3}
+
+\textbf{What this section is.} Phase 3 asked whether new per-task evidence, namely the outputs of model-written tests executed on every candidate (Verifier V2), and larger generators (Qwen3.5-27B, and the 35B-A3B as a 4-bit AWQ community checkpoint) could reach a \emph{certified} goal on fresh Python: a frozen selective policy whose selective risk is certified at most $0.10$ ($\delta=0.10$, fixed-sequence exact-binomial test over five declared thresholds) at certified coverage $\ge0.40$ on the sealed set G. The registration is addendum A33 of \code{docs/ANALYSIS_PLAN_E_TPU.md} with amendments A33.1 to A33.4, all committed before the number they govern (Section~\ref{sec:p3-order}). The work is exploratory development; it is not a registered hypothesis test and touches none of H1 to H15. \textbf{Result: every rule is met or not met as written, and the goal is not met.} Verifier V2 is not a lever for any tier, the 27B is not a lever over the 9B, and on the sealed read neither the V2 policy nor the frozen D3 baseline certifies at any threshold. Tables are written by \code{scripts/paper/tables_phase3.py} from the committed JSON files (\code{papers/tables_phase3.tex}); prose numbers were copied from them.
+
+\subsection{Status of every phase-3 item}\label{sec:p3-status}
+
+\begin{table}[!htbp]\centering\scriptsize\setlength{\tabcolsep}{3pt}
+\caption{Phase-3 items and what exists on disk. Nothing is claimed for an item without a result file.}\label{tab:p3-status}
+\begin{tabular}{l p{3.4cm} p{9.2cm}}\toprule
+item & question & status and outcome\\\midrule
+T5, 27B & larger tier, greedy + 4 samples + 2 draws of synthesized tests, F Python 407 + G 218 & done, bf16, TP=4 on a v5litepod-4 (625 tasks: 625 greedy, 2{,}500 sample and 1{,}250 test rows). The planned v5litepod-8 was unobtainable (4 v5e chips per zone and project; 23 spot and 10 on-demand attempts failed; A33.1).\\
+T5, 35B-A3B & the largest tier & \textbf{dropped} (A33.3). 4-bit AWQ community checkpoint; the first attempt failed on a launcher defect (float16 requested, \code{auto\_awq} supports bfloat16 only), the single re-run permitted by A33.2 failed in \code{auto\_awq.create\_weights} (``input size is not aligned with the quantized weight shape'', TP=4). No 35B output exists; every claim about it is absent.\\
+T6, 2B/4B/9B & greedy + 8 samples on G; greedy on the pool-O subset (Laya track) & pool-O greedy done (6{,}000 tasks per tier); \textbf{no G generation exists for these tiers} (the G sample task file of the T6 launcher was empty). They therefore get a development readout only and no sealed number.\\
+T7 & Laya v3 training on pool O & not run (budget; the ledger is at \$\PThreeTotal{} of the \$50 cap). No Laya v3 number exists.\\
+Verifier V2, dev & A33 rule (a) and (b) on F Python & rule (a) not met for any tier; rule (b) not met (Table~\ref{tab:p3-dev}).\\
+Sealed read, G & the frozen policy against the five-condition goal & 27B only, once: goal not met (Table~\ref{tab:p3-sealed}).\\
+\bottomrule\end{tabular}\end{table}
+
+\subsection{Order of events, amendments, and what was changed after registration}\label{sec:p3-order}
+
+All times are commit times (2026-10-16 and 17).
+\begin{itemize}
+\item \textbf{A33} (\code{798bb24}) registered the goal, the stages, Verifier V2, the dev decision rules (a) and (b), the sealed read and the stop rules before any phase-3 generation. G was sealed at \code{6a59278} (218 Python tasks, BigCodeBench 184 and FullStackBench 34, screened against E, P, Rust\_fresh, A18 and F).
+\item \textbf{Note to A33} (\code{4c7d02c}), before any Verifier V2 number: the dev certificate has low power (about 81 calibration tasks per fold; the greedy baseline certified a mean coverage of about $0$ in a pipeline check). Rule (a) was not changed.
+\item \textbf{A33.1} (\code{cd91a8b}, 2026-10-16 20:05, before any large-tier output): slice v5litepod-4 instead of -8, 35B-A3B as AWQ, 4 samples per task for the large tiers, tests written by both large tiers.
+\item \textbf{A33.2} (\code{c03dcd9}, 2026-10-17 07:46) after the 27B finished and the first 35B attempt failed, before any score: one re-run of the 35B permitted if the user authorised the spend; no Verifier V2 number until the test pool was fixed.
+\item \textbf{A33.3} (\code{7ccf98c}, 09:56) after the re-run failed: the 35B dropped, the 27B is the primary tier and writes the tests (so for the 27B the writer is the tier itself, which A33.1 had tried to avoid), T7 not run.
+\item \textbf{A33.4} (\code{a4202ab}, 10:22:51) the dev readout, the freeze of the sealed policy (named below) and the added code, committed \emph{before} G was scored; the sealed outcome was committed afterwards (\code{ce47e16}, 10:30:11).
+\end{itemize}
+\textbf{Changes to the registered tooling after A33.} The rule-(b) analysis, an out-of-fold score dump and the \code{sealed} command were added to \code{scripts/phase3/verifier_v2.py} in the A33.4 commit; the dev numbers were regenerated afterwards and are identical to the first run. Rule (b) was registered in A33 but unimplemented until then. \textbf{Sealed-read mechanics.} The first sealed run was started without detaching and was terminated after it had written one scored row; nobody read that row, and the relaunch resumed from the output file (the scorer skips rows already present). G was read once.
+
+\subsection{Development readout: Verifier V2 is not a lever}\label{sec:p3-dev}
+
+\input{tables_phase3.tex}
+
+\textbf{Result (Table~\ref{tab:p3-dev}).} On F Python, greedy accuracy rises with size (2B 0.189, 4B 0.329, 9B 0.396, 27B 0.550) and so does the share of tasks with at least one correct candidate. Certified coverage is $0$ for V2 and for the greedy baseline B0 on the 2B, 4B and 27B and is $0.070$ against $0.052$ on the 9B; the certificate rarely certifies anything at about 81 calibration tasks per fold, as the note to A33 predicted, so rule (a) is not met for any tier. The 2B is the one place where the paired interval is above zero ($+21.6$ correct tasks at coverage 0.40, interval $[8, 34]$), but the certified-coverage gain is $0$, below the $0.10$ the rule requires. Rule (b) is not met: the 27B certifies less than the 9B on dev ($-0.070$) and the paired difference at coverage 0.40 spans zero. \textbf{Caveats of this readout.} The tests are written by the 27B for every tier: for the 2B, 4B and 9B the writer is decoupled from the generator, for the 27B it is the generator itself, so the 27B's coupling is a threat to its readout that was not measured here. The 27B pool has 5 candidates and the others 9, so oracle and selection comparisons across tiers are not at equal candidate counts (the planned equal-count reporting was not run). One seed, Python only.
+
+\subsection{The sealed read on G (27B only)}\label{sec:p3-sealed}
+
+\textbf{Design.} Because V2 was not a lever for any tier, the pre-named primary policy was the simpler B0 (D3 \code{lr|core} on greedy), with V2 reported beside it (A33.4). Both were fitted on all of F, with the isotonic calibrator fitted on F's out-of-fold scores, and certified on G by the fixed-sequence test of the goal. Only the 27B has G generations. \textbf{Result (Table~\ref{tab:p3-sealed}).} Neither policy certifies: the first threshold, 0.95, already fails (V2 accepts no task at that calibrated probability; B0 accepts four, which cannot reach a binomial $p\le0.10$), and a fixed-sequence test stops at the first failure, so certified coverage is $0$ and the goal is \textbf{not met}. The descriptive rank curve is not nothing: the top 40\% of G tasks by V2 score (88 tasks) have precision 0.875 [0.790, 0.929] and by B0 0.886 [0.803, 0.937] against 0.638 [0.572, 0.699] for accepting everything, and the gate alone accepts 78\% of tasks at 0.813 (139 of 171). But precision of about 0.88 at coverage 0.4 has a Wilson lower bound of about 0.79 to 0.80 on 88 tasks, short of a certificate at risk $0.10$ with $\delta=0.10$ from the first threshold, and V2 and B0 are indistinguishable. \textbf{Condition (3) of the goal} (picking and accepting evidence from different generations or tools) is not met by V2 for the 27B by construction (A33.3) and is not claimed.
+
+\subsection{Caveats that apply to all of phase 3}\label{sec:p3-caveats}
+
+\begin{itemize}
+\item \textbf{One sealed tier.} The 2B, 4B and 9B have no sealed G number and the goal is not evaluated for them; nothing here supports a statement about them on G.
+\item \textbf{Low-power certificate.} With 218 tasks the strict certificate needs near-zero errors among few accepted tasks; the null does not show that no useful accepted subset exists, only that none is certified at the declared thresholds. The rank-curve numbers are descriptive and were not selected against.
+\item \textbf{The 35B-A3B was never measured.} A community AWQ checkpoint does not speak to the bf16 model in any case; both attempts failed before the first token, and the three conclusions above hold without it.
+\item \textbf{Tests written by the generator} (27B) and possible overlap of G with pre-training data; synthesized tests can be wrong in both directions and their contradiction rate with the hidden check was not measured here (planned in A33, not run).
+\item \textbf{Duplicate spend.} Two identical T5 VMs ran in parallel from 20:05 on 2026-10-16 (\code{p3-t5-200529} in us-west4-a and \code{p3-t5-200546} in us-west1-c; Table~\ref{tab:spend3130}); the cause was not established. The second one produced no additional result (identical job, same failure of the 35B). The driver's final SSH session also hung after the remote script finished, which left the VM idle for about 1.5 hours before the results were copied by hand; SSH keepalives were added afterwards (\code{805bfc5}). Both are spend inefficiencies, not result changes.
+\item \textbf{Spend.} The ledger has \PThreeLines{} lines and \$\PThreeTotal{} (\PThreeShare\% of the \$50 cap) as read for this revision; the \PThreeNewLines{} lines after the 3.12.0 reading total \$\PThreeNewTotal{}. These are list-price estimates, not the bill. All scoring, test execution, the dev readout and the sealed read ran locally.
+\end{itemize}
+
 \section{Hypothesis status}\label{sec:verdicts}
 
 Table~\ref{tab:verdict} restates \code{docs/RESULTS_VERDICT.md}. The probability column is the
