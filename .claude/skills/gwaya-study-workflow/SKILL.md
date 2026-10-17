@@ -5,7 +5,7 @@ description: Use when continuing GWAYA / GwenLaya research work in this repo - r
 
 # GWAYA / GwenLaya study workflow
 
-Start with `scripts/restart.sh` (read-only: branch, PRs, spend ledger, billing resources, prerequisites, next commands).
+Start with `scripts/restart.sh` (read-only: branch, PRs, spend ledger, billing resources, prerequisites, next commands). Then read `LL.md` (lessons learnt, 24 items). Task-specific checklists: `gwaya-tpu-stage-launch` (any TPU stage), `gwaya-sealed-read` (registration, freeze, sealed sets), `gwaya-release-and-audit` (paper section, audit, PR/tag/release/Zenodo).
 
 ## Process that worked every release
 1. **Plan addendum committed BEFORE running** (`docs/ANALYSIS_PLAN_E_TPU.md`, new `Addendum A<n>`): hypothesis, held-fixed
