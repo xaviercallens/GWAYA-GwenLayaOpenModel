@@ -576,3 +576,20 @@ further spend. Consequences: the primary tier is the 27B (bf16, TP=4); the synth
 27B's tests alone (2 draws x 12 asserts), so for the 27B the writer is the tier itself (coupled; the Verification-Trap
 decoupling of A33.1 item 5 does not hold for it and is reported as such); the 2B/4B/9B writers remain decoupled. T7 (Laya v3
 training) is not run (budget). Ledger after this run 41.75 USD of the 50 USD cap. Everything else in A33 is unchanged.
+
+### Dev readout (2026-10-17, F python, 407 tasks; written before G is scored or read) and A33.4 sealed-read freeze
+Dev, 5-fold grouped CV, certificate inside each fold (`results/gwenlaya_v4/phase3/v2_dev.json`, tests written by the 27B
+for all tiers; 2B/4B/9B pools greedy + 8 samples, 27B greedy + 4 samples; the 35B was dropped, A33.3):
+greedy / any-correct: 2B 0.189/0.339, 4B 0.329/0.541, 9B 0.396/0.617, 27B 0.550/0.715. Mean certified coverage V2 vs B0:
+2B 0.000/0.000, 4B 0.000/0.000, 9B 0.070/0.052, 27B 0.000/0.000. Rule (a): not met for any tier (2B: paired
+CI of correct@0.40 above zero, +21.6 [8,34], but the coverage gain is 0, below 0.10; 9B: gain 0.018, CI [0,17]; 4B and 27B:
+CI spans zero). Rule (b): 27B vs 9B, coverage gain -0.070, paired correct@0.40 +6.2 [-4,16]: not met. These are nulls and
+are reported as nulls. The certificate has little power at about 81 calibration tasks, as the note to A33 predicted.
+A33.4 (freeze before G is generated-on or scored): `verifier_v2.py` gains (i) the registered rule (b) analysis and an
+out-of-fold dump (additions; no registered number changes) and (ii) `sealed`. Sealed read, once, 27B ONLY: the 2B, 4B
+and 9B have no G generations (T6 produced greedy on pool O only; no spend remains), so they get no sealed number and the
+goal is reported as not evaluated for them. Frozen policies (none is a dev lever, so the pre-named primary is the simpler
+B0 = D3 lr|core on greedy; V2 is reported beside it): each fitted on all of F, isotonic calibrator on F out-of-fold
+scores, fixed-sequence LTT on G over {0.95,0.925,0.90,0.875,0.85} at risk 0.10, delta 0.10. Also reported: gate-only,
+accept-all, rank-curve precision with Wilson at coverage 0.3/0.4/0.5. Goal condition (3) fails by construction for
+V2 on the 27B (it accepts with its own tests, A33.3) and is reported as such. No revision after the read.
