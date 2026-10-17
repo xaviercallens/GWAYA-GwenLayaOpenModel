@@ -7,7 +7,7 @@ and, if it spends, the user's authorisation. Nothing here is a result.
 ## 1. What phase 3 established, in one paragraph
 
 On fresh Python the best policies we have accept the top 40% of tasks at precision about 0.88 (27B, sealed G, 88 tasks, Wilson
-[0.79, 0.94]) against 0.64 for accepting everything; the visible gate alone accepts 78% at 0.81. Verifier V2 (model-written tests
+[0.79, 0.93] for V2, [0.80, 0.94] for B0) against 0.64 for accepting everything; the visible gate alone accepts 78% at 0.81. Verifier V2 (model-written tests
 executed on every candidate) did not beat the greedy D3 baseline for any tier, a 27B did not beat the 9B on the certified readout,
 and nothing certifies at risk 0.10, delta 0.10. The phase-2 sealed E result (9B, precision 0.886 at coverage 0.73, previously seen
 set) remains the strongest positive finding and is not strengthened or contradicted by phase 3.
@@ -67,9 +67,8 @@ paired test, tier by tier, with the goal stated in Section 2's terms. G is spent
 - Find why two identical T5 VMs ran in parallel on 2026-10-16 (about 5 USD wasted): add a lock file or a check for a live driver of
   the same stage name in `scripts/tpu/launch_*.sh` before it creates a slice.
 - `drive.sh` now has SSH keepalives (`805bfc5`). Also poll the remote status file for the end marker instead of waiting on the SSH
-  session, and run the ledger booking from the real creation time, not the timestamp in the VM name (the 200546 line booked the
-  full 150 minutes).
-- Detach every long local job with `setsid nohup` (a plain background job died after one row on 2026-10-17).
+  session, and run the ledger booking from the real creation time, not the timestamp in the VM name (both T5 lines book about 153 minutes, 9,204 s and 9,193 s).
+- Detach every long local job with `setsid nohup` (on 2026-10-17 a plain background job was reported finished while still running; a second run was started and both wrote the same output file, so G was scored twice, see the paper and `docs/CLAIM_AUDIT_3130.md`). Scorers should also skip rows already present at write time or take a lock.
 - Independent audit of the phase-3 numbers (as for 3.10.0 and 3.12.0): recompute V2 dev, the sealed table and the spend from the raw
   files, then tag 3.13.0. The phase-3 section is a draft until then. Also update the paper abstract, hypothesis status, README
   status paragraph, and fix the stale `pyproject` version (3.4.0).
