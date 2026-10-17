@@ -566,3 +566,13 @@ selection number is computed for any tier until the 35B run has either completed
 pool (A33.1 item 5, union of both large tiers) is fixed before the first V2 readout; if the 35B is dropped the pool is the
 27B's tests alone and every tier is reported as such. (3) Infrastructure: the driver's final SSH session hung after the
 remote script finished; results were copied by hand and the T5 VM deleted by the user; the driver gets a timeout.
+
+### Amendment A33.3 (2026-10-17, before any large-tier score or Verifier V2 number)
+The single re-run permitted by A33.2 (user-authorised, v5litepod-4 spot, us-south1-a, 25 minutes of VM time, ledger 1.01 USD)
+did not reach engine-ready: with dtype bfloat16 the engine now fails in `auto_awq.create_weights` with "The input size is
+not aligned with the quantized weight shape. This can be caused by too large tensor parallel size" at TP=4 (all six steps).
+Per the A33 stop rule Qwen3.5-35B-A3B (4-bit AWQ) is DROPPED for this phase; no further retry, and the user ordered no
+further spend. Consequences: the primary tier is the 27B (bf16, TP=4); the synthesized-test pool for every tier is the
+27B's tests alone (2 draws x 12 asserts), so for the 27B the writer is the tier itself (coupled; the Verification-Trap
+decoupling of A33.1 item 5 does not hold for it and is reported as such); the 2B/4B/9B writers remain decoupled. T7 (Laya v3
+training) is not run (budget). Ledger after this run 41.75 USD of the 50 USD cap. Everything else in A33 is unchanged.
