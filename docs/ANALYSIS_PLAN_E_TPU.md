@@ -471,3 +471,125 @@ Source: `results/gwenlaya_v4/laya/phase2_A32_selector_over_pool_F_python.json`, 
 **9B (primary), the closest case.** B1 meets the A30 criterion at its CV threshold (0.884, LB 0.817) but fails (b): the coverage gain over B0 is +0.015, not >= 0.05; and fails (c): paired difference in correct accepted tasks at coverage 0.30 is +5.7 with CI [-0.02, +12], which touches zero. At coverage 0.5, B1 reaches 0.804 against 0.740 for the greedy-only model on the same tasks and folds; this is a real-looking but unconfirmed gain (+6 points, no CI computed for that cut, not a registered quantity). 4B: B1 misses the criterion at its CV threshold (0.835, LB 0.754), the gain in coverage is +0.09 but precision falls. 2B: far below 0.84 either way. The boosted-tree variant does not change any verdict.
 **Reading.** A learned selector over the pool helps most where the operating point is loose (coverage 0.5: +6 to +10 points over greedy-only on 9B and 4B, +12 on 2B), and not at the strict A30 point, where the greedy-only scorer is already near what the pool allows with these features. With 407 tasks the paired CI is wide; this is a direction, not a result. B0 here is a greedy-only model on F python alone and is not the D3 number (F+E').
 **Not tested.** Execution-based behavioural agreement; features from a second model; more samples or lower temperature; a bigger training set for the selector (F only has 407 tasks, 5-fold CV).
+
+## Addendum A33: phase 3 registration - certified goal, larger tiers, Verifier V2, Laya data scale (written before any phase-3 generation; no phase-3 number exists)
+Dated 2026-10-16. Implements `docs/IMPROVEMENT_PLAN_PHASE3.md` (v3, commit 562b34d) under a user grant of 30 USD for this
+run, bounded by the project's hard cap: ledger 26.33 USD, ceiling 47.00 USD (50 minus the 3 USD reserve), so at most
+20.67 USD of new spend. Drivers run with GWAYA_CAP_USD=47. Exploratory development work plus one sealed read; nothing
+here is a registered hypothesis test of the original study.
+**Goal (fixed now, replaces the A30 working goal for phase 3).** For a tier on fresh Python, a frozen selective policy is
+"at 0.90" when (1) on the sealed set G a fixed-sequence Learn-then-Test over at most five thresholds, declared and
+committed before G is scored, certifies selective risk <= 0.10 at delta = 0.10 (exact binomial, declared order, stop at
+the first failure); (2) the certified coverage on G is >= 0.40; (3) the evidence that picks a candidate and the
+evidence that accepts it come from different generations or tools, and calibration rows are produced under the
+deployed selection rule; (4) point precision with Wilson 95% and the full rank curve are reported beside it; (5) paired
+baselines: gate-only, frozen D3 (A31), accept-all. Primary tier: the largest tier that runs (35B-A3B or 27B), with 9B
+as the reference tier; every tier separately, no pooling.
+**Data.** Dev: F python (407). Sealed: G (`scripts/data/build_eval_set_G.py`): FullStackBench and BigCodeBench tasks
+not in F, screened against E, P, Rust_fresh, A18 and F python with the F builder's decontaminator and sanity checks
+(LeetCodeDataset is not used: F took its whole test split). G is sealed from the commit of its task file; it is
+generated on and scored once, by the final stage, with the frozen policy. Laya track: pool O (OpenCodeInstruct,
+re-verified, decontaminated, A23), deterministic 6,000-task subset of train+calib.
+**Generation stages (TPU, launched in this order; each dry-run first; spot with a US zone ladder, on-demand fallback
+reported in the ledger).** T5 (v5litepod-8, bf16, TP=8, <= 150 min): Qwen3.5-35B-A3B then Qwen3.5-27B, greedy + 8
+samples (T 0.8) on F python + G; the 35B-A3B also writes synthesized tests (kind `tests`, 2 draws x 12 asserts, T 0.7,
+prompt only, non-thinking). Deviations from the plan, fixed now: no int8 W8A8 checkpoint exists for either model
+(official variants are FP8, which tpu-inference lists for v7 only, and GPTQ-Int4), so both run in bf16 on 8 chips;
+tests are written by the 35B-A3B for every tier, which decouples the test writer from the 2B/4B/9B generators
+(Verification Trap) but not from the 35B-A3B itself (reported); thinking is off for test writing (cost). If the
+35B-A3B fails to load, the 27B writes the tests. T6 (v5litepod-4, bf16, TP=4): 2B/4B/9B greedy + 8 samples on G, and
+greedy on the pool-O subset for the Laya track. T7 (v5e-1): Laya v3 training exactly as A23.
+**Verifier V2 (scored locally, hidden tests never select or train).** For each task: parse the asserts; inputs = the
+call expressions; run every candidate of a tier (greedy + 8 samples) on those inputs in the sandbox; features =
+fraction of model-written asserts passed, size of the candidate's behavioural cluster (identical outputs on all
+inputs), number of clusters, agreement of the cluster's outputs with the model-written expected values, gate verdict,
+mean log-prob, truncation. Selection = best candidate by a D4 logistic scorer over these features (grouped CV on F by
+cluster); acceptance threshold family = D4 calibrated probability at {0.95, 0.925, 0.90, 0.875, 0.85} tested in that
+order on calibration rows produced by the same selection rule.
+**Decision rules (fixed now).** (a) Verifier V2 is a lever for a tier ONLY if, on dev F under 5-fold grouped CV with the
+same certificate procedure inside each fold, its mean certified coverage exceeds that of D3 on greedy (same tier, same
+tasks) by >= 0.10, and the paired cluster-bootstrap CI of correct accepted tasks at coverage 0.40 is above zero.
+(b) A larger tier is a lever ONLY if its certified coverage under Verifier V2 on dev F exceeds the 9B's by >= 0.10 with
+the same paired CI condition. (c) The sealed read on G is reported for the frozen best policy per tier against the
+five-condition goal above; met or not met, no revision afterwards. (d) Laya v3: the A23 rule, unchanged. Each rule is
+reported as met or not met; nulls are reported as nulls.
+**Stop rules.** A stage that cannot get capacity in its spot ladder within 30 minutes falls back to on-demand only if the
+ledger plus the on-demand worst case stays under 47 USD; otherwise it is skipped and reported. A model that does not
+reach "engine ready" within its step timeout is dropped for this phase, no retry on a larger slice.
+**Not claimed.** Python only; single seed; G may overlap the generators' pre-training data; synthesized tests can be
+wrong in both directions (their contradiction rate with the hidden check is measured on F only and reported);
+bf16 results do not speak to quantized serving.
+
+### Note to A33 (2026-10-16, before any Verifier V2 number; written after a pipeline check with the V2 features empty)
+A pipeline check of `scripts/phase3/verifier_v2.py` on the existing F pools, with no synthesized-test outputs (so the
+V2-specific features are constant), showed that the registered dev readout has low power: with 5 folds each
+calibration fold holds about 81 tasks, and the fixed-sequence certificate at risk 0.10 / delta 0.10 mostly abstains;
+the greedy baseline B0 certifies a mean coverage of 0.000 (2B, 4B) and 0.052 (9B). This is the small-calibration floor
+reported by Certified by Abstention (arXiv 2610.09541), not a code fault. Rule (a) is NOT changed. Added, as purely
+descriptive output (no decision rests on it): out-of-fold rank-curve precision with Wilson 95% at coverage 0.3, 0.4,
+0.5 for V2 and B0. The sealed read on G fits on all of F and certifies on G's 218 tasks, which has more power but is
+still strict (at coverage 0.40, about 87 accepted with at most 4 to 5 errors).
+
+### Amendment A33.1 (2026-10-16, before any phase-3 large-tier generation; no large-tier output exists)
+Cause: v5litepod-8 creation failed in 23 spot and 10 on-demand attempts across all US zones; Cloud Audit Logs show
+`Quota limit 'TPUV5sLitepodServingPerProjectPerZoneForTPUAPI' has been exceeded. Limit: 4` (4 v5e chips per zone per
+project). The user rules out quota requests, so 8-chip slices are unavailable. Changes to T5 only:
+(1) Slice: v5litepod-4 (64 GB HBM), spot, zones not already holding a T6 slice.
+(2) Qwen3.5-35B-A3B runs as the community 4-bit AWQ checkpoint `QuantTrio/Qwen3.5-35B-A3B-AWQ` (Apache-2.0;
+quant_method awq, 4 bits, group 128; attention, linear-attention, shared expert, router and layer 0 kept in higher
+precision), because bf16 (~70 GB) does not fit 4 chips. There is no bf16 reference run, so the A25 accuracy rule for a
+quantized arm cannot be applied: every 35B-A3B number is labelled "4-bit AWQ (community checkpoint)" and makes no
+claim about the bf16 model.
+(3) Qwen3.5-27B runs in bf16 with TP=4 and max_num_seqs 16 then 8 (~54 GB of weights in 64 GB HBM); if it does not
+start it is dropped (A33 stop rule).
+(4) Samples per task for both large tiers: 4 instead of 8 (time on 4 chips); the 2B/4B/9B keep 8 on F (existing) and
+8 on G (T6 later). Comparisons of selection across tiers are therefore made at equal candidate counts by also
+reporting the 2B/4B/9B with greedy + their first 4 samples.
+(5) Synthesized tests: both large tiers write tests (2 draws x 12 asserts each); the test pool per task is the union
+of their asserts. For the 2B/4B/9B the writers are other models (decoupled); for each large tier, half of its pool's
+tests are its own (coupled) and half come from the other large tier; reported.
+Everything else in A33 (goal, decision rules, sealed read, stop rules, budget ceiling) is unchanged.
+
+### Amendment A33.2 (2026-10-17, before any large-tier score or Verifier V2 number; raw generations exist but none has been scored)
+What happened: T5 on v5litepod-4 (spot, us-west4-a) produced the Qwen3.5-27B bf16 TP=4 outputs for all three kinds
+(greedy 625 tasks = F python 407 + G 218; 4 samples = 2,500 rows; synthesized tests 2 draws = 1,250 rows) at
+max_num_seqs 16, about 98 minutes of generation. All six Qwen3.5-35B-A3B-AWQ steps (answer, sample, tests; seqs 16 and 8)
+failed in under 45 s with `torch.float16 is not supported for quantization method auto_awq. Supported dtypes:
+[torch.bfloat16]`: the launcher passed no dtype and vLLM took float16 from the checkpoint config. This is a launcher
+defect, not a failure to load the model, so the A33 stop rule ("does not reach engine ready") is not triggered by it.
+Fix: `gen_batch.py` forces dtype bfloat16 for AWQ checkpoints (commit 4f94b88). The 35B never reached engine-ready, so
+no 35B output exists.
+Consequences, fixed now: (1) a single re-run of the 35B-A3B-AWQ only (same slice class, same kinds, same settings as
+A33.1) is permitted if the user authorizes the spend and the ledger plus worst case stays under 47 USD; if that run also
+fails to reach engine-ready it is dropped under the A33 stop rule, with no further retry. (2) No Verifier V2 or
+selection number is computed for any tier until the 35B run has either completed or been dropped, so the synthesized-test
+pool (A33.1 item 5, union of both large tiers) is fixed before the first V2 readout; if the 35B is dropped the pool is the
+27B's tests alone and every tier is reported as such. (3) Infrastructure: the driver's final SSH session hung after the
+remote script finished; results were copied by hand and the T5 VM deleted by the user; the driver gets a timeout.
+
+### Amendment A33.3 (2026-10-17, before any large-tier score or Verifier V2 number)
+The single re-run permitted by A33.2 (user-authorised, v5litepod-4 spot, us-south1-a, 25 minutes of VM time, ledger 1.01 USD)
+did not reach engine-ready: with dtype bfloat16 the engine now fails in `auto_awq.create_weights` with "The input size is
+not aligned with the quantized weight shape. This can be caused by too large tensor parallel size" at TP=4 (all six steps).
+Per the A33 stop rule Qwen3.5-35B-A3B (4-bit AWQ) is DROPPED for this phase; no further retry, and the user ordered no
+further spend. Consequences: the primary tier is the 27B (bf16, TP=4); the synthesized-test pool for every tier is the
+27B's tests alone (2 draws x 12 asserts), so for the 27B the writer is the tier itself (coupled; the Verification-Trap
+decoupling of A33.1 item 5 does not hold for it and is reported as such); the 2B/4B/9B writers remain decoupled. T7 (Laya v3
+training) is not run (budget). Ledger after this run 41.75 USD of the 50 USD cap. Everything else in A33 is unchanged.
+
+### Dev readout (2026-10-17, F python, 407 tasks; written before G is scored or read) and A33.4 sealed-read freeze
+Dev, 5-fold grouped CV, certificate inside each fold (`results/gwenlaya_v4/phase3/v2_dev.json`, tests written by the 27B
+for all tiers; 2B/4B/9B pools greedy + 8 samples, 27B greedy + 4 samples; the 35B was dropped, A33.3):
+greedy / any-correct: 2B 0.189/0.339, 4B 0.329/0.541, 9B 0.396/0.617, 27B 0.550/0.715. Mean certified coverage V2 vs B0:
+2B 0.000/0.000, 4B 0.000/0.000, 9B 0.070/0.052, 27B 0.000/0.000. Rule (a): not met for any tier (2B: paired
+CI of correct@0.40 above zero, +21.6 [8,34], but the coverage gain is 0, below 0.10; 9B: gain 0.018, CI [0,17]; 4B and 27B:
+CI spans zero). Rule (b): 27B vs 9B, coverage gain -0.070, paired correct@0.40 +6.2 [-4,16]: not met. These are nulls and
+are reported as nulls. The certificate has little power at about 81 calibration tasks, as the note to A33 predicted.
+A33.4 (freeze before G is generated-on or scored): `verifier_v2.py` gains (i) the registered rule (b) analysis and an
+out-of-fold dump (additions; no registered number changes) and (ii) `sealed`. Sealed read, once, 27B ONLY: the 2B, 4B
+and 9B have no G generations (T6 produced greedy on pool O only; no spend remains), so they get no sealed number and the
+goal is reported as not evaluated for them. Frozen policies (none is a dev lever, so the pre-named primary is the simpler
+B0 = D3 lr|core on greedy; V2 is reported beside it): each fitted on all of F, isotonic calibrator on F out-of-fold
+scores, fixed-sequence LTT on G over {0.95,0.925,0.90,0.875,0.85} at risk 0.10, delta 0.10. Also reported: gate-only,
+accept-all, rank-curve precision with Wilson at coverage 0.3/0.4/0.5. Goal condition (3) fails by construction for
+V2 on the 27B (it accepts with its own tests, A33.3) and is reported as such. No revision after the read.

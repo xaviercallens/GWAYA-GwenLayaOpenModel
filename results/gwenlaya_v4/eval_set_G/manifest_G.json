@@ -1,0 +1,142 @@
+{
+ "addendum": "A33",
+ "seed": 20261016,
+ "script": "scripts/data/build_eval_set_G.py",
+ "purpose": "sealed set G for phase 3; read once by the final certificate stage",
+ "screened_against": {
+  "E": {
+   "path": "/mnt/data/home/xavkal/gwaya-data/night/results/tasks_E_primary.d25.jsonl",
+   "n_records": 1536,
+   "sha256": "2143110c78a3a9f57599dce77021cf4571fc57cf2584017f16ebdd08d5acba66"
+  },
+  "P_all": {
+   "path": "/mnt/data/home/xavkal/gwaya-data/laya_data/tasks_P_all.jsonl",
+   "n_records": 2656,
+   "sha256": "b379d1193d1bcce68f60efe999f3bb4af13634f7ab0871846dd37bacfc00469e"
+  },
+  "Rust_fresh": {
+   "path": "/mnt/data/home/xavkal/gwaya-data/laya_data/tasks_Rust_fresh.jsonl",
+   "n_records": 69,
+   "sha256": "4d6d03e5a03c409b64c129b37689dbb2091cfd8d9929b47bb9c300e1aa3f3bf3"
+  },
+  "A18_minif2f_test": {
+   "path": "/home/xavkal/xdev/GWAYA-GwenLayaOpenModel/results/gwenlaya_v4/lean_a18/tasks_lean.jsonl",
+   "n_records": 223,
+   "sha256": "be0603bcc6b274cbb6cb9f39663f1af9fef0a782f2922a2739953e0bc88dd6a7"
+  },
+  "F_python": {
+   "path": "/home/xavkal/xdev/GWAYA-GwenLayaOpenModel/results/gwenlaya_v4/eval_sets_F/tasks_F_python.jsonl",
+   "n_records": 407,
+   "sha256": "49546c3bd612d5b4cf2eb1b72fc73b7822bf67f831efd954a5d3060bc417e68e"
+  }
+ },
+ "laya_rows_screened": {
+  "laya:laya_calib": 283,
+  "laya:laya_eprime": 828,
+  "laya:laya_rfresh": 69,
+  "laya:laya_train": 3081
+ },
+ "source_revisions": {
+  "newfacade/LeetCodeDataset": "215604aeed660029df7de2fea5a4d7b6ed476a08",
+  "ByteDance/FullStackBench": "11e2e64dbcd66d3680e5025cb9ad8b3c2275080f",
+  "bigcode/bigcodebench": "b74c0d0bf70d2c0bc459be537895cca163007f1a"
+ },
+ "source_files_sha256": {
+  "LeetCodeDataset-test.jsonl": "aec951945feb555b4c72783519452a7a0437ca8c6e5624a83d0ae888718fa4ed",
+  "LeetCodeDataset-train.jsonl": "ef7d64d34b092859607c1010bdd23540860a8cfff2ed7aeb0fe82e0ad524919b",
+  "FullStackBench/en/test.parquet": "f0bd3d34747fb25fc138d25d9ab9625770f3609bd7aac437311106bcb2c43a77",
+  "bigcodebench/v0.1.4.parquet": "d9a4965821c9507ebdfb551c288656b2d5fe553234f5183044333ca8a4018267"
+ },
+ "caps": {
+  "FullStackBench": 150,
+  "BigCodeBench": 250,
+  "LeetCodeDataset": "not used (F took the whole test split)"
+ },
+ "files": {
+  "tasks_G_python.jsonl": {
+   "rows": 218,
+   "sha256": "62852ba0ffb147a512f408e002b4254a6bead87944e37bbb70c86ba94b27b12e"
+  }
+ },
+ "counts": {
+  "per_source": {
+   "bigcode/bigcodebench:v0.1.4": 184,
+   "ByteDance/FullStackBench:en": 34
+  },
+  "gate_visible_in_prompt": {
+   "False": 129,
+   "True": 66,
+   "None": 23
+  }
+ },
+ "report": {
+  "sources": {
+   "LeetCodeDataset": {
+    "n_candidates_after_conversion": 0,
+    "conversion_drops": {},
+    "sanity_drops": {},
+    "sanity_dropped": "0 items",
+    "n_after_sanity": 0,
+    "decontam_drops": 0,
+    "n_after_decontam": 0,
+    "n_final": 0
+   },
+   "FullStackBench": {
+    "n_candidates_after_conversion": 359,
+    "conversion_drops": {
+     "needs_asset_files": 76,
+     "asserts_only_inside_functions": 238,
+     "test_needs_third_party": 133,
+     "no_insert_marker": 2,
+     "test_uses_unittest_or_pytest": 3,
+     "no_top_level_assert": 32,
+     "test_unparsable": 1
+    },
+    "sanity_drops": {
+     "no_reference_solution": 9,
+     "gate_equals_hidden_suite": 126,
+     "reference_fails_hidden": 49,
+     "hidden_test_shown_in_prompt": 28,
+     "stub_passes_gate": 1
+    },
+    "sanity_dropped": "213 items",
+    "n_after_sanity": 146,
+    "decontam_drops": 0,
+    "n_after_decontam": 146,
+    "n_final": 146
+   },
+   "BigCodeBench": {
+    "n_candidates_after_conversion": 364,
+    "conversion_drops": {
+     "needs_third_party": 776
+    },
+    "sanity_drops": {
+     "reference_fails_hidden": 80,
+     "stub_passes_gate": 7,
+     "reference_too_slow_for_a_stable_timeout": 2
+    },
+    "sanity_dropped": "89 items",
+    "n_after_sanity": 275,
+    "decontam_drops": 0,
+    "n_after_decontam": 275,
+    "n_final": 275
+   }
+  },
+  "ngram_filter": {
+   "ngram_hits_total": 17,
+   "ngram_hits_ignored_uninformative": 17
+  },
+  "F_screen_drops": 203,
+  "n_decontam_dropped": 0
+ },
+ "F_screen": {
+  "methods_counted": [
+   "exact",
+   "jaccard",
+   "py_ast",
+   "id"
+  ],
+  "dropped": 203,
+  "note": "13-gram and math-normalisation hits against F prompts ignored (shared docstring templates)"
+ }
+}

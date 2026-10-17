@@ -1,0 +1,38 @@
+{
+ "source": "nvidia/OpenCodeInstruct (CC-BY-4.0), synthetic LLM-written tests re-verified here",
+ "scanned": 10996,
+ "candidates_pre_sanity": 8400,
+ "kept": 8206,
+ "n": {
+  "train": 6597,
+  "calib": 826,
+  "dev": 783
+ },
+ "drops": {
+  "prompt_too_long_or_empty": 779,
+  "too_few_passing_tests": 1814,
+  "duplicate_prompt_in_pool": 2,
+  "reference_fails_gate_checks": 2,
+  "reference_fails_hidden_checks": 192
+ },
+ "holdout_files": [
+  "/mnt/data/home/xavkal/gwaya-data/night/results/tasks_E_primary.d25.jsonl",
+  "/mnt/data/home/xavkal/gwaya-data/laya_data/tasks_Eprime.jsonl",
+  "/mnt/data/home/xavkal/gwaya-data/laya_data/tasks_P_all.jsonl",
+  "/mnt/data/home/xavkal/gwaya-data/eval_sets_F_scored/tasks_F_pm.jsonl",
+  "/mnt/data/home/xavkal/gwaya-data/eval_sets_F_raw/try_py/tasks_F_python.jsonl",
+  "/mnt/data/home/xavkal/gwaya-data/eval_sets_F_raw/prev4/tasks_F_python.jsonl"
+ ],
+ "holdout_rows": 6747,
+ "params": {
+  "min_tests": 3,
+  "max_prompt_chars": 1200,
+  "shingle": 8,
+  "overlap": 0.5
+ },
+ "sha256": {
+  "train": "8755bfcfc003fcb6b4130fe02b503b93528392a20030f4026a8f5749375587a2",
+  "calib": "fedb96817353f049fee3429daa2b339b74c0c48d3213c03a3c3f7209a9920277",
+  "dev": "8bc7c1c0661e2e809816d710186e45d1c925764572794065c7294f66cb0dbb68"
+ }
+}

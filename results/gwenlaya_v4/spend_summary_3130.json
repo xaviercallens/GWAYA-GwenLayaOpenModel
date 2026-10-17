@@ -1,0 +1,46 @@
+{
+ "lines": 40,
+ "total": 41.7526,
+ "last_ts": "2026-10-17T09:55:59+02:00",
+ "new_lines": 5,
+ "new_total": 15.4212,
+ "new_items": [
+  {
+   "item": "tpu_p3-t6-9b-190428",
+   "usd": 3.0498,
+   "seconds": 5554,
+   "zone": "us-south1-a",
+   "accel": "v5litepod-4 spot"
+  },
+  {
+   "item": "tpu_p3-t6-small-190428",
+   "usd": 1.2579,
+   "seconds": 9163,
+   "zone": "us-east1-c",
+   "accel": "v5litepod-1 spot"
+  },
+  {
+   "item": "tpu_p3-t5-200529",
+   "usd": 5.054,
+   "seconds": 9204,
+   "zone": "us-west4-a",
+   "accel": "v5litepod-4 spot"
+  },
+  {
+   "item": "tpu_p3-t5-200546",
+   "usd": 5.048,
+   "seconds": 9193,
+   "zone": "us-west1-c",
+   "accel": "v5litepod-4 spot"
+  },
+  {
+   "item": "tpu_p3-t5-092304",
+   "usd": 1.0115,
+   "seconds": 1842,
+   "zone": "us-south1-a",
+   "accel": "v5litepod-4 spot"
+  }
+ ],
+ "total_3_12": 26.3314,
+ "lines_3_12": 35
+}

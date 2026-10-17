@@ -95,6 +95,12 @@ What has been measured (full 1,536-task E set, one greedy sample, one TPU v5e ch
 - All of this is on public benchmarks the models have probably seen. Every number is traceable to a committed file;
   an independent claim audit of the paper is in [`docs/CLAIM_AUDIT.md`](docs/CLAIM_AUDIT.md).
 
+**Phase 3 (17 October 2026, revision 3.13.0; independent audit: [`docs/CLAIM_AUDIT_3130.md`](docs/CLAIM_AUDIT_3130.md); paper section "Phase 3").** A test-executing selector (Verifier V2) and a 27B tier did not
+help: rules (a) and (b) are not met on the development table, and on the single sealed read of G (27B only, 218 fresh Python tasks) neither V2 nor the frozen D3 baseline
+certifies selective risk <= 0.10 at any threshold, so the certified goal is not met. Descriptively, the top 40% of G tasks by score have precision about 0.88 against 0.64 for accepting
+everything. The 35B-A3B (4-bit AWQ) could not be run on 4 chips and was dropped; the 2B, 4B and 9B have no G generations; Laya v3 was not trained. Next steps and the certificate arithmetic:
+[`docs/NEXT_STEPS_PHASE4.md`](docs/NEXT_STEPS_PHASE4.md).
+
 **Status of the paper, revision 3.12.0 (14 October 2026; 3.11.x were tooling-only).** Phase 2 (section "Phase 2" of the paper;
 independent audit: [`docs/CLAIM_AUDIT_3120.md`](docs/CLAIM_AUDIT_3120.md); the author's register it started from: [`docs/CLAIM_AUDIT_3120_author.md`](docs/CLAIM_AUDIT_3120_author.md)) is exploratory Python-only development work with
 rules written before the numbers; nothing registered changed. A prompt-only accept/refuse decision (U) does not reach the 0.80 working target; a

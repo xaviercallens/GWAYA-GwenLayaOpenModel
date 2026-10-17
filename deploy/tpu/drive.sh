@@ -97,5 +97,5 @@ FILES="$SCRIPT"; for f in $UPLOAD; do FILES="$FILES $f"; done
 gcloud compute tpus tpu-vm scp $FILES "$TPU:~/smoke/" --zone "$ZONE" --quiet
 RS="$(basename "$SCRIPT")"
 log "running $RS (hard cap ${MAX_MIN} min)"
-timeout "$(( MAX_MIN * 60 ))" gcloud compute tpus tpu-vm ssh "$TPU" --zone "$ZONE" --quiet --command "cd ~/smoke && chmod +x $RS && $REMOTE_ENV ./$RS" 2>&1 | tail -30
+timeout "$(( MAX_MIN * 60 ))" gcloud compute tpus tpu-vm ssh "$TPU" --zone "$ZONE" --quiet --ssh-flag="-o ServerAliveInterval=30" --ssh-flag="-o ServerAliveCountMax=4" --command "cd ~/smoke && chmod +x $RS && $REMOTE_ENV ./$RS" 2>&1 | tail -30
 log "remote script finished (rc=${PIPESTATUS[0]})"
