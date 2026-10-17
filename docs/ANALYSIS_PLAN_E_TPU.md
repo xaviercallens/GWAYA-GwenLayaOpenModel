@@ -549,3 +549,20 @@ reporting the 2B/4B/9B with greedy + their first 4 samples.
 of their asserts. For the 2B/4B/9B the writers are other models (decoupled); for each large tier, half of its pool's
 tests are its own (coupled) and half come from the other large tier; reported.
 Everything else in A33 (goal, decision rules, sealed read, stop rules, budget ceiling) is unchanged.
+
+### Amendment A33.2 (2026-10-17, before any large-tier score or Verifier V2 number; raw generations exist but none has been scored)
+What happened: T5 on v5litepod-4 (spot, us-west4-a) produced the Qwen3.5-27B bf16 TP=4 outputs for all three kinds
+(greedy 625 tasks = F python 407 + G 218; 4 samples = 2,500 rows; synthesized tests 2 draws = 1,250 rows) at
+max_num_seqs 16, about 98 minutes of generation. All six Qwen3.5-35B-A3B-AWQ steps (answer, sample, tests; seqs 16 and 8)
+failed in under 45 s with `torch.float16 is not supported for quantization method auto_awq. Supported dtypes:
+[torch.bfloat16]`: the launcher passed no dtype and vLLM took float16 from the checkpoint config. This is a launcher
+defect, not a failure to load the model, so the A33 stop rule ("does not reach engine ready") is not triggered by it.
+Fix: `gen_batch.py` forces dtype bfloat16 for AWQ checkpoints (commit 4f94b88). The 35B never reached engine-ready, so
+no 35B output exists.
+Consequences, fixed now: (1) a single re-run of the 35B-A3B-AWQ only (same slice class, same kinds, same settings as
+A33.1) is permitted if the user authorizes the spend and the ledger plus worst case stays under 47 USD; if that run also
+fails to reach engine-ready it is dropped under the A33 stop rule, with no further retry. (2) No Verifier V2 or
+selection number is computed for any tier until the 35B run has either completed or been dropped, so the synthesized-test
+pool (A33.1 item 5, union of both large tiers) is fixed before the first V2 readout; if the 35B is dropped the pool is the
+27B's tests alone and every tier is reported as such. (3) Infrastructure: the driver's final SSH session hung after the
+remote script finished; results were copied by hand and the T5 VM deleted by the user; the driver gets a timeout.
