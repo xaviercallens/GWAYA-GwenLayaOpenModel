@@ -94,3 +94,27 @@ def test_estimate_covers_t4_measurements():
     for (k, ctx), mib in measured.items():
         est = estimate_vram_mib(LITE_TIERS[k], ctx)
         assert mib <= est <= mib + 250, (k, ctx, est, mib)
+
+
+def test_score_is_whole_word():
+    from gwaya.hivemind_expert import keyword_hit
+    assert score("define a classification of subclasses and an important matter") == 1.0
+    assert score("python def import pytest") == 1.0 + 2.5 * 4
+    assert keyword_hit(".py", "open main.py now") and not keyword_hit("def ", "define it")
+
+
+def test_route_eval_harness_metrics():
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts" / "routing"))
+    from route_eval import compare, evaluate, load_rows, predictions
+    rows = load_rows(Path(__file__).resolve().parents[1] / "scripts" / "routing" / "routing_fixture_synthetic.jsonl")
+    assert len(rows) == 27 and sum(r["domain"] == "none" for r in rows) == 10
+    always_py = lambda p: (["Python_Code_GWAYA"], {"Python_Code_GWAYA": 1.0})  # noqa: E731
+    abstain = lambda p: ([], {})  # noqa: E731
+    ev = evaluate(predictions(always_py, rows), rows)
+    assert ev["top1_in_domain"][:2] == [5, 17] and ev["abstain_off"][:2] == [0, 10]
+    ev = evaluate(predictions(abstain, rows), rows)
+    assert ev["abstain_off"][:2] == [10, 10] and ev["abstain_in"] == [17, 17]
+    c = compare(predictions(always_py, rows), predictions(abstain, rows), rows)
+    assert c["b_only_right"] == 10 and c["a_only_right"] == 5

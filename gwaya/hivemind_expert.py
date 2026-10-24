@@ -10,6 +10,7 @@ has the shape of one ``SEASON_3_DOMAIN_EXPERT_SPECS`` entry.
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
@@ -29,10 +30,20 @@ HIVEMIND_SPEC: dict[str, Any] = {
 }
 
 
+def keyword_hit(keyword: str, text_lower: str) -> bool:
+    """Whole-word/phrase match, as HiveMind's ``hivemind.core.btm_moe._keyword_hit`` (no hit inside a longer word)."""
+    kw = keyword.strip().lower()
+    if not kw:
+        return False
+    head = r"(?<![a-z0-9_])" if (kw[0].isalnum() or kw[0] == "_") else ""
+    tail = r"(?![a-z0-9_])" if (kw[-1].isalnum() or kw[-1] == "_") else ""
+    return re.search(head + re.escape(kw) + tail, text_lower) is not None
+
+
 def score(prompt: str) -> float:
-    """Routing score on the same scale as ``route_domain_query`` (1.0 + 2.5 per keyword hit)."""
+    """Routing score on the same scale as ``route_domain_query`` (1.0 + 2.5 per whole-word keyword hit)."""
     low = prompt.lower()
-    return 1.0 + 2.5 * sum(1 for kw in KEYWORDS if kw in low)
+    return 1.0 + 2.5 * sum(1 for kw in KEYWORDS if keyword_hit(kw, low))
 
 
 @dataclass

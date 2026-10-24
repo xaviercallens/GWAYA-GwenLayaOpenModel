@@ -1,0 +1,27 @@
+{"prompt": "Write a function that merges overlapping intervals and add pytest tests for it", "domain": "Python_Code_GWAYA", "source": "synthetic"}
+{"prompt": "My script fails with a traceback in pandas when I read the csv, how do I fix this def", "domain": "Python_Code_GWAYA", "source": "synthetic"}
+{"prompt": "Refactor this class into a dataclass and add typing", "domain": "Python_Code_GWAYA", "source": "synthetic"}
+{"prompt": "How do I write a decorator that retries a lambda three times in python", "domain": "Python_Code_GWAYA", "source": "synthetic"}
+{"prompt": "Why does this import fail inside main.py", "domain": "Python_Code_GWAYA", "source": "synthetic"}
+{"prompt": "Explain the borrow checker error on this fn with a mut reference and a lifetime", "domain": "Rust_Systems_Security", "source": "synthetic"}
+{"prompt": "Is this unsafe block sound, it shares an Arc<Mutex> across threads", "domain": "Rust_Systems_Security", "source": "synthetic"}
+{"prompt": "Make this pub struct zero-copy in rust", "domain": "Rust_Systems_Security", "source": "synthetic"}
+{"prompt": "Audit this Solidity contract for reentrancy before msg.sender is paid", "domain": "Solidity_Smart_Contracts", "source": "synthetic"}
+{"prompt": "Does my ERC20 token with uint256 balances need a require on transfer", "domain": "Solidity_Smart_Contracts", "source": "synthetic"}
+{"prompt": "Add a pragma and fix the reentrancy guard in this contract", "domain": "Solidity_Smart_Contracts", "source": "synthetic"}
+{"prompt": "What does the clinical trial say about apoptosis and therapy response in the patient group", "domain": "Biomedical_Clinical_QA", "source": "synthetic"}
+{"prompt": "Summarise how mitochondria produce ATP and which enzyme limits it", "domain": "Biomedical_Clinical_QA", "source": "synthetic"}
+{"prompt": "Is the therapy effective for this patient according to the trial", "domain": "Biomedical_Clinical_QA", "source": "synthetic"}
+{"prompt": "Prove this lemma by induction using omega and simp", "domain": "Lean4_Theorem_Prover", "source": "synthetic"}
+{"prompt": "Finish the Lean theorem proof about Nat addition without sorry", "domain": "Lean4_Theorem_Prover", "source": "synthetic"}
+{"prompt": "Which tactic closes this goal in Lean, simp or omega", "domain": "Lean4_Theorem_Prover", "source": "synthetic"}
+{"prompt": "What is the capital of France", "domain": "none", "source": "synthetic"}
+{"prompt": "Write a short poem about the sea", "domain": "none", "source": "synthetic"}
+{"prompt": "Explain how the heart pumps blood", "domain": "none", "source": "synthetic"}
+{"prompt": "Prove that the sum of two even numbers is even", "domain": "none", "source": "synthetic"}
+{"prompt": "Is the search nation public maybe a bypass", "domain": "none", "source": "synthetic"}
+{"prompt": "Plan a three day trip to Lisbon", "domain": "none", "source": "synthetic"}
+{"prompt": "Translate good morning into Spanish", "domain": "none", "source": "synthetic"}
+{"prompt": "Give me a recipe for a classic tomato soup", "domain": "none", "source": "synthetic"}
+{"prompt": "Summarise the causes of the French revolution", "domain": "none", "source": "synthetic"}
+{"prompt": "How do I negotiate a higher salary", "domain": "none", "source": "synthetic"}
