@@ -82,6 +82,14 @@ Missed bars are reported as missed. The sealed set is read once (`.claude/skills
 | E3 | threshold selection on dev, bar registered, sealed read | none |
 | E4 | cascade with the verifiable-domain gate on fresh Python tasks | the T4 (`~/gwaya-lite`), the user's go-ahead for GPU time; no GCP spend |
 
+### 4.1 Python first (user decision, 2026-10-24)
+Every experiment above is run for the Python expert before any other domain. Python is the only domain with all of: a local verifier (GWAYA sandbox), a measured tier ceiling (section 7.2), a cleared fresh source (BigCodeBench, section 8) and an expert already adopted by HiveMind (3ca9466).
+- **Scope of the first pass:** the router decides `Python_Code_GWAYA` vs everything else, and the tier (3B / 7B / 20B) for the prompts it keeps. Rust, Solidity, Biomedical and Lean prompts enter only as confusers labelled `none-for-Python` (a Python router must not claim them). Their own experts and the licence work in section 8 for them are deferred until the Python bars hold.
+- **Keyword-blind Python stratum is mandatory:** Python prompts that do not contain `python`, `def`, `import`, `.py` or any other KEYWORDS entry (IDE-style requests such as "merge these intervals", a bare stack trace, a pasted function). Without it the keyword router scores near-perfect for artifact reasons (MBPP says "python").
+- **Fresh tasks, not MBPP, for the utility check:** BigCodeBench (cleared) for E4; MBPP stays the tier-ceiling reference only.
+- **Bars are the registered ones in 3.5 and 7.3, applied to the Python-vs-rest pair first.** No new bar is added; no domain beyond Python is read from the sealed set until the Python result is reported as-is.
+- **GPU:** E4 on the T4 still needs the user's go-ahead; E1-E3 are CPU only.
+
 ## 5. Division of work
 - HiveMind session: step A PR, licence check of each candidate source (the registry's own `anon/rust-code-instructions`, `hivemind/solidity-audit-invariants` and `hivemind/lean4-mathlib-proofs` return HTTP 401, so only `qiaojin/PubMedQA` is a confirmed source), exemplar format per expert (`SEASON_3_DOMAIN_EXPERT_SPECS` entries gain an `exemplars` list).
 - GWAYA session: dataset build/audit scripts, eval harness (`scripts/routing/route_eval.py`), gate oracles, sealed-read protocol, E4 on the T4.
