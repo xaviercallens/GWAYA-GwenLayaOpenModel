@@ -146,3 +146,10 @@ def test_discrimination_band_is_computed():
     assert d["blind"]["pooled_top1"] == 0.5 and d["blind"]["n"] == 4 and d["blind"]["in_band"] is True
     dead = discrimination({"y": ["none"] * 4, "z": ["none"] * 4}, rows, {"s": [True] * 4})
     assert dead["s"]["pooled_top1"] == 0.0 and dead["s"]["in_band"] is False  # all arms wrong: cannot rank them
+
+
+def test_python_stratum_hits_counts_whole_word_keywords():
+    from scripts.routing.build_python_stratum import hits
+    assert hits("Calculates the average of a list") == 0
+    assert hits("use numpy and pandas here") == 2
+    assert hits("a classification task") == 0  # 'class ' needs a whole word
