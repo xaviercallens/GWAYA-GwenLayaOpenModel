@@ -40,12 +40,13 @@ Consequence: start with the cheap baseline, and only escalate to a text transfor
 
 ## 4. Proposal
 
-**Step A (no training, small PR in HiveMind, 1 day): make the keyword router honest.**
-- word-boundary matching (`re.search(r"\b...\b")`, keep multi-word keywords as phrases);
-- abstain when the best score is the no-hit floor: return `([], {})` so the caller uses the base model / dense path; no arbitrary second expert (drop experts whose weight is below a floor);
-- add `Python_Code_GWAYA` (`gwaya.hivemind_expert.HIVEMIND_SPEC`) as a spec;
-- tests with the probe prompts above as regression cases.
-Expected effect: the five off-domain probes stop being sent to Rust + Solidity. This is a correctness fix, not an accuracy claim.
+**Step A (no training, small PR in HiveMind): make the keyword router honest. PREPARED, see section 8.**
+- whole-word matching for keywords (a keyword that starts or ends with punctuation, like `.py`, gets no boundary on that side);
+- abstain when no keyword hits: return `([], {})` so the caller uses the base model; ties broken by domain name instead of dict order;
+- optional `min_weight` (default 0.0, so the existing two-expert contract is unchanged) to drop weak secondary experts;
+- one shared helper, `keyword_route`, used by both `route_domain_query` and `route_with_serving_experts` (HiveMind already adopted the Python expert in commit 3ca9466, and that function copies the same substring scoring);
+- regression tests from the probe prompts.
+Expected effect: off-domain prompts stop being sent to Rust + Solidity. This is a correctness fix, not an accuracy claim. **One contract change:** a no-hit prompt now returns `([], {})`, so the property test `test_routing_weights_are_a_distribution_over_known_domains` (asserts `1 <= len(domains)`) is relaxed to allow the empty result; callers must treat an empty list as "use the base model" (in the repo only tests call these functions).
 
 **Step B: OpenLaya-R, a learned calibrated router (needs data, CPU is enough).**
 - Features: hashed word + char n-grams (TF-IDF) -> multinomial logistic regression, one probability per domain expert plus `none`; isotonic calibration on a dev split; abstain when max p < tau.
@@ -84,3 +85,16 @@ E
 - A router that abstains too often sends everything to the base model and removes the MoE benefit; tau must be chosen on dev against the utility check, not on classification accuracy.
 - Domain labels from dataset provenance are noisy (a "Rust" dataset prompt can be generic); expect a ceiling on top-1 accuracy and measure it.
 - MBPP-style tasks are likely seen in pre-training; the Python utility check should use a fresh set (the repo's sealed-set protocol applies).
+
+## 8. What is prepared on the GWAYA side (2026-10-24)
+
+Everything below was built against a read-only `git archive` of HiveMind at `eb0cdfb`; the real HiveMind checkout was not modified.
+
+- **Patch for step A:** `docs/patches/hivemind_route_part_a.patch` (205 lines; `src/hivemind/core/btm_moe.py`, `src/hivemind/core/serving_experts.py`, `tests/test_serving_experts.py`, new `tests/test_route_whole_word.py`). `git apply --check -p1` against the real checkout: applies cleanly. Apply with `git apply -p1 docs/patches/hivemind_route_part_a.patch` from the HiveMind root.
+- **Test results on the patched scratch copy** (HiveMind venv): the new `test_route_whole_word.py` and `test_serving_experts.py` pass (16 passed, 2 skipped); with `test_cov_core_and_swarm.py` and `test_seti_swarm_v2.py` the unpatched and patched copies show the same 3 failures in `test_seti_swarm_v2.py` (they need repository files my scratch archive omitted), so no regression from the patch; this subset is not the full HiveMind suite, which the HiveMind owner should run.
+- **Routing harness:** `scripts/routing/route_eval.py` computes the part B bar (top-1 on in-domain with Wilson 95%, abstain rate on off-domain, false-route rate, lost coverage, paired exact McNemar between two routers). Usage: `PYTHONPATH=<hivemind>/src python scripts/routing/route_eval.py --router hivemind.core.serving_experts:route_with_serving_experts --rows <jsonl>`.
+- **Smoke run on `routing_fixture_synthetic.jsonl`** (27 prompts, hand-written by the author of the fix; NOT evidence): original router abstain on off-domain 0/10, fixed router 10/10 (+10/0, exact McNemar p = 0.002); in-domain top-1 17/17 for both. The in-domain prompts were written with the keywords in mind, so that 17/17 is a ceiling effect.
+- **`gwaya.hivemind_expert.score`** now matches whole words as well, so the two scorers agree (HiveMind's `test_spec_keywords_match_gwaya_when_installed` still holds for its prompt).
+
+### Why no accuracy baseline for step B yet
+The local datasets cannot give an honest one: MBPP prompts literally say "python" and the MultiPL-E Rust set is the same tasks translated (even "rsthon"), so a keyword router would score near-perfect for artifact reasons; there is no local Solidity or biomedical corpus. Part B therefore needs (1) a labelled routing set whose prompts do not name the language (paraphrased or collected IDE-style prompts), including Solidity and biomedical sources, (2) a sealed split read once, with the bar registered first (section 4).

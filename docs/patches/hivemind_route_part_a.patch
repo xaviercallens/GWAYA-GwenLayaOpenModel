@@ -1,0 +1,205 @@
+--- a/src/hivemind/core/btm_moe.py
++++ b/src/hivemind/core/btm_moe.py
+@@ -28,8 +28,9 @@
+ 
+ from __future__ import annotations
+ 
++import re
+ from dataclasses import dataclass, field
+-from typing import Any, Dict, List, Tuple
++from typing import Any, Dict, List, Sequence, Tuple
+ 
+ import torch
+ import torch.nn as nn
+@@ -87,6 +88,49 @@
+ }
+ 
+ 
++def _keyword_hit(keyword: str, text_lower: str) -> bool:
++    """True when ``keyword`` occurs in ``text_lower`` as a whole word or phrase (no match inside a longer word)."""
++    kw = keyword.strip().lower()
++    if not kw:
++        return False
++    head = r"(?<![a-z0-9_])" if (kw[0].isalnum() or kw[0] == "_") else ""
++    tail = r"(?![a-z0-9_])" if (kw[-1].isalnum() or kw[-1] == "_") else ""
++    return re.search(head + re.escape(kw) + tail, text_lower) is not None
++
++
++def keyword_route(
++    prompt: str,
++    spec_tables: Sequence[Dict[str, Dict[str, Any]]],
++    top_k: int = 2,
++    min_weight: float = 0.0,
++) -> Tuple[List[str], Dict[str, float]]:
++    """Whole-word keyword routing over one or more spec tables, on the scale ``1.0 + 2.5 * hits``.
++
++    Differences from plain substring scoring: a keyword inside a longer word does not count, and a prompt with no
++    keyword hit at all abstains (``([], {})``) instead of returning the first dict entries on a tie. Ties are broken by
++    domain name. ``min_weight`` drops secondary experts whose normalised weight is below it (the best expert is kept).
++    """
++    low = prompt.lower()
++    raw: Dict[str, float] = {}
++    any_hit = False
++    for table in spec_tables:
++        for domain, spec in table.items():
++            hits = sum(1 for kw in spec["keywords"] if _keyword_hit(kw, low))
++            any_hit = any_hit or hits > 0
++            raw[domain] = 1.0 + 2.5 * hits
++    if not any_hit:
++        return [], {}
++    ranked = sorted(raw.items(), key=lambda kv: (-kv[1], kv[0]))[: max(1, int(top_k))]
++    total = sum(score for _, score in ranked) or 1.0
++    weights = {dom: round(score / total, 4) for dom, score in ranked}
++    if min_weight > 0.0:
++        kept = [dom for dom, _ in ranked if weights[dom] >= min_weight] or [ranked[0][0]]
++        total = sum(raw[d] for d in kept)
++        weights = {d: round(raw[d] / total, 4) for d in kept}
++        return kept, weights
++    return [dom for dom, _ in ranked], weights
++
++
+ @dataclass
+ class RegisteredDomainExpert:
+     """Metadata and CAS location for a trained Season 3 domain LoRA adapter."""
+@@ -283,19 +327,14 @@
+             "active_branch_names": list(moe_model.expert_domains),
+         }
+ 
+-    def route_domain_query(self, prompt: str, top_k: int = 2) -> Tuple[List[str], Dict[str, float]]:
+-        """Scores a prompt against Season 3 domain keyword signatures and returns Top-k expert weights."""
+-        p_low = prompt.lower()
+-        raw_scores: Dict[str, float] = {}
+-        for domain, spec in SEASON_3_DOMAIN_EXPERT_SPECS.items():
+-            hits = sum(1 for kw in spec["keywords"] if kw in p_low)
+-            raw_scores[domain] = 1.0 + hits * 2.5
+-
+-        ranked = sorted(raw_scores.items(), key=lambda kv: kv[1], reverse=True)
+-        selected = ranked[: max(1, int(top_k))]
+-        total = sum(score for _, score in selected) or 1.0
+-        weights = {dom: round(score / total, 4) for dom, score in selected}
+-        return [dom for dom, _ in selected], weights
++    def route_domain_query(
++        self, prompt: str, top_k: int = 2, min_weight: float = 0.0
++    ) -> Tuple[List[str], Dict[str, float]]:
++        """Scores a prompt against Season 3 domain keyword signatures and returns Top-k expert weights.
++
++        Returns ``([], {})`` when no domain keyword occurs in the prompt (the caller should use the base model).
++        """
++        return keyword_route(prompt, (SEASON_3_DOMAIN_EXPERT_SPECS,), top_k=top_k, min_weight=min_weight)
+ 
+ 
+ 
+--- a/src/hivemind/core/serving_experts.py
++++ b/src/hivemind/core/serving_experts.py
+@@ -14,7 +14,7 @@
+ 
+ from typing import Any, Dict, List, Tuple
+ 
+-from hivemind.core.btm_moe import SEASON_3_DOMAIN_EXPERT_SPECS
++from hivemind.core.btm_moe import SEASON_3_DOMAIN_EXPERT_SPECS, keyword_route
+ 
+ PYTHON_CODE_GWAYA = "Python_Code_GWAYA"
+ 
+@@ -31,20 +31,16 @@
+ }
+ 
+ 
+-def route_with_serving_experts(prompt: str, top_k: int = 2) -> Tuple[List[str], Dict[str, float]]:
++def route_with_serving_experts(
++    prompt: str, top_k: int = 2, min_weight: float = 0.0
++) -> Tuple[List[str], Dict[str, float]]:
+     """Top-k routing over the LoRA domain experts and the serving experts, on the scale of ``route_domain_query``.
+ 
+-    Each domain scores ``1.0 + 2.5 * keyword hits``; the Top-k scores are normalised to weights that sum to 1. A serving
+-    expert is therefore chosen only when its keywords outscore the other domains for this prompt.
++    Each domain scores ``1.0 + 2.5 * whole-word keyword hits``; the Top-k scores are normalised to weights that sum to 1.
++    A serving expert is therefore chosen only when its keywords outscore the other domains for this prompt. A prompt with
++    no keyword hit returns ``([], {})`` (use the base model).
+     """
+-    low = prompt.lower()
+-    raw: Dict[str, float] = {}
+-    for table in (SEASON_3_DOMAIN_EXPERT_SPECS, SERVING_EXPERT_SPECS):
+-        for domain, spec in table.items():
+-            raw[domain] = 1.0 + 2.5 * sum(1 for kw in spec["keywords"] if kw in low)
+-    ranked = sorted(raw.items(), key=lambda kv: kv[1], reverse=True)[: max(1, int(top_k))]
+-    total = sum(score for _, score in ranked) or 1.0
+-    return [dom for dom, _ in ranked], {dom: round(score / total, 4) for dom, score in ranked}
++    return keyword_route(prompt, (SEASON_3_DOMAIN_EXPERT_SPECS, SERVING_EXPERT_SPECS), top_k=top_k, min_weight=min_weight)
+ 
+ 
+ def load_gwaya_code_expert(large_url: str, large_model: str = "qwen2.5-coder:7b", *, small_url: str | None = None,
+--- a/tests/test_serving_experts.py
++++ b/tests/test_serving_experts.py
+@@ -44,9 +44,12 @@
+ def test_routing_weights_are_a_distribution_over_known_domains(prompt: str, top_k: int) -> None:
+     domains, weights = route_with_serving_experts(prompt, top_k=top_k)
+     known = set(SEASON_3_DOMAIN_EXPERT_SPECS) | set(SERVING_EXPERT_SPECS)
+-    assert 1 <= len(domains) <= min(top_k, len(known))
++    assert len(domains) <= min(top_k, len(known))
+     assert set(domains) <= known and set(weights) == set(domains)
+-    assert abs(sum(weights.values()) - 1.0) < 1e-3 * len(domains)
++    if domains:  # a prompt without any keyword hit abstains: ([], {})
++        assert abs(sum(weights.values()) - 1.0) < 1e-3 * len(domains)
++    else:
++        assert weights == {}
+ 
+ 
+ def test_loader_reports_a_missing_gwaya_clearly(monkeypatch: pytest.MonkeyPatch) -> None:
+--- /dev/null
++++ b/tests/test_route_whole_word.py
+@@ -0,0 +1,55 @@
++"""Prompt-level keyword routing: whole-word matching and abstention on no hit (regression cases from the 2026-10-24 probe)."""
++
++import pytest
++
++from hivemind.core.btm_moe import Season3DomainExpertRegistry, _keyword_hit
++from hivemind.core.serving_experts import PYTHON_CODE_GWAYA, route_with_serving_experts
++
++OFF_DOMAIN = [
++    "Explain how the heart pumps blood",
++    "What is the capital of France?",
++    "Prove that the sum of two even numbers is even",
++    "Is the search nation public maybe a bypass?",  # short keywords (arc, nat, pub, by) inside longer words
++]
++
++
++@pytest.mark.parametrize("prompt", OFF_DOMAIN)
++def test_off_domain_prompt_abstains(prompt):
++    assert Season3DomainExpertRegistry().route_domain_query(prompt) == ([], {})
++    assert route_with_serving_experts(prompt) == ([], {})
++
++
++@pytest.mark.parametrize(
++    "prompt, expected",
++    [
++        ("Audit this Solidity ERC20 smart contract for reentrancy in msg.sender", "Solidity_Smart_Contracts"),
++        ("Prove this Lean 4 theorem by induction and omega tactic", "Lean4_Theorem_Prover"),
++        ("fn unsafe mut rust borrow", "Rust_Systems_Security"),
++        ("Explain the patient clinical trial design", "Biomedical_Clinical_QA"),
++    ],
++)
++def test_in_domain_prompt_still_routes_first(prompt, expected):
++    top, weights = Season3DomainExpertRegistry().route_domain_query(prompt, top_k=2)
++    assert top[0] == expected and len(weights) == 2 and abs(sum(weights.values()) - 1.0) < 1e-3
++
++
++def test_python_prompt_reaches_the_serving_expert_only_with_whole_word_hits():
++    top, _ = route_with_serving_experts("fix this def with a traceback in pandas")
++    assert top[0] == PYTHON_CODE_GWAYA
++    assert route_with_serving_experts("define a classification of subclasses and an important matter") == ([], {})
++
++
++def test_keyword_hit_boundaries():
++    assert _keyword_hit("def ", "write a def that")
++    assert not _keyword_hit("def ", "define it")
++    assert _keyword_hit(".py", "open main.py now")  # keyword starting with punctuation needs no leading boundary
++    assert _keyword_hit("msg.sender", "check msg.sender here")
++    assert not _keyword_hit("pub", "a public method")
++
++
++def test_min_weight_drops_weak_secondary_but_keeps_the_best():
++    reg = Season3DomainExpertRegistry()
++    top, w = reg.route_domain_query("Explain the patient clinical trial design", top_k=2, min_weight=0.2)
++    assert top == ["Biomedical_Clinical_QA"] and w == {"Biomedical_Clinical_QA": 1.0}
++    top, _ = reg.route_domain_query("Explain the patient clinical trial design", top_k=2)
++    assert len(top) == 2  # default keeps the existing two-expert contract
