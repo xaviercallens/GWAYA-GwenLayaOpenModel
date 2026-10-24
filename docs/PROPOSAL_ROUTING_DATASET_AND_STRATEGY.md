@@ -132,15 +132,20 @@ Rule (section 3.3, step 0): allowed use is what the card states and nothing more
 | Offlin33er/solidity-audit-instruct | Solidity | MIT | Cleared; derived from msc-smart-contract-auditing/audits-with-reasons (also MIT, checked). Versions v2, v3 by the same author unchecked |
 | Harish-as-harry/solidity_contract_sft | Solidity | none | EXCLUDED |
 | verify-ppt/marin-starcoderdata_solidity | Solidity | none | EXCLUDED (297k rows of per-file-licensed StarCoderData) |
-| Fortytwo-Network/Strandset-Rust-v1 | Rust | apache-2.0 | NOT cleared: 191k synthetic examples validated by LLM judges (Claude Sonnet 4, GPT-4o); generator terms must be checked first |
-| Tesslate/Rust_Dataset | Rust | apache-2.0 | NOT cleared: card says nothing else |
+| Fortytwo-Network/Strandset-Rust-v1 | Rust | apache-2.0 | CLEARED for routing prompts (card body read 2026-10-24: Apache-2.0, unrestricted research and commercial use with attribution; small open models in a peer-ranked swarm, code validated by rustc; Claude Sonnet 4 and GPT-4o are named only as scorers for non-code tasks). Caveat to record: derived from 2,300 crates.io crates whose licences the card does not state; keep attribution |
+| Tesslate/Rust_Dataset | Rust | apache-2.0 | NOT cleared: the whole card is the licence line, no description or provenance |
 | WrittenWithRust/Magicoder-OSS-Instruct-Rust-cleaned-3.9K | Rust | MIT | Allowed only with the caveat that it is LLM-derived from GitHub projects (Magicoder); caveat recorded |
-| gaianet/learn-rust | Rust | apache-2.0 | NOT cleared: not read in full |
+| gaianet/learn-rust | Rust | apache-2.0 | UNSUITABLE as routing prompts (a vector knowledge base from the Rust Book and Rust by Example, not instruction prompts); not a licence problem |
 | AI-MO/NuminaMath-LEAN | Lean 4 | apache-2.0 | Competition problems with Lean formalisations; original problem sources keep their licences via NuminaMath 1.5: record per source before use |
-| internlm/Lean-Workbook | Lean 4 | apache-2.0 | Card short; NOT cleared |
+| internlm/Lean-Workbook | Lean 4 | apache-2.0 | NOT cleared: the card does not say where the contest problems come from (read arXiv 2406.03847 first); also math statements formalised in Lean, so only a "formalise this problem" stratum, not Lean help requests |
 | cat-searcher/minif2f-lean4 | Lean 4 | MIT (tags) | Statements only; usable as Lean-syntax exemplars |
 | natural-language Lean help requests | Lean 4 | n/a | no dataset with a clear licence found: write them (owner/author, original text) |
 | `anon/rust-code-instructions`, `hivemind/solidity-audit-invariants`, `hivemind/lean4-mathlib-proofs` | registry ids | n/a | do not resolve (HTTP 401); not sources |
-| BigCodeBench, LiveCodeBench, LeetCodeDataset, FullStackBench, gsm8k, MATH-500 (local) | Python / none | not yet checked | licence to be read and recorded before use |
+| bigcode/bigcodebench (local) | Python | apache-2.0 | cleared on the card field (read from the cached card 2026-10-24) |
+| newfacade/LeetCodeDataset (local) | Python | apache-2.0 | conditional: the card licence does not address the copyright of the LeetCode problem texts; use for routing labels only, no redistribution of prompts |
+| openai/gsm8k (local) | none | MIT | cleared (front matter and the card's Licensing Information section both state MIT) |
+| livecodebench/code_generation_lite (local) | Python | "cc" | NOT cleared: the variant of the Creative Commons licence is not stated |
+| HuggingFaceH4/MATH-500 (local) | none | none in card | NOT cleared (no licence in the card) |
+| ByteDance/FullStackBench (local) | Python / Rust / other code | unknown | NOT cleared: no card cached on this machine, so no licence could be read |
 
-Next licence work (before any labelling): read the card bodies of the three Rust candidates with "not cleared", of Lean-Workbook, and of the six local sets; record the manifest as a file next to the dataset.
+Remaining licence work (before any labelling): read arXiv 2406.03847 for Lean-Workbook's problem sources, find out what Tesslate/Rust_Dataset is, fetch the FullStackBench card, pin the Creative Commons variant for LiveCodeBench, find a licence statement for MATH-500, and write the manifest as a file next to the dataset. Rust now has one cleared source (Strandset-Rust-v1), so the 200-per-class Rust test split is no longer blocked by licensing; Solidity has one (Offlin33er); Biomedical has one (PubMedQA, labels only); Lean 4 has none cleared for natural-language help requests.
