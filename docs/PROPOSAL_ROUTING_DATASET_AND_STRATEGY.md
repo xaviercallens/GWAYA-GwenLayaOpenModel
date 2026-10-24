@@ -89,3 +89,56 @@ Missed bars are reported as missed. The sealed set is read once (`.claude/skills
 - Provenance labels leak style (dataset-specific phrasing). Mitigation: paraphrase a sample and compare accuracy on original vs paraphrased text; a large drop flags style leakage.
 - Verify-then-serve doubles generation cost on escalation; report the mean generations per request.
 - An abstaining router can look good on `none` by abstaining on everything; bar 1 and the in-domain abstain rate (`abstain_in`) guard against it.
+
+## 7. Complexity tier as a routed output (HiveMind owner's addition, 2026-10-24)
+
+The router's output becomes a pair **(expert, tier)**, where the tiers are coder-lite 3B (tier 0), coder 7B (tier 1) and moe-general gpt-oss 20B (tier 2). It picks the cheapest tier likely to be good enough and escalates one tier at a time only when a check fails. Escalation signals: retrieval confidence below its threshold (stage 1) and a failed gate (stage 2, verify-then-serve). Only 3B and 7B were measured here; tier 2 is unmeasured, and gpt-oss 20B is not expected to fit the 6656 MiB ceiling (to be confirmed by the owner), so where it runs and what one attempt costs there must be fixed before any cost number is quoted.
+
+### 7.1 The tier label
+- **Judged from solve rates, never from prompt length.** For each prompt and tier, the tier's answer is scored by an oracle (hidden tests for Python; compile + tests for Rust; the kernel for Lean 4; gold label for PubMedQA). Use k = 4 samples per tier (temperature 0.2, fixed seeds) so a single lucky or unlucky greedy sample does not set the label. `p_t` = share of samples that pass.
+- **Label = the lowest tier with `p_t >= 0.5`.** A prompt no tier solves gets `tier = unsolved`: routed to the top tier, reported separately, never counted as a tier-2 success. The 0.5 cut is fixed now and is not tuned on the sealed set.
+- **Domains without an executable oracle** (Solidity audit text) get no tier label; they are excluded from the tier bar and served at the owner's default tier.
+
+### 7.2 What the data already says (MBPP-sanitized test split, n = 257, greedy, GWAYA loop, T4)
+| Outcome | Items |
+|---|---|
+| solved by both 3B and 7B (tier 0 suffices) | 178 (69%) |
+| solved only by 7B (tier 1) | 35 (14%) |
+| solved only by 3B (noise or tier-0 luck: single greedy samples) | 6 (2%) |
+| solved by neither (candidate for tier 2, or flawed items) | 38 (15%) |
+
+- The 6 "only 3B" items show why a single greedy sample is too noisy for the label (hence k = 4).
+- **Ceiling for any 3B/7B tier router on these rows:** a perfect oracle that sends each item to the cheapest passing tier cuts mean generated tokens from 61.6 (always 7B) to 57.5, **6.6%**, and mean generation time from 2.45 s to 1.88 s, 23% (indicative only: the 3B and 7B runs were not under the same GPU load; the 3B emits more tokens per answer, 80 against 62). The measured 3B-first cascade (83.3% against 82.9%) was slower, 2.91 s against 2.45 s. So on easy function-level tasks tier routing can save little; the registered claim must not exceed this ceiling, and larger savings can only come from harder prompts where the 7B and 20B tiers differ widely.
+- Whether the 38 unsolved items are solved by the 20B tier, or are MBPP items with flawed tests, is unknown.
+
+### 7.3 Metrics and the registered bar for tiers
+`scripts/routing/route_eval.py` now has `evaluate_tiers` (exact, **under** = routed too cheap and paying the failed attempts on the way up, **over** = routed too high, mean cost, oracle cost, always-top cost, always-lowest-with-escalation cost). Cost unit per attempt (tokens, generations or seconds) is chosen by the owner and fixed before the sealed read. Bar 6 (added to section 3.5): on the verifiable sealed subset, the tier cascade's pass@1 is not below always-top-tier (paired McNemar), its mean cost (paired bootstrap 95% CI) is below always-top-tier, and it is reported next to the oracle ceiling and the fixed 3B-first cascade. A saving above the oracle ceiling is a bug, not a result.
+
+### 7.4 Non-destructiveness of the verify-and-repair loop (a claim the data supports)
+Recounted independently by the "Genetic sub project" session from `rows.jsonl`: over the two models the loop changed 4 verdicts to passing and **broke none**. A regression could only occur on items that already passed raw (211 for the 7B and 182 for the 3B, 393 in all), so the rate at which the loop breaks a passing answer has a one-sided 95% upper bound of about 0.76% (0 in 393; `1 - 0.05^(1/393) = 0.0076`). This is a non-destructiveness claim, not an accuracy claim: the pass@1 difference stays not significant at this n. Caveat: the policy returns the raw sample unless the loop's answer is VERIFIED against the visible test, which makes a regression less likely by construction.
+
+### 7.5 The band check is computed, not read by eye
+`route_eval.discrimination` returns, per stratum, the pooled in-domain top-1 over all arms and an `in_band` boolean against the band fixed at [0.3, 0.7]; the sealed-run report must contain these fields, so the check is asserted by code (suggested by the "Genetic sub project" session; tested in `tests/test_lite_hivemind.py`).
+
+## 8. Licence manifest (read from dataset cards by `autoevolveai-b8` on 2026-10-24; metadata and card text only, no data downloaded; not independently re-read by me except the HF metadata fields I fetched earlier)
+
+Rule (section 3.3, step 0): allowed use is what the card states and nothing more; no source is cleared until its card body has been read in full and recorded here.
+
+| Source | Class | Card licence | Status and caveat |
+|---|---|---|---|
+| qiaojin/PubMedQA | Biomedical | MIT | Cleared for evaluation and routing labels only; questions derive from PubMed abstracts whose copyright is not covered by the field: no redistribution of abstract text |
+| Offlin33er/solidity-audit-instruct | Solidity | MIT | Cleared; derived from msc-smart-contract-auditing/audits-with-reasons (also MIT, checked). Versions v2, v3 by the same author unchecked |
+| Harish-as-harry/solidity_contract_sft | Solidity | none | EXCLUDED |
+| verify-ppt/marin-starcoderdata_solidity | Solidity | none | EXCLUDED (297k rows of per-file-licensed StarCoderData) |
+| Fortytwo-Network/Strandset-Rust-v1 | Rust | apache-2.0 | NOT cleared: 191k synthetic examples validated by LLM judges (Claude Sonnet 4, GPT-4o); generator terms must be checked first |
+| Tesslate/Rust_Dataset | Rust | apache-2.0 | NOT cleared: card says nothing else |
+| WrittenWithRust/Magicoder-OSS-Instruct-Rust-cleaned-3.9K | Rust | MIT | Allowed only with the caveat that it is LLM-derived from GitHub projects (Magicoder); caveat recorded |
+| gaianet/learn-rust | Rust | apache-2.0 | NOT cleared: not read in full |
+| AI-MO/NuminaMath-LEAN | Lean 4 | apache-2.0 | Competition problems with Lean formalisations; original problem sources keep their licences via NuminaMath 1.5: record per source before use |
+| internlm/Lean-Workbook | Lean 4 | apache-2.0 | Card short; NOT cleared |
+| cat-searcher/minif2f-lean4 | Lean 4 | MIT (tags) | Statements only; usable as Lean-syntax exemplars |
+| natural-language Lean help requests | Lean 4 | n/a | no dataset with a clear licence found: write them (owner/author, original text) |
+| `anon/rust-code-instructions`, `hivemind/solidity-audit-invariants`, `hivemind/lean4-mathlib-proofs` | registry ids | n/a | do not resolve (HTTP 401); not sources |
+| BigCodeBench, LiveCodeBench, LeetCodeDataset, FullStackBench, gsm8k, MATH-500 (local) | Python / none | not yet checked | licence to be read and recorded before use |
+
+Next licence work (before any labelling): read the card bodies of the three Rust candidates with "not cleared", of Lean-Workbook, and of the six local sets; record the manifest as a file next to the dataset.

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Evaluation harness for HiveMind prompt-level expert routing (docs/PROPOSAL_OPENLAYA_HIVEMIND_ROUTING.md, part B bar).
 
-A router is ``module:function`` taking ``(prompt)`` and returning ``(domains, weights)`` as ``route_with_serving_experts`` /
+Optional ``"tier"`` (int, 0 = cheapest) marks the cheapest tier that solves the prompt, judged from tier solve rates and never
+from prompt length; ``evaluate_tiers`` scores a tier router against it. A router is ``module:function`` taking ``(prompt)`` and returning ``(domains, weights)`` as ``route_with_serving_experts`` /
 ``Season3DomainExpertRegistry().route_domain_query`` do; ``([], {})`` means abstain (use the base model). Rows are JSONL
 ``{"prompt": str, "domain": str | "none", "source": str}``. Reported, per the pre-registered bar:
   top1_in_domain   share of in-domain prompts whose best expert is the labelled domain (Wilson 95%)
@@ -76,6 +77,63 @@ def compare(pred_a: list[str], pred_b: list[str], rows: list[dict]) -> dict:
     b = sum(ok(pb, r) and not ok(pa, r) for pa, pb, r in zip(pred_a, pred_b, rows))
     c = sum(ok(pa, r) and not ok(pb, r) for pa, pb, r in zip(pred_a, pred_b, rows))
     return {"b_only_right": b, "a_only_right": c, "mcnemar_p": round(mcnemar_exact(b, c), 4)}
+
+
+def cascade_cost(pred: int, label: int, costs: list[float]) -> float:
+    """Cost of serving a request whose cheapest sufficient tier is ``label`` when the router starts at ``pred``.
+
+    Starting too low pays every failed attempt on the way up (escalation on a failed check); starting at or above the label
+    pays the starting tier only. ``costs[t]`` is the cost of one attempt at tier ``t`` (tokens, generations or seconds).
+    """
+    return float(sum(costs[pred:label + 1])) if pred < label else float(costs[pred])
+
+
+def evaluate_tiers(pred: list[int], rows: list[dict], costs: list[float]) -> dict:
+    """Complexity-tier routing on rows that carry an integer ``tier`` label (cheapest tier that solves the prompt).
+
+    under = routed below the label (needs escalation), over = routed above it (waste). Costs are compared with the oracle
+    (always the label) and with always-top; the oracle is the ceiling for any tier router on these rows.
+    """
+    pairs = [(p, r["tier"]) for p, r in zip(pred, rows) if isinstance(r.get("tier"), int)]
+    n = len(pairs)
+    if not n:
+        return {"n_tiered": 0}
+    top = len(costs) - 1
+    cost = sum(cascade_cost(p, t, costs) for p, t in pairs) / n
+    return {
+        "n_tiered": n,
+        "exact": round(sum(p == t for p, t in pairs) / n, 4),
+        "under": round(sum(p < t for p, t in pairs) / n, 4),
+        "over": round(sum(p > t for p, t in pairs) / n, 4),
+        "mean_cost": round(cost, 4),
+        "oracle_cost": round(sum(costs[t] for _, t in pairs) / n, 4),
+        "always_top_cost": round(float(costs[top]), 4),
+        "always_lowest_cost": round(sum(cascade_cost(0, t, costs) for _, t in pairs) / n, 4),
+    }
+
+
+BAND = (0.3, 0.7)  # registered before any sealed read (docs/PROPOSAL_ROUTING_DATASET_AND_STRATEGY.md, bar 5); do not tune on test
+
+
+def discrimination(preds_by_arm: dict[str, list[str]], rows: list[dict], strata: dict[str, list[bool]],
+                   band: tuple[float, float] = BAND) -> dict:
+    """Computed band check per stratum: pooled in-domain top-1 over ALL arms; outside ``band`` the stratum cannot rank the arms.
+
+    ``strata[name][i]`` says whether row i belongs to the stratum (e.g. the keyword-blind rows). Returned as data so the check
+    is asserted by code, not left to a reader.
+    """
+    out = {}
+    for name, mask in strata.items():
+        hit = tot = 0
+        for pred in preds_by_arm.values():
+            for p, r, m in zip(pred, rows, mask):
+                if m and r["domain"] != "none":
+                    tot += 1
+                    hit += p == r["domain"]
+        pooled = hit / tot if tot else None
+        out[name] = {"pooled_top1": None if pooled is None else round(pooled, 4), "n": tot,
+                     "in_band": pooled is not None and band[0] <= pooled <= band[1], "band": list(band)}
+    return out
 
 
 def resolve(spec: str):
