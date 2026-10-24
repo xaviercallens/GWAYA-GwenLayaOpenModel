@@ -23,6 +23,7 @@ def hits(text: str) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--parquet", required=True)
+    ap.add_argument("--negatives", default=None, help="parquet with a 'question' column of off-domain prompts (GSM8K test, MIT)")
     ap.add_argument("--out", default="results/routing/python_stratum_counts.json")
     a = ap.parse_args()
     d = pd.read_parquet(a.parquet)
@@ -34,6 +35,10 @@ def main() -> int:
     res = {"n": n, "visible_keyword_hit": [sum(hv), n, wilson(sum(hv), n)],
            "blind_keyword_hit": [sum(hb), n, wilson(sum(hb), n)],
            "blind_nohit_ids": [i for i, h in zip(d["task_id"], hb) if not h]}
+    if a.negatives:
+        neg = pd.read_parquet(a.negatives)["question"].tolist()
+        fr = sum(hits(t) > 0 for t in neg)
+        res["negatives_keyword_hit"] = [fr, len(neg), wilson(fr, len(neg))]
     res["blind_nohit"] = len(res["blind_nohit_ids"])
     Path(a.out).write_text(json.dumps(res, indent=1))
     print({k: v for k, v in res.items() if k != "blind_nohit_ids"})
