@@ -130,6 +130,14 @@ Recounted independently by the "Genetic sub project" session from `rows.jsonl`: 
 ### 7.5 The band check is computed, not read by eye
 `route_eval.discrimination` returns, per stratum, the pooled in-domain top-1 over all arms and an `in_band` boolean against the band fixed at [0.3, 0.7]; the sealed-run report must contain these fields, so the check is asserted by code (suggested by the "Genetic sub project" session; tested in `tests/test_lite_hivemind.py`).
 
+### 7.6 Tier 2 (gpt-oss 20B) as measured by `autoevolveai-b8` on the T4, 2026-10-24 (reported by the peer, not re-run by me)
+- **Memory:** 12,331 MiB resident (Ollama 0.34.1, flash attention, 8-bit KV, one slot, num_ctx 4096, think=low). It does NOT fit the 6,656 MiB ceiling; it needs most of the 15,360 MiB card. Tier 2 is therefore a T4-class option, not an 8 GB-card option.
+- **Co-residency:** beside a 3B (num_ctx 2048) it loads at 13,873 MiB total but Ollama put the 3B 36% on CPU; beside the 7B (5.6 GB) it does not fit. A 7B + 20B cascade on one T4 means swapping models.
+- **Speed:** 19-45 tok/s on single short prompts (indicative only); cold load 285 s, warm 0.2 s. The cold load makes "escalate only on a failed check" expensive unless the 20B stays resident.
+- **Quality:** 6 harder hand-picked Python tasks with hidden tests: 7B 3/6, 20B 6/6 (first try). n = 6 gives direction only and is not a tier-label source; labels still come from solve rates on the real set (7.1).
+- **Cost unit:** GPU-seconds on equal load, card otherwise empty. The 7B timings in that run shared the GPU and must not be used for a ratio. Running it on MBPP-sanitized needs the T4 to be given to it; E17 training needs the card next, so this waits for the owner's decision.
+- **Cross-check:** base 7B via llama-server on the same 257 MBPP-sanitized tasks: 210 first-attempt passes (81.7%), 215 with repair; 0 of 30 repeated requests differed (greedy is deterministic).
+
 ## 8. Licence manifest (read from dataset cards by `autoevolveai-b8` on 2026-10-24; metadata and card text only, no data downloaded; not independently re-read by me except the HF metadata fields I fetched earlier)
 
 Rule (section 3.3, step 0): allowed use is what the card states and nothing more; no source is cleared until its card body has been read in full and recorded here.
