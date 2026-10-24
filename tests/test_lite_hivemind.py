@@ -118,3 +118,31 @@ def test_route_eval_harness_metrics():
     assert ev["abstain_off"][:2] == [10, 10] and ev["abstain_in"] == [17, 17]
     c = compare(predictions(always_py, rows), predictions(abstain, rows), rows)
     assert c["b_only_right"] == 10 and c["a_only_right"] == 5
+
+
+def test_tier_cost_model():
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts" / "routing"))
+    from route_eval import cascade_cost, evaluate_tiers
+    costs = [1.0, 2.0, 10.0]
+    assert cascade_cost(0, 0, costs) == 1.0 and cascade_cost(2, 0, costs) == 10.0  # over-tier pays the high tier
+    assert cascade_cost(0, 2, costs) == 13.0 and cascade_cost(1, 2, costs) == 12.0  # under-tier pays every failed attempt
+    rows = [{"tier": 0}, {"tier": 1}, {"tier": 2}, {"prompt": "no label"}]
+    ev = evaluate_tiers([0, 0, 2, 1], rows, costs)
+    assert ev["n_tiered"] == 3 and ev["exact"] == round(2 / 3, 4) and ev["under"] == round(1 / 3, 4) and ev["over"] == 0.0
+    assert ev["oracle_cost"] == round((1 + 2 + 10) / 3, 4) and ev["mean_cost"] == round((1 + 3 + 10) / 3, 4)
+
+
+def test_discrimination_band_is_computed():
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts" / "routing"))
+    from route_eval import discrimination
+    rows = [{"domain": "A"}, {"domain": "A"}, {"domain": "B"}, {"domain": "none"}]
+    arms = {"x": ["A", "A", "B", "none"], "y": ["A", "none", "none", "none"]}  # pooled in-domain: 4 right of 6
+    d = discrimination(arms, rows, {"all": [True] * 4, "blind": [False, True, True, False]})
+    assert d["all"]["pooled_top1"] == round(4 / 6, 4) and d["all"]["in_band"] is True
+    assert d["blind"]["pooled_top1"] == 0.5 and d["blind"]["n"] == 4 and d["blind"]["in_band"] is True
+    dead = discrimination({"y": ["none"] * 4, "z": ["none"] * 4}, rows, {"s": [True] * 4})
+    assert dead["s"]["pooled_top1"] == 0.0 and dead["s"]["in_band"] is False  # all arms wrong: cannot rank them
