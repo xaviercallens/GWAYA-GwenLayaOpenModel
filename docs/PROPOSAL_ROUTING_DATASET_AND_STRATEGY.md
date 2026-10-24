@@ -41,18 +41,19 @@ Not proposed: using the frozen Laya as is (trained for Qwen3.5 size tiers; text 
 | Class | Local (this machine) | Gap / external source to obtain |
 |---|---|---|
 | Python | BigCodeBench (API-style prompts), LiveCodeBench, LeetCodeDataset, FullStackBench Python items (844 of 1,687) | rewrite or filter to remove the word "python"; MBPP/HumanEval+ only as contamination-checked extras |
-| Rust | McEval Rust: 53 tasks and FullStackBench: 30 (83 in total, far below the 200 needed for the test split alone) | `anon/rust-code-instructions` (the registry's own `dataset_id`), Rust forum/issue-style questions |
-| Solidity | none | `hivemind/solidity-audit-invariants` (registry `dataset_id`), public audit reports |
-| Biomedical | none | `qiaojin/PubMedQA` (registry `dataset_id`) |
+| Rust | McEval Rust: 53 tasks and FullStackBench: 30 (83 in total, far below the 200 needed for the test split alone) | a public Rust instruction/question corpus with a clear licence; none verified yet. The registry's `anon/rust-code-instructions` returns HTTP 401 (absent or private), so it is NOT a usable source |
+| Solidity | none | candidates seen on the Hugging Face API 2026-10-24: `Offlin33er/solidity-audit-instruct` (licence field: MIT), `Harish-as-harry/solidity_contract_sft` and `verify-ppt/marin-starcoderdata_solidity` (no licence in the metadata; the latter is derived from per-file-licensed code, so it is the riskiest). Content not inspected. The registry's `hivemind/solidity-audit-invariants` returns HTTP 401 |
+| Biomedical | none | `qiaojin/PubMedQA` (exists, MIT, not gated; the only registry `dataset_id` that resolves) |
 | Lean 4 | minif2f-lean4 statements (Lean syntax only) | natural-language requests about proofs ("how do I close this goal"), written or collected |
 | none (off-domain) | gsm8k, MATH-500, FullStackBench non-Python/Rust/Solidity items (Go, Java, ... are code but belong to no expert) | generic chat/instruction prompts with a clear licence |
 
 Local data alone cannot supply Solidity, Biomedical or enough Rust. Obtaining the external sources is the first work item; licences must be checked before any redistribution (nothing is committed that cannot be).
 
 ### 3.3 Construction
+0. **Licence first:** no corpus is downloaded, labelled or committed until its licence has been read and recorded in a manifest (`name, URL, licence text/URL, date checked, rows used`). A missing licence field in the metadata is treated as "not allowed" until the dataset card says otherwise.
 1. **Label from provenance** (which dataset a prompt came from), never from a keyword match.
 2. **Keyword-blind stratum:** compute, with the merged whole-word router, which prompts have zero registry-keyword hits. The routers are judged on this stratum separately, because it is where a learned or retrieval router can add anything over stage 0. Report both strata.
-3. **Hard negatives** (about 15% of `none`): ordinary words that contained keywords under substring matching ("search", "public", "nation", "maybe", "bypass", "important"), code in other languages, and cross-domain prompts. Cross-domain prompts get a **multi-label** (e.g. a Python script that talks to a Solidity contract), scored as correct when the top-1 is any of its labels.
+3. **Hard negatives** (about 15% of `none`): ordinary words that contained keywords under substring matching ("search", "public", "nation", "maybe", "bypass", "important"); **ordinary English words that are themselves registry keywords and still hit under whole-word matching** (found by `autoevolveai-b8`, confirmed in `SEASON_3_DOMAIN_EXPERT_SPECS`): `by`, `nat`, `require`, `contract`, `trial`, `therapy`, `proof`, `lean`, `borrow`, `lifetime`, `unsafe`, `patient`, `arc`, `pub`, `mut` (e.g. "a legal contract", "a fair trial", "I need proof", "lean beef", "borrow a book", "written by"); code in other languages; and cross-domain prompts. The stratum report lists, per keyword, how many `none` prompts it falsely fires on, which also tells the owner which keywords to drop from stage 0. Cross-domain prompts get a **multi-label** (e.g. a Python script that talks to a Solidity contract), scored as correct when the top-1 is any of its labels.
 4. **Dedupe** within and across splits by normalised 8-gram hashing (MBPP and MBPP+ overlap); split by source task, not by prompt, so paraphrases of one task do not straddle splits.
 5. **Human audit:** the owner (or a second reviewer) re-labels a random 150-prompt sample blind; report agreement (Cohen's kappa) and fix systematic label errors before the splits are sealed.
 
@@ -77,7 +78,7 @@ Missed bars are reported as missed. The sealed set is read once (`.claude/skills
 | E4 | cascade with the verifiable-domain gate on fresh Python tasks | the T4 (`~/gwaya-lite`), the user's go-ahead for GPU time; no GCP spend |
 
 ## 5. Division of work
-- HiveMind session: step A PR, dataset sources it owns (`anon/rust-code-instructions`, `hivemind/solidity-audit-invariants`, `qiaojin/PubMedQA` access), exemplar format per expert (`SEASON_3_DOMAIN_EXPERT_SPECS` entries gain an `exemplars` list).
+- HiveMind session: step A PR, licence check of each candidate source (the registry's own `anon/rust-code-instructions`, `hivemind/solidity-audit-invariants` and `hivemind/lean4-mathlib-proofs` return HTTP 401, so only `qiaojin/PubMedQA` is a confirmed source), exemplar format per expert (`SEASON_3_DOMAIN_EXPERT_SPECS` entries gain an `exemplars` list).
 - GWAYA session: dataset build/audit scripts, eval harness (`scripts/routing/route_eval.py`), gate oracles, sealed-read protocol, E4 on the T4.
 
 ## 6. Risks
