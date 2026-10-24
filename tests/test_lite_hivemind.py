@@ -73,3 +73,24 @@ def test_no_escalation_without_tests_or_when_unverified_and_default_is_large():
     ex = GwayaCodeExpert(_Client("s"), _Client("l"), assistant_factory=_factory({"s": "FAILED", "l": "FAILED"}))
     r = ex.handle("t", tests="assert 1")
     assert r.tier == "l" and not r.escalated and r.verdict == "FAILED"
+
+
+def test_lite_bench_stats():
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+    from lite_bench import mcnemar_exact, summarize, wilson
+    assert mcnemar_exact(0, 0) == 1.0 and mcnemar_exact(5, 0) == pytest.approx(0.0625)
+    lo, hi = wilson(50, 100)
+    assert 0.39 < lo < 0.41 and 0.59 < hi < 0.61
+    rows = [{"a0_pass": False, "a3_pass": True, "verdict": "VERIFIED", "gen_s": 1.0, "completion_tokens": 10},
+            {"a0_pass": True, "a3_pass": True, "verdict": "FAILED", "gen_s": 3.0, "completion_tokens": 20}]
+    s = summarize(rows)
+    assert (s["gained"], s["lost"], s["verified_hidden_precision"], s["mean_gen_s"]) == (1, 0, 1.0, 2.0)
+
+
+def test_estimate_covers_t4_measurements():
+    measured = {("3b", 4096): 2191, ("3b", 8192): 2339, ("7b", 4096): 4663, ("7b", 8192): 4891}  # nvidia-smi, T4, b11854
+    for (k, ctx), mib in measured.items():
+        est = estimate_vram_mib(LITE_TIERS[k], ctx)
+        assert mib <= est <= mib + 250, (k, ctx, est, mib)

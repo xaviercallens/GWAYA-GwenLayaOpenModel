@@ -1,0 +1,27 @@
+{
+ "n": 257,
+ "a0_pass": 182,
+ "a3_pass": 184,
+ "a0_pct": 70.82,
+ "a3_pct": 71.6,
+ "a0_wilson95": [
+  65.0,
+  76.0
+ ],
+ "a3_wilson95": [
+  65.8,
+  76.8
+ ],
+ "gained": 2,
+ "lost": 0,
+ "mcnemar_p": 0.5,
+ "verified_claimed": 199,
+ "verified_hidden_pass": 184,
+ "verified_hidden_precision": 0.9246,
+ "mean_gen_s": 1.95,
+ "completion_tokens": 20639,
+ "model": "qwen2.5-coder:3b",
+ "rounds": 3,
+ "max_new_tokens": 512,
+ "base_url": "http://127.0.0.1:8180"
+}

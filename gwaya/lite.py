@@ -1,8 +1,8 @@
 """GWAYA-Lite: Q4 Qwen2.5-Coder tiers that fit 4-8 GB GPUs, a VRAM estimator and llama-server launch lines.
 
-Sizes are ESTIMATES from the published Q4_K_M file sizes and the models' KV-cache geometry (layers x kv_heads x head_dim,
-fp16 cache). They are not measurements: docs/PROPOSAL_HIVEMIND_GWAYA_CODER.md step P1 measures them on a real card, and
-``estimate_vram_mib`` must be replaced by the measured numbers (or checked against them) before the table is relied on.
+Sizes are estimates from the Q4_K_M file sizes and the KV-cache geometry (layers x kv_heads x head_dim, fp16 cache),
+checked against T4 measurements for the 3B and 7B tiers (the 1.5B tier is not measured). Measured values are never exceeded
+by the estimate for 3B and 7B (tests/test_lite_hivemind.py).
 """
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import shlex
 from dataclasses import dataclass
 
 HIVEMIND_VRAM_CEILING_MIB = 6656  # HiveMind golden invariant: 8 GB card minus 1536 MiB WDDM reserve
-CUDA_OVERHEAD_MIB = 600  # CUDA context + compute buffers, conservative
+CUDA_OVERHEAD_MIB = 100  # margin over weights + KV; measured 2026-10-24 on a Tesla T4 (llama.cpp b11854): 3B 2191/2339 MiB, 7B 4663/4891 MiB at 4k/8k
 
 
 @dataclass(frozen=True)
@@ -27,7 +27,7 @@ LITE_TIERS: dict[str, LiteTier] = {
     "1.5b": LiteTier("qwen2.5-coder:1.5b", "Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF",
                      "qwen2.5-coder-1.5b-instruct-q4_k_m.gguf", 1070, 28),
     "3b": LiteTier("qwen2.5-coder:3b", "Qwen/Qwen2.5-Coder-3B-Instruct-GGUF",
-                   "qwen2.5-coder-3b-instruct-q4_k_m.gguf", 1840, 36),
+                   "qwen2.5-coder-3b-instruct-q4_k_m.gguf", 2007, 36),
     "7b": LiteTier("qwen2.5-coder:7b", "Qwen/Qwen2.5-Coder-7B-Instruct-GGUF",
                    "qwen2.5-coder-7b-instruct-q4_k_m.gguf", 4466, 56),
 }

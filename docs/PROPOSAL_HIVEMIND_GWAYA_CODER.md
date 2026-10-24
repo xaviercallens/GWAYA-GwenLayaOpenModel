@@ -78,3 +78,22 @@ Train a Python-coding QLoRA branch (r=16, as the other Season 3 experts) on top 
 - Options: (a) run P1 on the RTX 2070 node (address needed; no `rtx2070` SSH entry resolves), (b) run it on hermes-node1 itself with the user's say-so (no extra GPU cost), (c) the user stops hermes-node1 for the run.
 - `deploy/run_on_gcp.sh --model-ladder a,b` puts a comma inside `--metadata=MODEL=a,b`, which gcloud splits into two keys; run one model per launch until fixed.
 - Cost if a T4 spot slot is available: dry-run worst case $0.88 per launch (ledger 41.75 -> at most 42.63 per launch, cap 50).
+- Resolved 2026-10-24: P1 ran on `hermes-node1` once its GPU was idle (see section 10); no new GPU was created.
+
+## 10. P1 results (2026-10-24, Tesla T4 on `socreateai-agora-hermes-node1`, llama.cpp b11854 commit 8e5a58d, Q4_K_M, greedy, 3 repair rounds, 512 new tokens)
+
+Raw data: `results/gwaya_lite/t4_{3b,7b}/` (`rows.jsonl`, `summary.json`), driver `scripts/lite_bench.py`. MBPP-sanitized test split, first 257 problems; the model sees the problem and test_list[0]; an arm passes only if the final code passes ALL tests, run in the local bwrap sandbox (generation on the T4 over an ssh tunnel, no model-generated code ran on the VM). GPU spend: $0 new (existing VM); ledger unchanged at $41.75.
+
+| Tier | Resident VRAM 4k / 8k ctx | llama-bench prompt / generation | A0 raw pass@1 (95% CI) | A3 with GWAYA loop | gained / lost, McNemar p | VERIFIED claimed -> pass all tests |
+|---|---|---|---|---|---|---|
+| 3B Q4 | 2191 / 2339 MiB | 2658 / 87.4 tok/s | 70.8% (65.0-76.0) | 71.6% (65.8-76.8) | +2 / 0, p = 0.5 | 199 -> 184 (92.5%) |
+| 7B Q4 | 4663 / 4891 MiB | 1349 / 40.4 tok/s | 82.1% (77.0-86.3) | 82.9% (77.8-87.0) | +2 / 0, p = 0.5 | 222 -> 213 (95.9%) |
+
+Findings (what the data supports):
+- Both tiers fit the 6656 MiB HiveMind ceiling with margin; 7B at 8k context uses 4891 MiB. `gwaya/lite.py` now covers the measured values (a test enforces it).
+- The repair loop did NOT significantly improve pass@1 on MBPP for either tier (+2 problems, p = 0.5). Do not claim an accuracy gain.
+- The gate's VERIFIED label is informative: 92-96% of VERIFIED answers pass all tests. Caveats: the visible test is test_list[0] and the label is checked against the other tests of the same problem, not an independent set; MBPP is small and likely seen in pre-training.
+- 3B-first cascade (3B answer kept when VERIFIED, else the 7B answer), computed from the two runs: 58 of 257 escalated, 83.3% pass@1 versus 82.9% for 7B alone (one problem, not significant), mean generation time 2.91 s versus 2.45 s per problem. Small-first does not pay off on this benchmark; the default stays 7B (`small_first=False`). Latencies are indicative only: the two runs were not under identical load (a LeanMaster Ollama process started on the same GPU during the 3B run).
+- Not measured: 1.5B tier, FIM autocomplete quality, IDE latency, Windows/WDDM, more than 3 repair rounds, any benchmark other than MBPP-sanitized, edit/refactor tasks.
+
+Sharing with HiveMind: HiveMind already ships GWAYA as a verifier (E15: `scripts/e15_gate.py`, vendored `third_party/gwaya/`, Qwen2.5-Coder-1.5B + LoRA under 8 GB). The expert route is to register `gwaya.hivemind_expert.HIVEMIND_SPEC` and call `GwayaCodeExpert`; the trained route (level B) is the E15 LoRA as the Python branch. No HiveMind source has been changed.
