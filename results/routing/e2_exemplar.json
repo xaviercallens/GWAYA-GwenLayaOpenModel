@@ -175,5 +175,35 @@
     ]
    ]
   }
+ },
+ "floor_tau": 0.7816,
+ "floor": {
+  "doc": {
+   "knn15": 157,
+   "knn15_with_floor": 23,
+   "n": 164
+  },
+  "stub": {
+   "knn15": 150,
+   "knn15_with_floor": 24,
+   "n": 164
+  },
+  "leave_source_out": {
+   "gsm8k": {
+    "knn15": 1098,
+    "knn15_with_floor": 0,
+    "n": 1319
+   },
+   "rust": {
+    "knn15": 66,
+    "knn15_with_floor": 1,
+    "n": 225
+   },
+   "solidity": {
+    "knn15": 0,
+    "knn15_with_floor": 0,
+    "n": 248
+   }
+  }
  }
 }
