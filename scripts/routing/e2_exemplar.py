@@ -88,6 +88,32 @@ def cmd_score(a) -> int:
             idx = np.argsort(-s2, axis=1)[:, :k]
             v = int((yk[idx].mean(axis=1) > 0.5).sum())
             res["leave_source_out_false_route"][name][f"knn{k}"] = [v, hi - lo, wilson(v, hi - lo)]
+    # similarity floor: tau = 5th percentile of each Python exemplar's best similarity to OTHER Python exemplars
+    # (the same task's description/code pair, indices i and i+1140, is masked). Uses Python training rows only; no negative or test data.
+    py = np.where(y == 1)[0]
+    sp = Xtr[py] @ Xtr[py].T
+    n_task = len(py) // 2
+    for i in range(len(py)):
+        sp[i, i] = sp[i, (i + n_task) % len(py)] = -1
+    tau = float(np.percentile(sp.max(axis=1), 5))
+    res["floor_tau"] = round(tau, 4)
+    floor = {"doc": {}, "stub": {}, "leave_source_out": {}}
+    pyidx = np.where(y == 1)[0]
+    for view in ("doc", "stub"):
+        E = np.load(d / f"{view}.npy")
+        sm = E @ Xtr.T
+        top = np.argsort(-sm, axis=1)[:, :15]
+        vote = y[top].mean(axis=1) > 0.5
+        near = (E @ Xtr[pyidx].T).max(axis=1) >= tau
+        floor[view] = {"knn15": int(vote.sum()), "knn15_with_floor": int((vote & near).sum()), "n": len(E)}
+    for name, (lo, hi) in bounds.items():
+        keep = np.ones(len(y), bool); keep[lo:hi] = False
+        s2 = Xtr[lo:hi] @ Xtr[keep].T
+        top = np.argsort(-s2, axis=1)[:, :15]
+        vote = y[keep][top].mean(axis=1) > 0.5
+        near = (Xtr[lo:hi] @ Xtr[pyidx].T).max(axis=1) >= tau
+        floor["leave_source_out"][name] = {"knn15": int(vote.sum()), "knn15_with_floor": int((vote & near).sum()), "n": hi - lo}
+    res["floor"] = floor
     json.dump(res, open(a.out, "w"), indent=1)
     print(json.dumps(res))
     return 0
