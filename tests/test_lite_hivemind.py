@@ -153,3 +153,9 @@ def test_python_stratum_hits_counts_whole_word_keywords():
     assert hits("Calculates the average of a list") == 0
     assert hits("use numpy and pandas here") == 2
     assert hits("a classification task") == 0  # 'class ' needs a whole word
+
+
+def test_class_keyword_dropped_school_class_is_not_python():
+    from gwaya.hivemind_expert import KEYWORDS, score
+    assert "class " not in KEYWORDS
+    assert score("There are 20 students in a class and 5 left") == 1.0

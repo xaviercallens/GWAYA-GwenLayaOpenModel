@@ -1,0 +1,22 @@
+--- a/src/hivemind/core/serving_experts.py	2026-10-24 18:38:54.000000000 +0200
++++ b/src/hivemind/core/serving_experts.py	2026-10-25 07:34:41.092417428 +0100
+@@ -23,7 +23,7 @@
+     PYTHON_CODE_GWAYA: {
+         "kind": "serving_verified",
+         "keywords": [
+-            "def ", "import ", "python", "pytest", "unittest", "traceback", "assert ", "lambda", "class ", "numpy",
++            "def ", "import ", "python", "pytest", "unittest", "traceback", "assert ", "lambda", "numpy",
+             "pandas", "list comprehension", "decorator", "generator", "dataclass", "pip ", ".py", "typing",
+         ],
+         "description": "Python function-level generation and repair gated by AST stub audit and sandboxed tests (GWAYA-Lite).",
+--- a/tests/test_serving_experts.py	2026-10-24 18:38:54.000000000 +0200
++++ b/tests/test_serving_experts.py	2026-10-25 07:34:41.098417507 +0100
+@@ -71,3 +71,8 @@
+     assert isinstance(expert, gwaya_expert.GwayaCodeExpert)
+     assert expert.small is None and expert.small_first is False
+     assert expert.large.name == "qwen2.5-coder:7b" and expert.large.url.endswith("/v1")
++
++
++def test_python_keywords_do_not_route_a_school_class() -> None:
++    # "class " fired on 38 of 1319 GSM8K word problems ("a class of 20 students"); a real class statement also carries def/import.
++    assert "class " not in SERVING_EXPERT_SPECS[PYTHON_CODE_GWAYA]["keywords"]
