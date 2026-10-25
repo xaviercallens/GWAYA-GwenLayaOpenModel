@@ -76,6 +76,18 @@ def cmd_score(a) -> int:
     for k in (1, 5, 15):
         idx = np.argsort(-s, axis=1)[:, :k]
         res[f"loo_negative_false_route_knn{k}"] = [int((y[idx].mean(axis=1) > 0.5).sum()), len(neg)]
+    # leave-one-source-out: drop a whole negative source from the exemplars, then route its own prompts (held-out off-domain)
+    bounds = {"gsm8k": (2280, 3599), "rust": (3599, 3824), "solidity": (3824, len(y))}
+    res["leave_source_out_false_route"] = {}
+    for name, (lo, hi) in bounds.items():
+        keep = np.ones(len(y), bool); keep[lo:hi] = False
+        s2 = Xtr[lo:hi] @ Xtr[keep].T
+        yk = y[keep]
+        res["leave_source_out_false_route"][name] = {}
+        for k in (1, 5, 15):
+            idx = np.argsort(-s2, axis=1)[:, :k]
+            v = int((yk[idx].mean(axis=1) > 0.5).sum())
+            res["leave_source_out_false_route"][name][f"knn{k}"] = [v, hi - lo, wilson(v, hi - lo)]
     json.dump(res, open(a.out, "w"), indent=1)
     print(json.dumps(res))
     return 0
