@@ -18,7 +18,7 @@ from gwaya.assistant import Assistant, AssistResult
 from gwaya.llama_tier import LlamaServerClient
 
 DOMAIN_NAME = "Python_Code_GWAYA"
-KEYWORDS = ("def ", "import ", "python", "pytest", "unittest", "traceback", "assert ", "lambda", "class ", "numpy",
+KEYWORDS = ("def ", "import ", "python", "pytest", "unittest", "traceback", "assert ", "lambda", "numpy",
             "pandas", "list comprehension", "decorator", "generator", "dataclass", "pip ", ".py", "typing")
 
 HIVEMIND_SPEC: dict[str, Any] = {
